@@ -1,20 +1,35 @@
+"use client";
+
 import Link from 'next/link';
-
-type FieldType = {
-  email?: string;
-  password?: string;
-  remember?: string;
-};
-
-const onFinish = (values: FieldType) => {
-  console.log("Success:", values);
-};
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { login as apiLogin } from '../../../lib/auth';
 
 const onFinishFailed = (errorInfo: any) => {
-  console.log("Failed:", errorInfo);
+  console.log('Failed:', errorInfo);
 };
 
 export default function Login() {
+  const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+    try {
+      await apiLogin(email, password);
+      router.push('/dashboard');
+    } catch (err: any) {
+      setError(err?.message || 'Login failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="bg-background text-on-background min-h-screen flex flex-col">
       {/* TopNavBar suppressed per "Destination Rule" for Login Screen */}
@@ -39,15 +54,18 @@ export default function Login() {
           </div>
           
           {/* Login Form */}
-          <form className="flex flex-col gap-8" onFinish={onFinish} onFinishFailed={onFinishFailed}>
+          <form className="flex flex-col gap-8" onSubmit={onSubmit}>
             <div className="flex flex-col gap-6">
               {/* Email Input */}
               <div className="flex flex-col gap-2">
                 <label className="text-[0.75rem] font-bold uppercase tracking-[0.15em] text-on-surface-variant">Email Address</label>
-                <input 
-                  className="w-full bg-surface-container-high border-0 border-b-2 border-transparent py-4 px-0 text-on-surface font-bold placeholder:text-outline-variant focus:ring-0 focus:outline-none focus:border-primary transition-colors" 
-                  placeholder="NAME@DOMAIN.COM" 
+                <input
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full bg-surface-container-high border-0 border-b-2 border-transparent py-4 px-0 text-on-surface font-bold placeholder:text-outline-variant focus:ring-0 focus:outline-none focus:border-primary transition-colors"
+                  placeholder="NAME@DOMAIN.COM"
                   type="email"
+                  required
                 />
               </div>
               
@@ -59,22 +77,27 @@ export default function Login() {
                     Forgot?
                   </Link>
                 </div>
-                <input 
-                  className="w-full bg-surface-container-high border-0 border-b-2 border-transparent py-4 px-0 text-on-surface font-bold placeholder:text-outline-variant focus:ring-0 focus:outline-none focus:border-primary transition-colors" 
-                  placeholder="••••••••" 
+                <input
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full bg-surface-container-high border-0 border-b-2 border-transparent py-4 px-0 text-on-surface font-bold placeholder:text-outline-variant focus:ring-0 focus:outline-none focus:border-primary transition-colors"
+                  placeholder="••••••••"
                   type="password"
+                  required
                 />
               </div>
             </div>
             
             {/* Action Button */}
-            <button 
-              className="bg-primary text-on-primary font-black py-6 text-xl uppercase tracking-widest hover:bg-primary-dim transition-all active:scale-[0.98] flex items-center justify-center gap-3" 
+            <button
+              className="bg-primary text-on-primary font-black py-6 text-xl uppercase tracking-widest hover:bg-primary-dim transition-all active:scale-[0.98] flex items-center justify-center gap-3"
               type="submit"
+              disabled={loading}
             >
-              Secure Login
+              {loading ? 'Signing in...' : 'Secure Login'}
               <span className="material-symbols-outlined">arrow_forward</span>
             </button>
+            {error && <div className="text-negative font-bold">{error}</div>}
           </form>
           
           {/* Secondary Actions */}

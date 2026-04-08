@@ -1,8 +1,36 @@
+"use client";
+
 import Link from 'next/link';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { signup as apiSignup } from '../../../lib/auth';
 
 export default function SignUp() {
+  const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    if (password !== confirm) return setError('Passwords do not match');
+    setLoading(true);
+    try {
+      await apiSignup({ email, password });
+      // after successful signup, navigate to dashboard
+      router.push('/dashboard');
+    } catch (err: any) {
+      setError(err?.message || 'Signup failed');
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <div className="bg-background text-on-background min-h-screen flex flex-col">
+      {/* TopNavBar suppressed per "Destination Rule" for Sign-up Screen */}
       {/* Auth Shell Suppression: Per instructions, TopNavBar is suppressed for transactional pages like Sign-up */}
       <main className="flex-grow flex flex-col md:flex-row">
         {/* Branding/Copy Column */}
@@ -46,14 +74,17 @@ export default function SignUp() {
               <p className="text-on-surface-variant font-medium">Already have an account? <Link href="/login" className="text-primary font-bold hover:underline">Log in</Link></p>
             </header>
 
-            <form className="space-y-6">
+            <form className="space-y-6" onSubmit={onSubmit}>
               {/* Email Field */}
               <div className="space-y-1">
                 <label className="block text-[0.75rem] font-bold tracking-wide uppercase text-on-surface-variant">Email Address</label>
-                <input 
-                  className="w-full bg-surface-container-high border-0 border-b-2 border-transparent h-14 px-4 font-medium text-on-surface placeholder:text-outline-variant focus:outline-none focus:border-primary focus:ring-0 transition-colors" 
-                  placeholder="name@example.com" 
-                  type="email" 
+                <input
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full bg-surface-container-high border-0 border-b-2 border-transparent h-14 px-4 font-medium text-on-surface placeholder:text-outline-variant focus:outline-none focus:border-primary focus:ring-0 transition-colors"
+                  placeholder="name@example.com"
+                  type="email"
+                  required
                 />
               </div>
 
@@ -61,19 +92,25 @@ export default function SignUp() {
                 {/* Password Field */}
                 <div className="space-y-1">
                   <label className="block text-[0.75rem] font-bold tracking-wide uppercase text-on-surface-variant">Password</label>
-                  <input 
-                    className="w-full bg-surface-container-high border-0 border-b-2 border-transparent h-14 px-4 font-medium text-on-surface focus:outline-none focus:border-primary focus:ring-0 transition-colors" 
-                    placeholder="••••••••" 
-                    type="password" 
+                  <input
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full bg-surface-container-high border-0 border-b-2 border-transparent h-14 px-4 font-medium text-on-surface focus:outline-none focus:border-primary focus:ring-0 transition-colors"
+                    placeholder="••••••••"
+                    type="password"
+                    required
                   />
                 </div>
                 {/* Confirm Password Field */}
                 <div className="space-y-1">
                   <label className="block text-[0.75rem] font-bold tracking-wide uppercase text-on-surface-variant">Confirm Password</label>
-                  <input 
-                    className="w-full bg-surface-container-high border-0 border-b-2 border-transparent h-14 px-4 font-medium text-on-surface focus:outline-none focus:border-primary focus:ring-0 transition-colors" 
-                    placeholder="••••••••" 
-                    type="password" 
+                  <input
+                    value={confirm}
+                    onChange={(e) => setConfirm(e.target.value)}
+                    className="w-full bg-surface-container-high border-0 border-b-2 border-transparent h-14 px-4 font-medium text-on-surface focus:outline-none focus:border-primary focus:ring-0 transition-colors"
+                    placeholder="••••••••"
+                    type="password"
+                    required
                   />
                 </div>
               </div>
@@ -121,13 +158,15 @@ export default function SignUp() {
               </div>
 
               {/* Submit Button */}
-              <button 
-                className="w-full bg-primary h-16 flex items-center justify-center gap-2 group hover:bg-primary-dim transition-colors" 
+              <button
+                className="w-full bg-primary h-16 flex items-center justify-center gap-2 group hover:bg-primary-dim transition-colors"
                 type="submit"
+                disabled={loading}
               >
-                <span className="text-on-primary font-black uppercase tracking-widest text-lg">Complete Registration</span>
+                <span className="text-on-primary font-black uppercase tracking-widest text-lg">{loading ? 'Creating...' : 'Complete Registration'}</span>
                 <span className="material-symbols-outlined text-on-primary group-active:translate-x-1 transition-transform">arrow_forward</span>
               </button>
+              {error && <div className="text-negative font-bold text-center">{error}</div>}
 
               <p className="text-[0.7rem] text-on-surface-variant text-center uppercase font-bold tracking-wider leading-relaxed">
                 By clicking registration, you agree to our <br/>
