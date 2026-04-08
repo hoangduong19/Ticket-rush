@@ -1,5 +1,19 @@
 import Link from 'next/link';
 
+type FieldType = {
+  email?: string;
+  password?: string;
+  remember?: string;
+};
+
+const onFinish = (values: FieldType) => {
+  console.log("Success:", values);
+};
+
+const onFinishFailed = (errorInfo: any) => {
+  console.log("Failed:", errorInfo);
+};
+
 export default function Login() {
   return (
     <div className="bg-background text-on-background min-h-screen flex flex-col">
@@ -25,7 +39,7 @@ export default function Login() {
           </div>
           
           {/* Login Form */}
-          <form className="flex flex-col gap-8">
+          <form className="flex flex-col gap-8" onFinish={onFinish} onFinishFailed={onFinishFailed}>
             <div className="flex flex-col gap-6">
               {/* Email Input */}
               <div className="flex flex-col gap-2">
