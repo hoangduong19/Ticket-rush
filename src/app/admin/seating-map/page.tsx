@@ -163,13 +163,13 @@ export default function SeatingMapConfigurator() {
                     <div className="flex gap-1 mb-1">
                       <div className="w-4 h-4 bg-secondary"></div><div className="w-4 h-4 bg-secondary"></div><div className="w-4 h-4 bg-secondary"></div>
                       <div className="w-4 h-4 bg-primary outline outline-offset-2 outline-primary"></div><div className="w-4 h-4 bg-primary outline outline-offset-2 outline-primary"></div><div className="w-4 h-4 bg-primary outline outline-offset-2 outline-primary"></div>
-                      <div className="w-4 h-4 bg-primary outline outline-offset-2 outline-primary"></div><div className="w-4 h-4 bg-tertiary"></div><div class="w-4 h-4 bg-tertiary"></div>
+                      <div className="w-4 h-4 bg-primary outline outline-offset-2 outline-primary"></div><div className="w-4 h-4 bg-tertiary"></div><div className="w-4 h-4 bg-tertiary"></div>
                       <div className="w-4 h-4 bg-secondary"></div><div className="w-4 h-4 bg-secondary"></div><div className="w-4 h-4 bg-secondary"></div>
                     </div>
                     <div className="flex gap-1">
                       <div className="w-4 h-4 bg-secondary"></div><div className="w-4 h-4 bg-secondary"></div><div className="w-4 h-4 bg-secondary"></div>
                       <div className="w-4 h-4 bg-tertiary"></div><div className="w-4 h-4 bg-tertiary"></div><div className="w-4 h-4 bg-tertiary"></div>
-                      <div className="w-4 h-4 bg-tertiary"></div><div class="w-4 h-4 bg-tertiary"></div><div className="w-4 h-4 bg-tertiary"></div>
+                      <div className="w-4 h-4 bg-tertiary"></div><div className="w-4 h-4 bg-tertiary"></div><div className="w-4 h-4 bg-tertiary"></div>
                       <div className="w-4 h-4 bg-secondary"></div><div className="w-4 h-4 bg-secondary"></div><div className="w-4 h-4 bg-secondary"></div>
                     </div>
                   </div>
