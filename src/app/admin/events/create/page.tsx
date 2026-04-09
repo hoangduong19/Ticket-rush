@@ -1,6 +1,59 @@
+'use client';
+
+import { useState } from 'react';
 import Link from 'next/link';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? '';
 
 export default function CreateEvent() {
+  const [eventData, setEventData] = useState({
+    title: '',
+    description: '',
+    location: '',
+    date: '',
+    bannerUrl: '',
+    category: 'MUSIC'
+  });
+
+  const [loading, setLoading] = useState(false);
+
+  const handlePublish = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_BASE}/admin/events`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // 'Authorization': 'Bearer ' + yourToken 
+        },
+        body: JSON.stringify(eventData),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        alert('Event Published Successfully! ID: ' + result.eventId);
+      } else {
+        const error = await response.json();
+        alert('Error: ' + (error.message || 'Failed to create event'));
+      }
+    } catch (err) {
+      alert('Connection failed. Please check your backend.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>('');
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      setPreviewUrl(URL.createObjectURL(file));
+      setEventData({ ...eventData, bannerUrl: file.name }); 
+    }
+  };
+
   return (
     <div className="bg-background text-on-background min-h-screen">
       {/* TopNavBar */}
@@ -35,7 +88,13 @@ export default function CreateEvent() {
               <Link href="/admin/seating-map" className="bg-surface-container-highest text-on-surface px-8 py-4 font-bold uppercase tracking-widest hover:bg-surface-dim transition-colors flex items-center justify-center gap-2">
                 <span className="material-symbols-outlined text-[18px]">chair</span> Configure Map Seating
               </Link>
-              <button className="bg-primary text-on-primary px-12 py-4 font-bold uppercase tracking-widest hover:bg-primary-dim transition-colors">Publish Event</button>
+              <button 
+                onClick={handlePublish}
+                disabled={loading}
+                className="bg-primary text-on-primary px-12 py-4 font-bold uppercase tracking-widest hover:bg-opacity-90 disabled:opacity-50 transition-all"
+              >
+                {loading ? 'Publishing...' : 'Publish Event'}
+              </button>
             </div>
           </div>
         </header>
@@ -50,6 +109,8 @@ export default function CreateEvent() {
                 className="w-full text-2xl font-bold bg-surface-container-high border-0 border-b-2 border-transparent focus:outline-none focus:border-primary focus:ring-0 transition-colors px-4 py-4 placeholder:text-surface-dim" 
                 placeholder="ENTER EVENT NAME" 
                 type="text"
+                onChange={(e) => setEventData({...eventData, title: e.target.value})}
+                value={eventData.title}
               />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -59,8 +120,22 @@ export default function CreateEvent() {
                   <input 
                     className="w-full font-bold bg-surface-container-high border-0 border-b-2 border-transparent focus:outline-none focus:border-primary focus:ring-0 transition-colors px-4 py-4" 
                     type="datetime-local"
+                    onChange={(e) => setEventData({...eventData, date: e.target.value})}
+                    value={eventData.date}
                   />
                 </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-[0.75rem] font-bold text-outline uppercase tracking-widest">Category</label>
+                <select 
+                  className="w-full font-bold bg-surface-container-high border-0 border-b-2 border-transparent focus:outline-none focus:border-primary focus:ring-0 px-4 py-4 appearance-none"
+                  value={eventData.category}
+                  onChange={(e) => setEventData({...eventData, category: e.target.value})}
+                >
+                  <option value="MUSIC">MUSIC</option>
+                  <option value="SPORT">SPORT</option>
+                  <option value="THEATER">THEATER</option>
+                </select>
               </div>
               <div className="space-y-2">
                 <label className="text-[0.75rem] font-bold text-outline uppercase tracking-widest">Venue Location</label>
@@ -68,6 +143,8 @@ export default function CreateEvent() {
                   className="w-full font-bold bg-surface-container-high border-0 border-b-2 border-transparent focus:outline-none focus:border-primary focus:ring-0 transition-colors px-4 py-4" 
                   placeholder="VENUE NAME OR ADDRESS" 
                   type="text"
+                  onChange={(e) => setEventData({...eventData, location: e.target.value})}
+                  value={eventData.location}
                 />
               </div>
             </div>
@@ -76,145 +153,52 @@ export default function CreateEvent() {
               <textarea 
                 className="w-full font-body bg-surface-container-high border-0 border-b-2 border-transparent focus:outline-none focus:border-primary focus:ring-0 transition-colors px-4 py-4 resize-none" 
                 placeholder="DESCRIBE THE EXPERIENCE..." 
+                onChange={(e) => setEventData({...eventData, description: e.target.value})}
+                value={eventData.description}
                 rows={6}
               ></textarea>
             </div>
 
             {/* Ticket Tiers Section */}
-            <div className="space-y-6 pt-6">
-              <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold uppercase tracking-tight">Ticket Architecture</h2>
-                <button className="flex items-center gap-2 text-primary font-bold text-sm uppercase tracking-widest hover:opacity-80">
-                  <span className="material-symbols-outlined text-lg">add_circle</span> Add Tier
-                </button>
-              </div>
-              <div className="space-y-1 bg-surface-container">
-                {/* VIP Tier */}
-                <div className="grid grid-cols-12 gap-4 bg-surface-container-lowest p-4 items-center">
-                  <div className="col-span-1 text-outline font-black text-xl">01</div>
-                  <div className="col-span-5">
-                    <input className="w-full font-bold bg-transparent border-0 border-b-2 border-outline-variant/20 focus:outline-none focus:border-primary focus:ring-0 transition-colors px-2 py-2" type="text" defaultValue="VIP" />
-                  </div>
-                  <div className="col-span-3">
-                    <div className="flex items-center gap-2 bg-surface-container-high px-3 py-2 border-b-2 border-transparent focus-within:border-primary transition-colors">
-                      <span className="font-bold text-outline">$</span>
-                      <input className="w-full font-bold bg-transparent border-0 focus:ring-0 p-0" type="number" defaultValue="250.00" />
-                    </div>
-                  </div>
-                  <div className="col-span-2 text-right">
-                    <span className="bg-secondary text-on-secondary text-[10px] px-2 py-0.5 font-black uppercase">Live</span>
-                  </div>
-                  <div className="col-span-1 text-right">
-                    <button className="material-symbols-outlined text-outline hover:text-error transition-colors">delete</button>
-                  </div>
-                </div>
-
-                {/* General Tier */}
-                <div className="grid grid-cols-12 gap-4 bg-surface-container-lowest p-4 items-center">
-                  <div className="col-span-1 text-outline font-black text-xl">02</div>
-                  <div className="col-span-5">
-                    <input className="w-full font-bold bg-transparent border-0 border-b-2 border-outline-variant/20 focus:outline-none focus:border-primary focus:ring-0 transition-colors px-2 py-2" type="text" defaultValue="General Admission" />
-                  </div>
-                  <div className="col-span-3">
-                    <div className="flex items-center gap-2 bg-surface-container-high px-3 py-2 border-b-2 border-transparent focus-within:border-primary transition-colors">
-                      <span className="font-bold text-outline">$</span>
-                      <input className="w-full font-bold bg-transparent border-0 focus:ring-0 p-0" type="number" defaultValue="85.00" />
-                    </div>
-                  </div>
-                  <div className="col-span-2 text-right"></div>
-                  <div className="col-span-1 text-right">
-                    <button className="material-symbols-outlined text-outline hover:text-error transition-colors">delete</button>
-                  </div>
-                </div>
-
-                {/* Early Bird Tier */}
-                <div className="grid grid-cols-12 gap-4 bg-surface-container-lowest p-4 items-center">
-                  <div className="col-span-1 text-outline font-black text-xl">03</div>
-                  <div className="col-span-5">
-                    <input className="w-full font-bold bg-transparent border-0 border-b-2 border-outline-variant/20 focus:outline-none focus:border-primary focus:ring-0 transition-colors px-2 py-2" type="text" defaultValue="Early Bird" />
-                  </div>
-                  <div className="col-span-3">
-                    <div className="flex items-center gap-2 bg-surface-container-high px-3 py-2 border-b-2 border-transparent focus-within:border-primary transition-colors">
-                      <span className="font-bold text-outline">$</span>
-                      <input className="w-full font-bold bg-transparent border-0 focus:ring-0 p-0" type="number" defaultValue="45.00" />
-                    </div>
-                  </div>
-                  <div className="col-span-2 text-right">
-                    <span className="bg-tertiary text-on-tertiary text-[10px] px-2 py-0.5 font-black uppercase">Active</span>
-                  </div>
-                  <div className="col-span-1 text-right">
-                    <button className="material-symbols-outlined text-outline hover:text-error transition-colors">delete</button>
-                  </div>
-                </div>
-              </div>
-            </div>
+            
           </section>
 
           {/* Right Column: Assets & Config */}
           <aside className="md:col-span-4 flex flex-col gap-1">
-            {/* Image Upload Block */}
             <div className="bg-surface-container-lowest p-12 flex-grow">
-              <label className="text-[0.75rem] font-bold text-outline uppercase tracking-widest block mb-4">Visual Asset</label>
-              <div className="aspect-[4/5] bg-surface-container-high flex flex-col items-center justify-center border-2 border-dashed border-outline-variant/40 p-8 group cursor-pointer hover:bg-surface-variant transition-colors">
-                <span className="material-symbols-outlined text-6xl text-outline mb-4 group-hover:scale-110 transition-transform">add_a_photo</span>
-                <p className="font-bold text-sm uppercase tracking-widest text-center">Drag & Drop Cover Image</p>
-                <p className="text-xs text-outline-variant mt-2">MIN. 1200 x 1500 PX</p>
-              </div>
-              <div className="mt-8 space-y-4">
-                <div className="p-4 bg-surface-container-low">
-                  <h4 className="text-xs font-black uppercase tracking-widest mb-1">Preview Style</h4>
-                  <div className="flex gap-2">
-                    <div className="w-8 h-8 bg-primary"></div>
-                    <div className="w-8 h-8 bg-secondary"></div>
-                    <div className="w-8 h-8 bg-tertiary"></div>
-                    <div className="w-8 h-8 bg-on-background"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
+              <label className="text-[0.75rem] font-bold text-outline uppercase tracking-widest block mb-4 cursor-pointer">
+                Visual Asset
+                <input 
+                  type="file" 
+                  className="hidden" 
+                  accept="image/*" 
+                  onChange={handleFileChange} 
+                />
 
-            {/* Status Config */}
-            <div className="bg-surface-container-lowest p-12">
-              <label className="text-[0.75rem] font-bold text-outline uppercase tracking-widest block mb-6">Publication Settings</label>
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-sm uppercase tracking-wider">Private Event</span>
-                  <div className="w-12 h-6 bg-surface-container-high relative">
-                    <div className="absolute left-0 top-0 h-6 w-6 bg-outline"></div>
-                  </div>
+                <div className="aspect-[4/5] bg-surface-container-high flex flex-col items-center justify-center border-2 border-dashed border-outline-variant/40 p-8 group cursor-pointer hover:bg-surface-variant transition-colors relative overflow-hidden mt-4">
+                  
+                  {previewUrl ? (
+                    <img src={previewUrl} alt="Preview" className="absolute inset-0 w-full h-full object-cover" />
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined text-6xl text-outline mb-4 group-hover:scale-110 transition-transform">add_a_photo</span>
+                      <p className="font-bold text-sm uppercase tracking-widest text-center">Click to browse or Drag & Drop</p>
+                      <p className="text-xs text-outline-variant mt-2">MIN. 1200 x 1500 PX</p>
+                    </>
+                  )}
+
+                  {previewUrl && (
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                      <span className="text-white font-bold uppercase text-xs tracking-widest">Change Image</span>
+                    </div>
+                  )}
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-sm uppercase tracking-wider">Highlight on Home</span>
-                  <div className="w-12 h-6 bg-primary relative">
-                    <div className="absolute right-0 top-0 h-6 w-6 bg-white"></div>
-                  </div>
-                </div>
-                <div className="pt-6">
-                  <button className="w-full bg-on-background text-surface py-4 font-bold uppercase tracking-widest text-sm hover:bg-outline transition-colors">Manage Permissions</button>
-                </div>
-              </div>
+              </label>
             </div>
           </aside>
         </div>
 
-        {/* Secondary Meta Section */}
-        <section className="mt-1 gap-1 grid grid-cols-1 md:grid-cols-3">
-          <div className="bg-surface-container-lowest p-8 border-t-4 border-primary">
-            <span className="material-symbols-outlined text-primary mb-4">analytics</span>
-            <h3 className="font-black text-lg uppercase mb-1">Forecasted Reach</h3>
-            <p className="text-sm text-on-surface-variant font-body">Based on similar events in your region, expected traffic: <span className="font-bold text-on-surface">12.5k visitors</span>.</p>
-          </div>
-          <div className="bg-surface-container-lowest p-8 border-t-4 border-secondary">
-            <span className="material-symbols-outlined text-secondary mb-4">security</span>
-            <h3 className="font-black text-lg uppercase mb-1">Access Control</h3>
-            <p className="text-sm text-on-surface-variant font-body">Verification required for VIP check-in. <span className="font-bold text-on-surface">Digital ID only</span>.</p>
-          </div>
-          <div className="bg-surface-container-lowest p-8 border-t-4 border-tertiary">
-            <span className="material-symbols-outlined text-tertiary mb-4">share</span>
-            <h3 className="font-black text-lg uppercase mb-1">Global Sync</h3>
-            <p className="text-sm text-on-surface-variant font-body">Connect to <span className="font-bold text-on-surface">Instagram & TikTok</span> for automated promotional reels.</p>
-          </div>
-        </section>
+        
       </main>
 
       {/* Footer */}
