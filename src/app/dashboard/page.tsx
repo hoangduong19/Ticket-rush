@@ -29,16 +29,35 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const res = await fetch(`${API_BASE}/users/me`);
+        const token = localStorage.getItem('token'); 
+        if (!token) {
+          console.warn("Chưa có token, vui lòng đăng nhập!");
+          setLoading(false);
+          return;
+        }
+
+        const res = await fetch(`${API_BASE}/users/me`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
         if (res.ok) {
           const data = await res.json();
           console.log("Dữ liệu từ Backend:", data);
-          setUser(data);
+          setUser({
+            ...data,
+            avatarUrl: data.avatarUrl || data.url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix'
+          });
           setFormData({
             displayName: data.displayName || '',
             age: data.age || 0,
             gender: data.gender || 'OTHER'
           });
+        } else if (res.status === 401) {
+          console.error("Token hết hạn hoặc không hợp lệ");
         }
       } catch (err) {
         console.error("Lỗi kết nối Backend:", err);
@@ -46,15 +65,21 @@ export default function Dashboard() {
         setLoading(false);
       }
     };
+    
     fetchUserData();
   }, []);
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const token = localStorage.getItem('token');
+      
       const res = await fetch(`${API_BASE}/users/me`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` 
+        },
         body: JSON.stringify(formData), 
       });
 
@@ -74,7 +99,6 @@ export default function Dashboard() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // 1. Show ảnh lên ngay lập tức (Optimistic UI)
     const previewUrl = URL.createObjectURL(file);
     setAvatarPreview(previewUrl); 
     setIsUploading(true);
@@ -83,11 +107,21 @@ export default function Dashboard() {
     uploadData.append('file', file);
 
     try {
+        const token = localStorage.getItem('token');
+
         const res = await fetch(`${API_BASE}/users/me/avatar`, {
             method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
             body: uploadData,
         });
-        if (!res.ok) {
+
+        if (res.ok) {
+            const data = await res.json();
+            setUser(prev => ({ ...prev, avatarUrl: data.url || data.avatarUrl }));
+            alert("Upload thành công!");
+        } else {
             setAvatarPreview(null);
             alert("Upload thất bại!");
         }
@@ -97,7 +131,7 @@ export default function Dashboard() {
     } finally {
         setIsUploading(false);
     }
-};
+  };
 
 
   if (loading) {
