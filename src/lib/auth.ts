@@ -17,9 +17,16 @@ export async function login(email: string, password: string) {
     throw new Error(text || res.statusText);
   }
 
-  const data: LoginResponse = await res.json();
-  if (data.token) setToken(data.token);
-  return data;
+  const text = await res.text();
+  try {
+    const data: LoginResponse = JSON.parse(text);
+    if (data.token) setToken(data.token);
+    return data;
+  } catch {
+    // Backend returned plain JWT token
+    setToken(text);
+    return { token: text };
+  }
 }
 
 export async function signup(payload: Record<string, any>) {
@@ -34,9 +41,16 @@ export async function signup(payload: Record<string, any>) {
     throw new Error(text || res.statusText);
   }
 
-  const data = await res.json();
-  if (data.token) setToken(data.token);
-  return data;
+  const text = await res.text();
+  try {
+    const data = JSON.parse(text);
+    if (data.token) setToken(data.token);
+    return data;
+  } catch {
+    // Backend returned plain JWT token
+    setToken(text);
+    return { token: text };
+  }
 }
 
 export function setToken(token: string) {
