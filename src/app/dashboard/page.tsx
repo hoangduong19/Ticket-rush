@@ -23,6 +23,8 @@ export default function Dashboard() {
 
   const [loading, setLoading] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -68,31 +70,35 @@ export default function Dashboard() {
     }
   };
 
-  // API 2: Cập nhật Avatar (API riêng biệt)
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // 1. Show ảnh lên ngay lập tức (Optimistic UI)
+    const previewUrl = URL.createObjectURL(file);
+    setAvatarPreview(previewUrl); 
+    setIsUploading(true);
 
     const uploadData = new FormData();
     uploadData.append('file', file);
 
     try {
-      const res = await fetch(`${API_BASE}/users/me/avatar`, {
-        method: 'POST',
-        body: uploadData,
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        setUser(prev => ({ ...prev, avatarUrl: data.url }));
-        alert("Avatar đã được cập nhật!");
-      } else {
-        alert("Lỗi upload ảnh.");
-      }
+        const res = await fetch(`${API_BASE}/users/me/avatar`, {
+            method: 'POST',
+            body: uploadData,
+        });
+        if (!res.ok) {
+            setAvatarPreview(null);
+            alert("Upload thất bại!");
+        }
     } catch (err) {
-      alert("Lỗi kết nối server.");
+        setAvatarPreview(null);
+        alert("Lỗi kết nối khi upload!");
+    } finally {
+        setIsUploading(false);
     }
-  };
+};
+
 
   if (loading) {
     return (
@@ -131,18 +137,26 @@ export default function Dashboard() {
         <div className="mb-12 bg-surface-container">
           <div className="lg:col-span-8 bg-surface-container-lowest p-12 flex flex-col md:flex-row gap-12 items-start border-2 border-black">
             <div className="w-48 h-48 bg-primary relative shrink-0 border-2 border-black">
-              <img className="w-full h-full object-cover grayscale contrast-125" alt="Profile" src={user.avatarUrl || "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"} />
+              <img className="w-full h-full object-cover contrast-125" alt="Profile" src={avatarPreview || user.avatarUrl || "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"} />
               
+              {isUploading && (
+                <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center z-10 transition-opacity">
+                  <span className="material-symbols-outlined text-white text-3xl animate-spin mb-2">sync</span>
+                  <span className="text-white text-[10px] font-bold uppercase tracking-widest animate-pulse">Uploading</span>
+                </div>
+              )}
+
               {/* Nút Update Avatar */}
               <button 
                 onClick={() => fileInputRef.current?.click()}
-                className="absolute -bottom-2 -left-2 bg-black text-white w-10 h-10 flex items-center justify-center hover:bg-blue-700 border-2 border-white transition-colors"
+                disabled={isUploading}
+                className="absolute -bottom-2 -left-2 bg-black text-white w-10 h-10 flex items-center justify-center hover:bg-blue-700 border-2 border-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed z-20"
               >
                 <span className="material-symbols-outlined text-sm">photo_camera</span>
               </button>
               <input type="file" ref={fileInputRef} onChange={handleAvatarChange} className="hidden" accept="image/*" />
               
-              <div className="absolute -bottom-4 -right-4 bg-secondary px-4 py-2 text-on-secondary font-bold text-xs uppercase tracking-widest">Verified</div>
+              <div className="absolute -bottom-4 -right-4 bg-secondary px-4 py-2 text-on-secondary font-bold text-xs uppercase tracking-widest z-20">Verified</div>
             </div>
 
             <div className="flex-1">
