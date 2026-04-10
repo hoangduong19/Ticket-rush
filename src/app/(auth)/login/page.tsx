@@ -105,7 +105,7 @@ export default function Login() {
             <div className="h-[2px] w-full bg-surface-container"></div>
             <div className="flex flex-col gap-1">
               <span className="text-on-surface-variant text-sm font-medium">New to the platform?</span>
-              <Link href="/signup" className="text-secondary font-black text-lg uppercase tracking-tight hover:underline">
+              <Link href="/register" className="text-secondary font-black text-lg uppercase tracking-tight hover:underline">
                 Create Account
               </Link>
             </div>
