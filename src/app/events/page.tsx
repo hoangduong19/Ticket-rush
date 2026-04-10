@@ -11,7 +11,7 @@ export default function BrowseEvents() {
 
   // 2. Fetch dữ liệu từ Backend Java (Spring Boot)
   useEffect(() => {
-    fetch("http://localhost:8080/api/events")
+    fetch("http://localhost:8080/events")
       .then((res) => {
         if (!res.ok) throw new Error("Network response was not ok");
         return res.json();
