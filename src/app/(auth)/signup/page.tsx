@@ -10,6 +10,10 @@ export default function SignUp() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
+  const [displayName, setDisplayName] = useState('');
+  const [age, setAge] = useState('');
+  const [gender, setGender] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -19,7 +23,31 @@ export default function SignUp() {
     if (password !== confirm) return setError('Passwords do not match');
     setLoading(true);
     try {
-      await apiSignup({ email, password });
+      const normalizeGender = (g: string) => {
+        switch (g) {
+          case 'male':
+            return 'MALE';
+          case 'female':
+            return 'FEMALE';
+          case 'non-binary':
+            return 'NON_BINARY';
+          case 'prefer-not-to-say':
+            return 'PREFER_NOT_TO_SAY';
+          default:
+            return undefined;
+        }
+      };
+
+      const payload: Record<string, any> = {
+        username: email,
+        password,
+        ...(age && { age: Number(age) }),
+        ...(displayName && { displayName }),
+        ...(gender && { gender: normalizeGender(gender) }),
+        ...(avatarUrl && { avatarUrl }),
+      };
+
+      await apiSignup(payload);
       // after successful signup, navigate to dashboard
       router.push('/dashboard');
     } catch (err: any) {
@@ -88,6 +116,17 @@ export default function SignUp() {
                 />
               </div>
 
+              <div className="space-y-1">
+                <label className="block text-[0.75rem] font-bold tracking-wide uppercase text-on-surface-variant">Display Name</label>
+                <input
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  className="w-full bg-surface-container-high border-0 border-b-2 border-transparent h-14 px-4 font-medium text-on-surface placeholder:text-outline-variant focus:outline-none focus:border-primary focus:ring-0 transition-colors"
+                  placeholder="Hoang Quoc Duong"
+                  type="text"
+                />
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Password Field */}
                 <div className="space-y-1">
@@ -119,25 +158,28 @@ export default function SignUp() {
                 {/* Age Field */}
                 <div className="space-y-1">
                   <label className="block text-[0.75rem] font-bold tracking-wide uppercase text-on-surface-variant">Age</label>
-                  <input 
-                    className="w-full bg-surface-container-high border-0 border-b-2 border-transparent h-14 px-4 font-medium text-on-surface focus:outline-none focus:border-primary focus:ring-0 transition-colors" 
-                    placeholder="21" 
-                    type="number" 
-                  />
+                    <input
+                      value={age}
+                      onChange={(e) => setAge(e.target.value)}
+                      className="w-full bg-surface-container-high border-0 border-b-2 border-transparent h-14 px-4 font-medium text-on-surface focus:outline-none focus:border-primary focus:ring-0 transition-colors"
+                      placeholder="21"
+                      type="number"
+                    />
                 </div>
                 {/* Gender Selection */}
                 <div className="space-y-1">
                   <label className="block text-[0.75rem] font-bold tracking-wide uppercase text-on-surface-variant">Gender</label>
-                  <select 
-                    defaultValue="" 
-                    className="w-full bg-surface-container-high border-0 border-b-2 border-transparent h-14 px-4 font-medium text-on-surface appearance-none focus:outline-none focus:border-primary focus:ring-0 transition-colors"
-                  >
-                    <option disabled value="">Select Gender</option>
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                    <option value="non-binary">Non-binary</option>
-                    <option value="prefer-not-to-say">Prefer not to say</option>
-                  </select>
+                    <select
+                      value={gender}
+                      onChange={(e) => setGender(e.target.value)}
+                      className="w-full bg-surface-container-high border-0 border-b-2 border-transparent h-14 px-4 font-medium text-on-surface appearance-none focus:outline-none focus:border-primary focus:ring-0 transition-colors"
+                    >
+                      <option disabled value="">Select Gender</option>
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                      <option value="non-binary">Non-binary</option>
+                      <option value="prefer-not-to-say">Prefer not to say</option>
+                    </select>
                 </div>
               </div>
 
