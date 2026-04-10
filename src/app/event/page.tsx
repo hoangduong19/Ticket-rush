@@ -119,7 +119,7 @@ export default function EventDetail() {
                   </div>
                   <ul className="text-xs text-on-surface-variant flex flex-col gap-2 uppercase tracking-wide font-medium">
                     <li className="flex items-center gap-2"><span className="material-symbols-outlined text-base">check</span> Priority Entrance</li>
-                    <li className="flex items-center gap-2"><span class="material-symbols-outlined text-base">check</span> Private Bar & Restrooms</li>
+                    <li className="flex items-center gap-2"><span className="material-symbols-outlined text-base">check</span> Private Bar & Restrooms</li>
                     <li className="flex items-center gap-2"><span className="material-symbols-outlined text-base">check</span> Artist Meet & Greet</li>
                   </ul>
                 </div>
