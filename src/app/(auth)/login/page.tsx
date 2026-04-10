@@ -37,22 +37,22 @@ export default function Login() {
         {/* Background Architectural Block */}
         <div className="absolute top-0 right-0 w-1/3 h-full bg-surface-container-low -z-10"></div>
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-primary opacity-5 -z-10"></div>
-        
+
         <div className="w-full max-w-[480px] bg-surface-container-lowest p-10 md:p-16 flex flex-col gap-10">
           {/* Brand Anchor */}
           <div className="flex flex-col gap-2">
             <Link href="/" className="text-primary font-black text-4xl tracking-tighter uppercase italic">TicketRush</Link>
             <div className="h-1.5 w-12 bg-secondary"></div>
           </div>
-          
+
           {/* Header Section */}
           <div className="flex flex-col gap-4">
             <h1 className="text-[3.5rem] font-extrabold leading-[1] tracking-tighter text-on-surface">
-              SIGN<br/>IN.
+              SIGN IN.
             </h1>
             <p className="text-on-surface-variant font-medium tracking-tight">Access your exclusive event pass dashboard.</p>
           </div>
-          
+
           {/* Login Form */}
           <form className="flex flex-col gap-8" onSubmit={onSubmit}>
             <div className="flex flex-col gap-6">
@@ -60,15 +60,13 @@ export default function Login() {
               <div className="flex flex-col gap-2">
                 <label className="text-[0.75rem] font-bold uppercase tracking-[0.15em] text-on-surface-variant">Email Address</label>
                 <input
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
                   className="w-full bg-surface-container-high border-0 border-b-2 border-transparent py-4 px-0 text-on-surface font-bold placeholder:text-outline-variant focus:ring-0 focus:outline-none focus:border-primary transition-colors"
                   placeholder="NAME@DOMAIN.COM"
                   type="email"
                   required
                 />
               </div>
-              
+
               {/* Password Input */}
               <div className="flex flex-col gap-2">
                 <div className="flex justify-between items-end">
@@ -78,8 +76,6 @@ export default function Login() {
                   </Link>
                 </div>
                 <input
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
                   className="w-full bg-surface-container-high border-0 border-b-2 border-transparent py-4 px-0 text-on-surface font-bold placeholder:text-outline-variant focus:ring-0 focus:outline-none focus:border-primary transition-colors"
                   placeholder="••••••••"
                   type="password"
@@ -87,7 +83,7 @@ export default function Login() {
                 />
               </div>
             </div>
-            
+
             {/* Action Button */}
             <button
               className="bg-primary text-on-primary font-black py-6 text-xl uppercase tracking-widest hover:bg-primary-dim transition-all active:scale-[0.98] flex items-center justify-center gap-3"
@@ -99,7 +95,7 @@ export default function Login() {
             </button>
             {error && <div className="text-negative font-bold">{error}</div>}
           </form>
-          
+
           {/* Secondary Actions */}
           <div className="flex flex-col gap-6 items-start">
             <div className="h-[2px] w-full bg-surface-container"></div>
@@ -111,7 +107,7 @@ export default function Login() {
             </div>
           </div>
         </div>
-        
+
         {/* Decorative Precision Element */}
         <div className="hidden lg:block absolute right-24 bottom-24">
           <div className="flex flex-col items-end text-on-surface-variant opacity-20">
