@@ -29,10 +29,10 @@ export default function SignUp() {
             return 'MALE';
           case 'female':
             return 'FEMALE';
-          case 'non-binary':
-            return 'NON_BINARY';
+          case 'other':
+            return 'OTHER';
           case 'prefer-not-to-say':
-            return 'PREFER_NOT_TO_SAY';
+            return 'OTHER';
           default:
             return undefined;
         }
@@ -177,7 +177,7 @@ export default function SignUp() {
                       <option disabled value="">Select Gender</option>
                       <option value="male">Male</option>
                       <option value="female">Female</option>
-                      <option value="non-binary">Non-binary</option>
+                      <option value="other">Other</option>
                       <option value="prefer-not-to-say">Prefer not to say</option>
                     </select>
                 </div>
