@@ -90,7 +90,11 @@ export default function SeatingMapConfigurator() {
       seatsPerRow,
       rowPriceTiers,
     };
+    // Lưu ma trận ghế
     localStorage.setItem('seatingMapDraft', JSON.stringify(mapConfig));
+
+    // Điều hướng quay lại trang tạo sự kiện
+    // Dữ liệu eventData vẫn nằm an toàn trong key 'eventDataDraft' ở trang kia
     router.push('/admin/events/create');
   };
 
@@ -136,8 +140,8 @@ export default function SeatingMapConfigurator() {
                       key={rowIndex}
                       onClick={() => setSelectedRow(rowIndex)}
                       className={`p-2 cursor-pointer rounded-sm transition-colors border-l-4 ${selectedRow === rowIndex
-                          ? 'bg-primary bg-opacity-20 border-primary'
-                          : 'bg-surface-container border-surface-dim'
+                        ? 'bg-primary bg-opacity-20 border-primary'
+                        : 'bg-surface-container border-surface-dim'
                         }`}
                     >
                       <div className={`text-[0.65rem] font-bold ${selectedRow === rowIndex ? 'text-on-primary' : 'text-on-surface'}`}>
