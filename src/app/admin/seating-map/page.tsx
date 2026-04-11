@@ -1,6 +1,80 @@
+'use client';
+
 import Link from 'next/link';
+import { useState } from 'react';
+
+const PRICE_TIERS = [
+  { label: 'PLATINUM - $499.00', color: 'bg-indigo-600', hex: '#4f46e5' },
+  { label: 'VIP - $249.00', color: 'bg-blue-500', hex: '#3b82f6' },
+  { label: 'GENERAL - $89.00', color: 'bg-slate-500', hex: '#6b7280' },
+];
 
 export default function SeatingMapConfigurator() {
+  const [rows, setRows] = useState(12);
+  const [seatsPerRow, setSeatsPerRow] = useState(24);
+  const [sectionLabel, setSectionLabel] = useState('VIP NORTH');
+  const [selectedRow, setSelectedRow] = useState(0);
+  const [rowPriceTiers, setRowPriceTiers] = useState<{[key: number]: string}>({
+    0: 'PLATINUM - $499.00',
+    1: 'PLATINUM - $499.00',
+    2: 'VIP - $249.00',
+    3: 'VIP - $249.00',
+    4: 'VIP - $249.00',
+    5: 'VIP - $249.00',
+    6: 'GENERAL - $89.00',
+    7: 'GENERAL - $89.00',
+    8: 'GENERAL - $89.00',
+    9: 'GENERAL - $89.00',
+    10: 'GENERAL - $89.00',
+    11: 'GENERAL - $89.00',
+  });
+
+  // Generate seat matrix with status
+  const generateSeatMatrix = () => {
+    const matrix = [];
+    for (let i = 0; i < rows; i++) {
+      const row = [];
+      for (let j = 0; j < seatsPerRow; j++) {
+        // Varied seat statuses for visualization
+        let status = 'available'; // tertiary color
+        if (Math.random() > 0.7) status = 'reserved'; // secondary color
+        if (Math.random() > 0.85) status = 'disabled'; // surface-dim color
+        
+        row.push({
+          id: `${i}-${j}`,
+          row: i,
+          seat: j,
+          status: status
+        });
+      }
+      matrix.push(row);
+    }
+    return matrix;
+  };
+
+  const seatMatrix = generateSeatMatrix();
+
+  const getSeatBgHex = (status: string, rowIndex: number) => {
+    if (status === 'reserved') return '#ef4444'; // red-500
+    if (status === 'disabled') return '#9ca3af'; // gray-400
+
+    // Available seat color based on row price tier
+    const tier = rowPriceTiers[rowIndex] || 'GENERAL - $89.00';
+    const tierConfig = PRICE_TIERS.find(t => t.label === tier);
+    return tierConfig?.hex || '#6b7280';
+  };
+
+  const getSeatStyle = (status: string, rowIndex: number) => ({
+    backgroundColor: getSeatBgHex(status, rowIndex),
+  });
+
+  const updateRowPriceTier = (row: number, tier: string) => {
+    setRowPriceTiers({
+      ...rowPriceTiers,
+      [row]: tier,
+    });
+  };
+
   return (
     <div className="bg-background text-on-background min-h-screen flex flex-col">
       {/* TopNavBar */}
@@ -59,7 +133,8 @@ export default function SeatingMapConfigurator() {
                   <input
                     className="w-full bg-surface-container-high border-none p-2 text-sm focus:outline-none focus:ring-0 border-b-2 border-transparent focus:border-primary transition-colors"
                     type="text"
-                    defaultValue="VIP NORTH"
+                    value={sectionLabel}
+                    onChange={(e) => setSectionLabel(e.target.value)}
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -68,7 +143,8 @@ export default function SeatingMapConfigurator() {
                     <input
                       className="w-full bg-surface-container-high border-none p-2 text-sm focus:outline-none focus:ring-0 border-b-2 border-transparent focus:border-primary transition-colors"
                       type="number"
-                      defaultValue="12"
+                      value={rows}
+                      onChange={(e) => setRows(Math.max(1, parseInt(e.target.value) || 1))}
                     />
                   </div>
                   <div>
@@ -76,44 +152,76 @@ export default function SeatingMapConfigurator() {
                     <input
                       className="w-full bg-surface-container-high border-none p-2 text-sm focus:outline-none focus:ring-0 border-b-2 border-transparent focus:border-primary transition-colors"
                       type="number"
-                      defaultValue="24"
+                      value={seatsPerRow}
+                      onChange={(e) => setSeatsPerRow(Math.max(1, parseInt(e.target.value) || 1))}
                     />
                   </div>
                 </div>
+              </div>
+            </section>
+
+            {/* Row-based Price Tier Configuration */}
+            <section className="space-y-4">
+              <p className="font-bold text-[0.75rem] uppercase tracking-widest text-on-surface-variant">Configure Row Pricing</p>
+              <div className="bg-surface-container-lowest p-3 space-y-2">
+                <div className="max-h-32 overflow-y-auto space-y-2">
+                  {Array.from({ length: rows }).map((_, rowIndex) => (
+                    <div
+                      key={rowIndex}
+                      onClick={() => setSelectedRow(rowIndex)}
+                      className={`p-2 cursor-pointer rounded-sm transition-colors border-l-4 ${
+                        selectedRow === rowIndex
+                          ? 'bg-primary bg-opacity-20 border-primary'
+                          : 'bg-surface-container border-surface-dim'
+                      }`}
+                    >
+                      <div className="text-[0.65rem] font-bold text-on-surface">
+                        Row {rowIndex + 1}
+                      </div>
+                      <div className="text-[0.6rem] text-on-surface-variant">
+                        {rowPriceTiers[rowIndex] || 'GENERAL - $89.00'}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {rows > 0 && (
                 <div>
-                  <label className="block font-bold text-[0.65rem] uppercase mb-1">Price Tier</label>
+                  <label className="block font-bold text-[0.65rem] uppercase mb-2">Tier for Row {selectedRow + 1}</label>
                   <select
                     className="w-full bg-surface-container-high border-none p-2 text-sm focus:outline-none focus:ring-0 border-b-2 border-transparent focus:border-primary transition-colors"
-                    defaultValue="VIP - $249.00"
+                    value={rowPriceTiers[selectedRow] || 'GENERAL - $89.00'}
+                    onChange={(e) => updateRowPriceTier(selectedRow, e.target.value)}
                   >
-                    <option value="PLATINUM - $499.00">PLATINUM - $499.00</option>
-                    <option value="VIP - $249.00">VIP - $249.00</option>
-                    <option value="GENERAL - $89.00">GENERAL - $89.00</option>
+                    {PRICE_TIERS.map((tier) => (
+                      <option key={tier.label} value={tier.label}>
+                        {tier.label}
+                      </option>
+                    ))}
                   </select>
                 </div>
-                <button className="w-full bg-secondary text-on-secondary py-3 font-bold text-[0.75rem] uppercase hover:bg-secondary-dim transition-colors">Apply Changes</button>
-              </div>
+              )}
             </section>
 
             {/* Legend */}
             <section>
-              <p className="font-bold text-[0.75rem] uppercase tracking-widest text-on-surface-variant mb-4">Status Indicators</p>
+              <p className="font-bold text-[0.75rem] uppercase tracking-widest text-on-surface-variant mb-4">Price Tier Colors</p>
               <div className="space-y-2">
-                <div className="flex items-center gap-3">
-                  <div className="w-4 h-4 bg-primary"></div>
-                  <span className="text-[0.75rem] font-bold uppercase">Active Section</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-4 h-4 bg-tertiary"></div>
-                  <span className="text-[0.75rem] font-bold uppercase">Available</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-4 h-4 bg-secondary"></div>
-                  <span className="text-[0.75rem] font-bold uppercase">Reserved/Sold</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-4 h-4 bg-surface-dim"></div>
-                  <span className="text-[0.75rem] font-bold uppercase">Disabled</span>
+                {PRICE_TIERS.map((tier) => (
+                  <div key={tier.label} className="flex items-center gap-3">
+                    <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: tier.hex }}></div>
+                    <span className="text-[0.75rem] font-bold">{tier.label}</span>
+                  </div>
+                ))}
+                <div className="mt-3 pt-3 border-t border-outline-variant space-y-2">
+                  <div className="flex items-center gap-3">
+                    <div className="w-4 h-4 bg-red-500"></div>
+                    <span className="text-[0.75rem] font-bold uppercase">Reserved/Sold</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-4 h-4 bg-gray-400"></div>
+                    <span className="text-[0.75rem] font-bold uppercase">Disabled</span>
+                  </div>
                 </div>
               </div>
             </section>
@@ -146,53 +254,49 @@ export default function SeatingMapConfigurator() {
                 <span className="text-surface font-black tracking-[0.5em] text-xl">STAGE</span>
               </div>
 
-              {/* Seating Grid Asymmetric */}
-              <div className="flex flex-col items-center gap-16">
-                {/* VIP Front Section */}
-                <div className="relative group">
-                  <div className="absolute -top-6 left-0 text-[0.65rem] font-bold text-primary uppercase">Section VIP_NORTH</div>
-                  <div className="flex flex-col gap-1">
-                    {/* Dynamically Rendered Seat Rows */}
-                    <div className="flex gap-1 mb-1">
-                      {/* Logic for rows */}
-                      <div className="w-4 h-4 bg-secondary"></div><div className="w-4 h-4 bg-secondary"></div><div className="w-4 h-4 bg-secondary"></div>
-                      <div className="w-4 h-4 bg-tertiary"></div><div className="w-4 h-4 bg-tertiary"></div><div className="w-4 h-4 bg-tertiary"></div>
-                      <div className="w-4 h-4 bg-tertiary"></div><div className="w-4 h-4 bg-tertiary"></div><div className="w-4 h-4 bg-tertiary"></div>
-                      <div className="w-4 h-4 bg-secondary"></div><div className="w-4 h-4 bg-secondary"></div><div className="w-4 h-4 bg-secondary"></div>
+              {/* Seating Grid - Dynamic Rendering */}
+              <div className="flex flex-col items-center gap-4">
+                {/* Section Label */}
+                <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-[0.65rem] font-bold text-primary uppercase">
+                  Section {sectionLabel}
+                </div>
+                
+                {/* Dynamic Seat Matrix */}
+                <div className="flex flex-col gap-2">
+                  {seatMatrix.map((row, rowIndex) => (
+                    <div key={rowIndex} className="flex gap-1 items-center">
+                      <span className="text-[0.6rem] font-bold text-on-surface-variant w-8 text-right">{rowIndex + 1}</span>
+                      <div className="flex gap-1">
+                        {row.map((seat) => (
+                          <div
+                            key={seat.id}
+                            className="w-4 h-4 cursor-pointer hover:brightness-110 transition-all rounded-sm"
+                            style={getSeatStyle(seat.status, rowIndex)}
+                            title={`Row ${seat.row + 1}, Seat ${seat.seat + 1} - ${seat.status} - ${rowPriceTiers[rowIndex] || 'GENERAL - $89.00'}`}
+                          />
+                        ))}
+                      </div>
                     </div>
-                    <div className="flex gap-1 mb-1">
-                      <div className="w-4 h-4 bg-secondary"></div><div className="w-4 h-4 bg-secondary"></div><div className="w-4 h-4 bg-secondary"></div>
-                      <div className="w-4 h-4 bg-primary outline outline-offset-2 outline-primary"></div><div className="w-4 h-4 bg-primary outline outline-offset-2 outline-primary"></div><div className="w-4 h-4 bg-primary outline outline-offset-2 outline-primary"></div>
-                      <div className="w-4 h-4 bg-primary outline outline-offset-2 outline-primary"></div><div className="w-4 h-4 bg-tertiary"></div><div className="w-4 h-4 bg-tertiary"></div>
-                      <div className="w-4 h-4 bg-secondary"></div><div className="w-4 h-4 bg-secondary"></div><div className="w-4 h-4 bg-secondary"></div>
-                    </div>
-                    <div className="flex gap-1">
-                      <div className="w-4 h-4 bg-secondary"></div><div className="w-4 h-4 bg-secondary"></div><div className="w-4 h-4 bg-secondary"></div>
-                      <div className="w-4 h-4 bg-tertiary"></div><div className="w-4 h-4 bg-tertiary"></div><div className="w-4 h-4 bg-tertiary"></div>
-                      <div className="w-4 h-4 bg-tertiary"></div><div className="w-4 h-4 bg-tertiary"></div><div className="w-4 h-4 bg-tertiary"></div>
-                      <div className="w-4 h-4 bg-secondary"></div><div className="w-4 h-4 bg-secondary"></div><div className="w-4 h-4 bg-secondary"></div>
-                    </div>
-                  </div>
-                  <div className="absolute inset-0 bg-primary opacity-0 group-hover:opacity-10 cursor-pointer"></div>
+                  ))}
                 </div>
 
-                {/* Lower Bowl Left/Right */}
-                <div className="flex gap-24">
-                  {/* Left */}
-                  <div className="space-y-1">
-                    <div className="flex gap-1"><div className="w-4 h-4 bg-surface-dim"></div><div className="w-4 h-4 bg-surface-dim"></div><div className="w-4 h-4 bg-surface-dim"></div><div className="w-4 h-4 bg-tertiary"></div><div className="w-4 h-4 bg-tertiary"></div></div>
-                    <div className="flex gap-1"><div className="w-4 h-4 bg-surface-dim"></div><div className="w-4 h-4 bg-surface-dim"></div><div className="w-4 h-4 bg-tertiary"></div><div className="w-4 h-4 bg-tertiary"></div><div className="w-4 h-4 bg-tertiary"></div></div>
-                    <div className="flex gap-1"><div className="w-4 h-4 bg-surface-dim"></div><div className="w-4 h-4 bg-tertiary"></div><div className="w-4 h-4 bg-tertiary"></div><div className="w-4 h-4 bg-tertiary"></div><div className="w-4 h-4 bg-tertiary"></div></div>
-                    <div className="flex gap-1"><div className="w-4 h-4 bg-tertiary"></div><div className="w-4 h-4 bg-tertiary"></div><div className="w-4 h-4 bg-tertiary"></div><div className="w-4 h-4 bg-tertiary"></div><div className="w-4 h-4 bg-tertiary"></div></div>
-                    <div className="flex gap-1"><div className="w-4 h-4 bg-tertiary"></div><div className="w-4 h-4 bg-tertiary"></div><div className="w-4 h-4 bg-tertiary"></div><div className="w-4 h-4 bg-tertiary"></div><div className="w-4 h-4 bg-tertiary"></div></div>
-                  </div>
-                  {/* Right */}
-                  <div className="space-y-1">
-                    <div className="flex gap-1"><div className="w-4 h-4 bg-tertiary"></div><div className="w-4 h-4 bg-tertiary"></div><div className="w-4 h-4 bg-surface-dim"></div><div className="w-4 h-4 bg-surface-dim"></div><div className="w-4 h-4 bg-surface-dim"></div></div>
-                    <div className="flex gap-1"><div className="w-4 h-4 bg-tertiary"></div><div className="w-4 h-4 bg-tertiary"></div><div className="w-4 h-4 bg-tertiary"></div><div className="w-4 h-4 bg-surface-dim"></div><div className="w-4 h-4 bg-surface-dim"></div></div>
-                    <div className="flex gap-1"><div className="w-4 h-4 bg-tertiary"></div><div className="w-4 h-4 bg-tertiary"></div><div className="w-4 h-4 bg-tertiary"></div><div className="w-4 h-4 bg-tertiary"></div><div className="w-4 h-4 bg-surface-dim"></div></div>
-                    <div className="flex gap-1"><div className="w-4 h-4 bg-tertiary"></div><div className="w-4 h-4 bg-tertiary"></div><div className="w-4 h-4 bg-tertiary"></div><div className="w-4 h-4 bg-tertiary"></div><div className="w-4 h-4 bg-tertiary"></div></div>
-                    <div className="flex gap-1"><div className="w-4 h-4 bg-tertiary"></div><div className="w-4 h-4 bg-tertiary"></div><div className="w-4 h-4 bg-tertiary"></div><div className="w-4 h-4 bg-tertiary"></div><div className="w-4 h-4 bg-tertiary"></div></div>
+                {/* Seat Count Info */}
+                <div className="text-[0.7rem] font-bold text-on-surface-variant uppercase mt-4 space-y-2">
+                  <div>Total Seats: {rows} rows × {seatsPerRow} seats = {rows * seatsPerRow}</div>
+                  <div className="bg-surface-container-lowest p-3 rounded space-y-1">
+                    {PRICE_TIERS.map((tier) => {
+                      const tierRows = Object.entries(rowPriceTiers)
+                        .filter(([_, tierName]) => tierName === tier.label)
+                        .length;
+                      return tierRows > 0 ? (
+                        <div key={tier.label} className="flex justify-between items-center text-[0.65rem]">
+                          <span>{tier.label}</span>
+                          <span className={`px-2 py-1 rounded text-white ${tier.color}`}>
+                            {tierRows} rows × {seatsPerRow} = {tierRows * seatsPerRow}
+                          </span>
+                        </div>
+                      ) : null;
+                    })}
                   </div>
                 </div>
               </div>
