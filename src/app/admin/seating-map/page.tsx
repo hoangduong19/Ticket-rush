@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 const PRICE_TIERS = [
   { label: 'PLATINUM - $499.00', color: 'bg-indigo-600', hex: '#4f46e5' },
@@ -10,6 +11,7 @@ const PRICE_TIERS = [
 ];
 
 export default function SeatingMapConfigurator() {
+  const router = useRouter();
   const [rows, setRows] = useState(12);
   const [seatsPerRow, setSeatsPerRow] = useState(24);
   const [sectionLabel, setSectionLabel] = useState('VIP NORTH');
@@ -29,6 +31,21 @@ export default function SeatingMapConfigurator() {
     11: 'GENERAL - $89.00',
   });
 
+  useEffect(() => {
+    const draft = localStorage.getItem('seatingMapDraft');
+    if (draft) {
+      try {
+        const parsed = JSON.parse(draft);
+        if (parsed.rows) setRows(parsed.rows);
+        if (parsed.seatsPerRow) setSeatsPerRow(parsed.seatsPerRow);
+        if (parsed.sectionLabel) setSectionLabel(parsed.sectionLabel);
+        if (parsed.rowPriceTiers) setRowPriceTiers(parsed.rowPriceTiers);
+      } catch (e) {
+        console.error('Failed to parse draft', e);
+      }
+    }
+  }, []);
+
   // Generate seat matrix with status
   const generateSeatMatrix = () => {
     const matrix = [];
@@ -37,8 +54,8 @@ export default function SeatingMapConfigurator() {
       for (let j = 0; j < seatsPerRow; j++) {
         // Varied seat statuses for visualization
         let status = 'available'; // tertiary color
-        if (Math.random() > 0.7) status = 'reserved'; // secondary color
-        if (Math.random() > 0.85) status = 'disabled'; // surface-dim color
+        // if (Math.random() > 0.7) status = 'reserved'; // secondary color
+        // if (Math.random() > 0.85) status = 'disabled'; // surface-dim color
         
         row.push({
           id: `${i}-${j}`,
@@ -73,6 +90,17 @@ export default function SeatingMapConfigurator() {
       ...rowPriceTiers,
       [row]: tier,
     });
+  };
+
+  const handleSaveDraft = () => {
+    const mapConfig = {
+      sectionLabel,
+      rows,
+      seatsPerRow,
+      rowPriceTiers,
+    };
+    localStorage.setItem('seatingMapDraft', JSON.stringify(mapConfig));
+    router.push('/admin/events/create');
   };
 
   return (
@@ -241,7 +269,7 @@ export default function SeatingMapConfigurator() {
             </div>
             <div className="flex gap-2">
               <span className="bg-secondary px-3 py-1 text-on-secondary font-bold text-[0.65rem] tracking-tighter uppercase self-center">LIVE SYNC ACTIVE</span>
-              <button className="bg-surface-container-lowest px-4 py-2 font-bold text-[0.75rem] uppercase border-2 border-primary text-primary hover:bg-primary hover:text-on-primary transition-colors">Save Draft</button>
+              <button onClick={handleSaveDraft} className="bg-surface-container-lowest px-4 py-2 font-bold text-[0.75rem] uppercase border-2 border-primary text-primary hover:bg-primary hover:text-on-primary transition-colors">Save Draft</button>
             </div>
           </div>
 

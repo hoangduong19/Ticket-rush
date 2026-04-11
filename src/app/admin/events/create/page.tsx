@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? '';
 
@@ -15,17 +15,33 @@ export default function CreateEvent() {
   });
 
   const [loading, setLoading] = useState(false);
+  const [seatingMap, setSeatingMap] = useState<any>(null);
+
+  useEffect(() => {
+    const draft = localStorage.getItem('seatingMapDraft');
+    if (draft) {
+      try {
+        setSeatingMap(JSON.parse(draft));
+      } catch (e) {
+        console.error('Failed to parse seating map draft', e);
+      }
+    }
+  }, []);
 
   const handlePublish = async () => {
     setLoading(true);
     try {
+      const payload = {
+        ...eventData,
+        seatingMap,
+      };
       const response = await fetch(`${API_BASE}/admin/events`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           // 'Authorization': 'Bearer ' + yourToken 
         },
-        body: JSON.stringify(eventData),
+        body: JSON.stringify(payload),
       });
 
       if (response.ok) {
@@ -160,6 +176,24 @@ export default function CreateEvent() {
             </div>
 
             {/* Ticket Tiers Section */}
+            {seatingMap && (
+              <div className="space-y-4 pt-8 border-t-2 border-surface-container-high">
+                <label className="text-[0.75rem] font-bold text-outline uppercase tracking-widest">Configured Seating Map</label>
+                <div className="bg-surface-container-high p-6 flex flex-col gap-2 relative">
+                  <div className="text-xl font-bold uppercase">{seatingMap.sectionLabel}</div>
+                  <div className="text-sm font-bold text-outline">{seatingMap.rows} Rows × {seatingMap.seatsPerRow} Seats = {seatingMap.rows * seatingMap.seatsPerRow} Total Seats</div>
+                  <button 
+                    onClick={() => {
+                        localStorage.removeItem('seatingMapDraft');
+                        setSeatingMap(null);
+                    }}
+                    className="text-xs font-bold text-red-500 uppercase self-start mt-4 hover:underline"
+                  >
+                    Remove Layout
+                  </button>
+                </div>
+              </div>
+            )}
             
           </section>
 
