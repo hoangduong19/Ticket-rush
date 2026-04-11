@@ -175,10 +175,10 @@ export default function SeatingMapConfigurator() {
                           : 'bg-surface-container border-surface-dim'
                       }`}
                     >
-                      <div className="text-[0.65rem] font-bold text-on-surface">
+                      <div className={`text-[0.65rem] font-bold ${selectedRow === rowIndex ? 'text-on-primary' : 'text-on-surface'}`}>
                         Row {rowIndex + 1}
                       </div>
-                      <div className="text-[0.6rem] text-on-surface-variant">
+                      <div className={`text-[0.6rem] ${selectedRow === rowIndex ? 'font-bold text-on-primary' : 'text-on-surface-variant'}`}>
                         {rowPriceTiers[rowIndex] || 'GENERAL - $89.00'}
                       </div>
                     </div>
