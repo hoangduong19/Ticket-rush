@@ -55,8 +55,8 @@ export default function SeatingMapConfigurator() {
   const seatMatrix = generateSeatMatrix();
 
   const getSeatBgHex = (status: string, rowIndex: number) => {
-    if (status === 'reserved') return '#ef4444'; // red-500
-    if (status === 'disabled') return '#9ca3af'; // gray-400
+    // if (status === 'reserved') return '#ef4444'; // red-500
+    // if (status === 'disabled') return '#9ca3af'; // gray-400
 
     // Available seat color based on row price tier
     const tier = rowPriceTiers[rowIndex] || 'GENERAL - $89.00';
