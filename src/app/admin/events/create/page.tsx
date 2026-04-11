@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -17,16 +17,51 @@ export default function CreateEvent() {
     category: 'MUSIC'
   });
 
-  // HÀM LƯU TẠM VÀ ĐIỀU HƯỚNG
-  const handleConfigureSeating = () => {
-    if (!eventData.title) {
-      alert("Please enter event name first");
-      return;
+  const [loading, setLoading] = useState(false);
+  const [seatingMap, setSeatingMap] = useState<any>(null);
+
+  useEffect(() => {
+    const draft = localStorage.getItem('seatingMapDraft');
+    if (draft) {
+      try {
+        setSeatingMap(JSON.parse(draft));
+      } catch (e) {
+        console.error('Failed to parse seating map draft', e);
+      }
     }
-    localStorage.setItem('pendingEvent', JSON.stringify(eventData));
-    router.push('/admin/seating-map');
+  }, []);
+
+  const handlePublish = async () => {
+    setLoading(true);
+    try {
+      const payload = {
+        ...eventData,
+        seatingMap,
+      };
+      const response = await fetch(`${API_BASE}/admin/events`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // 'Authorization': 'Bearer ' + yourToken 
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        alert('Event Published Successfully! ID: ' + result.eventId);
+      } else {
+        const error = await response.json();
+        alert('Error: ' + (error.message || 'Failed to create event'));
+      }
+    } catch (err) {
+      alert('Connection failed. Please check your backend.');
+    } finally {
+      setLoading(false);
+    }
   };
 
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>('');
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -129,6 +164,27 @@ export default function CreateEvent() {
                 onChange={(e) => setEventData({ ...eventData, description: e.target.value })}
               ></textarea>
             </div>
+
+            {/* Ticket Tiers Section */}
+            {seatingMap && (
+              <div className="space-y-4 pt-8 border-t-2 border-surface-container-high">
+                <label className="text-[0.75rem] font-bold text-outline uppercase tracking-widest">Configured Seating Map</label>
+                <div className="bg-surface-container-high p-6 flex flex-col gap-2 relative">
+                  <div className="text-xl font-bold uppercase">{seatingMap.sectionLabel}</div>
+                  <div className="text-sm font-bold text-outline">{seatingMap.rows} Rows × {seatingMap.seatsPerRow} Seats = {seatingMap.rows * seatingMap.seatsPerRow} Total Seats</div>
+                  <button
+                    onClick={() => {
+                      localStorage.removeItem('seatingMapDraft');
+                      setSeatingMap(null);
+                    }}
+                    className="text-xs font-bold text-red-500 uppercase self-start mt-4 hover:underline"
+                  >
+                    Remove Layout
+                  </button>
+                </div>
+              </div>
+            )}
+
           </section>
 
           <aside className="md:col-span-4 flex flex-col gap-1">

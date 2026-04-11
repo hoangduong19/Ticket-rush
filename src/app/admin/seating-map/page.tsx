@@ -1,10 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-
-const API_BASE = 'http://localhost:8080';
 
 const PRICE_TIERS = [
   { label: 'PLATINUM - $499.00', value: 499.00, color: 'bg-indigo-600', hex: '#4f46e5' },
@@ -14,81 +12,57 @@ const PRICE_TIERS = [
 
 export default function SeatingMapConfigurator() {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
   const [rows, setRows] = useState(12);
   const [seatsPerRow, setSeatsPerRow] = useState(24);
   const [sectionLabel, setSectionLabel] = useState('VIP NORTH');
   const [selectedRow, setSelectedRow] = useState(0);
   const [rowPriceTiers, setRowPriceTiers] = useState<{ [key: number]: string }>({
-    // Khởi tạo mặc định
-    ...Object.fromEntries(Array.from({ length: 12 }).map((_, i) => [i, i < 2 ? 'PLATINUM - $499.00' : i < 6 ? 'VIP - $249.00' : 'GENERAL - $89.00']))
+    0: 'PLATINUM - $499.00',
+    1: 'PLATINUM - $499.00',
+    2: 'VIP - $249.00',
+    3: 'VIP - $249.00',
+    4: 'VIP - $249.00',
+    5: 'VIP - $249.00',
+    6: 'GENERAL - $89.00',
+    7: 'GENERAL - $89.00',
+    8: 'GENERAL - $89.00',
+    9: 'GENERAL - $89.00',
+    10: 'GENERAL - $89.00',
+    11: 'GENERAL - $89.00',
   });
 
-  // THUẬT TOÁN ĐẨY TOÀN BỘ DỮ LIỆU
-  const handleFinalPublish = async () => {
-    const rawData = localStorage.getItem('pendingEvent');
-    if (!rawData) {
-      alert("Missing event data. Go back to Create Event page.");
-      return;
-    }
-    const eventData = JSON.parse(rawData);
-
-    setLoading(true);
-    try {
-      // BƯỚC 1: TẠO EVENT
-      const eventRes = await fetch(`${API_BASE}/admin/events`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(eventData),
-      });
-
-      if (!eventRes.ok) throw new Error("Failed to create event");
-      const createdEvent = await eventRes.json();
-      const eventId = createdEvent.eventId;
-
-      // BƯỚC 2: CHUẨN BỊ PAYLOAD GHẾ
-      const rowConfigs = Array.from({ length: rows }).map((_, i) => {
-        const tierLabel = rowPriceTiers[i] || 'GENERAL - $89.00';
-        const tierObj = PRICE_TIERS.find(t => t.label === tierLabel);
-        return {
-          rowNumber: i + 1,
-          price: tierObj?.value || 89.00
-        };
-      });
-
-      const seatingPayload = {
-        sectionLabel,
-        seatsPerRow,
-        rowConfigs
-      };
-
-      // BƯỚC 3: ĐẨY MA TRẬN GHẾ
-      const seatRes = await fetch(`${API_BASE}/events/${eventId}/seats`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(seatingPayload),
-      });
-
-      if (seatRes.ok) {
-        alert("PUBLISH SUCCESSFUL! Event and " + (rows * seatsPerRow) + " seats created.");
-        localStorage.removeItem('pendingEvent');
-        window.location.href = '/events'; // Điều hướng về trang người dùng
+  useEffect(() => {
+    const draft = localStorage.getItem('seatingMapDraft');
+    if (draft) {
+      try {
+        const parsed = JSON.parse(draft);
+        if (parsed.rows) setRows(parsed.rows);
+        if (parsed.seatsPerRow) setSeatsPerRow(parsed.seatsPerRow);
+        if (parsed.sectionLabel) setSectionLabel(parsed.sectionLabel);
+        if (parsed.rowPriceTiers) setRowPriceTiers(parsed.rowPriceTiers);
+      } catch (e) {
+        console.error('Failed to parse draft', e);
       }
-
-    } catch (err: any) {
-      alert("Error: " + err.message);
-    } finally {
-      setLoading(false);
     }
-  };
+  }, []);
 
-  // Giữ nguyên logic render UI của bạn
+  // Generate seat matrix with status
   const generateSeatMatrix = () => {
     const matrix = [];
     for (let i = 0; i < rows; i++) {
       const row = [];
       for (let j = 0; j < seatsPerRow; j++) {
-        row.push({ id: `${i}-${j}`, row: i, seat: j, status: 'available' });
+        // Varied seat statuses for visualization
+        let status = 'available'; // tertiary color
+        // if (Math.random() > 0.7) status = 'reserved'; // secondary color
+        // if (Math.random() > 0.85) status = 'disabled'; // surface-dim color
+
+        row.push({
+          id: `${i}-${j}`,
+          row: i,
+          seat: j,
+          status: status
+        });
       }
       matrix.push(row);
     }
@@ -103,7 +77,21 @@ export default function SeatingMapConfigurator() {
   };
 
   const updateRowPriceTier = (row: number, tier: string) => {
-    setRowPriceTiers({ ...rowPriceTiers, [row]: tier });
+    setRowPriceTiers({
+      ...rowPriceTiers,
+      [row]: tier,
+    });
+  };
+
+  const handleSaveDraft = () => {
+    const mapConfig = {
+      sectionLabel,
+      rows,
+      seatsPerRow,
+      rowPriceTiers,
+    };
+    localStorage.setItem('seatingMapDraft', JSON.stringify(mapConfig));
+    router.push('/admin/events/create');
   };
 
   return (
@@ -141,11 +129,53 @@ export default function SeatingMapConfigurator() {
 
             <section className="space-y-4">
               <p className="font-bold text-[0.75rem] uppercase tracking-widest text-on-surface-variant">Configure Row Pricing</p>
-              <div className="bg-surface-container-lowest p-3 space-y-2 max-h-48 overflow-y-auto">
-                {Array.from({ length: rows }).map((_, i) => (
-                  <div key={i} onClick={() => setSelectedRow(i)} className={`p-2 cursor-pointer border-l-4 ${selectedRow === i ? 'bg-primary/10 border-primary' : 'bg-surface-container border-transparent'}`}>
-                    <p className="text-[0.65rem] font-bold">Row {i + 1}</p>
-                    <p className="text-[0.6rem] opacity-60">{rowPriceTiers[i] || 'GENERAL - $89.00'}</p>
+              <div className="bg-surface-container-lowest p-3 space-y-2">
+                <div className="max-h-32 overflow-y-auto space-y-2">
+                  {Array.from({ length: rows }).map((_, rowIndex) => (
+                    <div
+                      key={rowIndex}
+                      onClick={() => setSelectedRow(rowIndex)}
+                      className={`p-2 cursor-pointer rounded-sm transition-colors border-l-4 ${selectedRow === rowIndex
+                          ? 'bg-primary bg-opacity-20 border-primary'
+                          : 'bg-surface-container border-surface-dim'
+                        }`}
+                    >
+                      <div className={`text-[0.65rem] font-bold ${selectedRow === rowIndex ? 'text-on-primary' : 'text-on-surface'}`}>
+                        Row {rowIndex + 1}
+                      </div>
+                      <div className={`text-[0.6rem] ${selectedRow === rowIndex ? 'font-bold text-on-primary' : 'text-on-surface-variant'}`}>
+                        {rowPriceTiers[rowIndex] || 'GENERAL - $89.00'}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {rows > 0 && (
+                <div>
+                  <label className="block font-bold text-[0.65rem] uppercase mb-2">Tier for Row {selectedRow + 1}</label>
+                  <select
+                    className="w-full bg-surface-container-high border-none p-2 text-sm focus:outline-none focus:ring-0 border-b-2 border-transparent focus:border-primary transition-colors"
+                    value={rowPriceTiers[selectedRow] || 'GENERAL - $89.00'}
+                    onChange={(e) => updateRowPriceTier(selectedRow, e.target.value)}
+                  >
+                    {PRICE_TIERS.map((tier) => (
+                      <option key={tier.label} value={tier.label}>
+                        {tier.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </section>
+
+            {/* Legend */}
+            <section>
+              <p className="font-bold text-[0.75rem] uppercase tracking-widest text-on-surface-variant mb-4">Price Tier Colors</p>
+              <div className="space-y-2">
+                {PRICE_TIERS.map((tier) => (
+                  <div key={tier.label} className="flex items-center gap-3">
+                    <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: tier.hex }}></div>
+                    <span className="text-[0.75rem] font-bold">{tier.label}</span>
                   </div>
                 ))}
               </div>
@@ -158,18 +188,21 @@ export default function SeatingMapConfigurator() {
           </div>
         </aside>
 
-        <section className="flex-grow bg-surface flex flex-col relative">
-          <div className="bg-surface-container px-6 py-4 flex justify-between items-center">
-            <span className="bg-secondary px-3 py-1 text-on-secondary font-bold text-[0.65rem] uppercase tracking-widest">Live Editor</span>
-
-            {/* NÚT LƯU TOÀN BỘ DỮ LIỆU */}
-            <button
-              onClick={handleFinalPublish}
-              disabled={loading}
-              className="bg-blue-700 text-white px-8 py-2 font-bold text-[0.75rem] uppercase shadow-lg hover:bg-blue-600 disabled:opacity-50 transition-all"
-            >
-              {loading ? 'Processing...' : 'Save Draft & Publish'}
-            </button>
+        {/* Canvas Area */}
+        <section className="flex-grow bg-surface relative overflow-hidden flex flex-col">
+          {/* Canvas Toolbar */}
+          <div className="bg-surface-container border-b-0 px-6 py-4 flex justify-between items-center">
+            <div className="flex gap-4">
+              <button className="material-symbols-outlined bg-surface-container-lowest p-2 hover:bg-white transition-colors">zoom_in</button>
+              <button className="material-symbols-outlined bg-surface-container-lowest p-2 hover:bg-white transition-colors">zoom_out</button>
+              <div className="h-8 w-[1px] bg-outline-variant opacity-20"></div>
+              <button className="material-symbols-outlined bg-surface-container-lowest p-2 hover:bg-white transition-colors">undo</button>
+              <button className="material-symbols-outlined bg-surface-container-lowest p-2 hover:bg-white transition-colors">redo</button>
+            </div>
+            <div className="flex gap-2">
+              <span className="bg-secondary px-3 py-1 text-on-secondary font-bold text-[0.65rem] tracking-tighter uppercase self-center">LIVE SYNC ACTIVE</span>
+              <button onClick={handleSaveDraft} className="bg-surface-container-lowest px-4 py-2 font-bold text-[0.75rem] uppercase border-2 border-primary text-primary hover:bg-primary hover:text-on-primary transition-colors">Save Draft</button>
+            </div>
           </div>
 
           <div className="flex-grow overflow-auto p-12 bg-surface cursor-crosshair flex flex-col items-center">
