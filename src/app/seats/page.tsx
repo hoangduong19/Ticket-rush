@@ -1,35 +1,66 @@
 "use client";
 
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 
-export default function InteractiveSeatSelection() {
+function SeatSelectionContent() {
   const router = useRouter();
-  const [selectedSeats, setSelectedSeats] = useState<number[]>([]);
-  const [isNotBot, setIsNotBot] = useState(false);
+  const searchParams = useSearchParams();
+  const eventId = searchParams.get('eventId');
 
-  const SEAT_PRICE = 189.00;
+  const [seatsData, setSeatsData] = useState<any[]>([]);
+  const [selectedSeats, setSelectedSeats] = useState<any[]>([]);
+  const [isNotBot, setIsNotBot] = useState(false);
+  const [loading, setLoading] = useState(true);
+
   const SERVICE_FEE_RATE = 0.15;
 
-  const toggleSeat = (index: number) => {
-    // Prevent selecting locked or sold out seats
-    const isLocked = index % 13 === 0;
-    const isSold = index % 7 === 0 && !isLocked;
+  useEffect(() => {
+    if (eventId) {
+      fetch(`http://localhost:8080/events/${eventId}/seats`)
+        .then(res => res.json())
+        .then(data => {
+          // Sort seats by row and seat number for consistent display
+          setSeatsData(data.sort((a: any, b: any) => {
+            if (a.rowNumber === b.rowNumber) return a.seatNumber - b.seatNumber;
+            return a.rowNumber - b.rowNumber;
+          }));
+          setLoading(false);
+        })
+        .catch(err => {
+          console.error(err);
+          setLoading(false);
+        });
+    } else {
+        setLoading(false);
+    }
+  }, [eventId]);
+
+  const toggleSeat = (seat: any) => {
+    const isLocked = seat.status === 'Locked';
+    const isSold = seat.status === 'Sold' || seat.status === 'Booked' || !seat.available;
     if (isLocked || isSold) return;
 
     setSelectedSeats(prev => {
-      if (prev.includes(index)) {
-        return prev.filter(seat => seat !== index);
+      if (prev.some(s => s.seatId === seat.seatId)) {
+        return prev.filter(s => s.seatId !== seat.seatId);
       } else {
-        return [...prev, index].sort((a, b) => a - b);
+        return [...prev, seat].sort((a, b) => {
+            if (a.rowNumber === b.rowNumber) return a.seatNumber - b.seatNumber;
+            return a.rowNumber - b.rowNumber;
+        });
       }
     });
   };
 
-  const removeSeat = (index: number) => {
-    setSelectedSeats(prev => prev.filter(seat => seat !== index));
+  const removeSeat = (seatId: string) => {
+    setSelectedSeats(prev => prev.filter(seat => seat.seatId !== seatId));
   };
+
+  const subtotal = selectedSeats.reduce((sum, seat) => sum + (seat.price || 0), 0);
+  const serviceFee = subtotal * SERVICE_FEE_RATE;
+  const totalPrice = subtotal + serviceFee;
 
   const handleConfirmSelection = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -43,31 +74,32 @@ export default function InteractiveSeatSelection() {
     }
 
     const cartData = {
-      seats: selectedSeats.map(index => ({
-        id: index,
-        row: String.fromCharCode(65 + Math.floor(index / 12)),
-        seatNumber: index + 1,
-        label: `Orchestra Left - Row ${String.fromCharCode(65 + Math.floor(index / 12))}, Seat ${index + 1}`,
-        type: 'General Admission',
-        price: SEAT_PRICE
+      seats: selectedSeats.map(seat => ({
+        id: seat.seatId,
+        row: seat.rowNumber,
+        seatNumber: seat.seatNumber,
+        label: `${seat.sectionName || 'Section'} - Row ${seat.rowNumber}, Seat ${seat.seatNumber}`,
+        type: seat.seatType || 'General Admission',
+        price: seat.price
       })),
       subtotal,
       fee: serviceFee,
-      total: totalPrice
+      total: totalPrice,
+      eventId: eventId
     };
 
     localStorage.setItem('checkoutCart', JSON.stringify(cartData));
     router.push('/checkout');
   };
 
-  const subtotal = selectedSeats.length * SEAT_PRICE;
-  const serviceFee = subtotal * SERVICE_FEE_RATE;
-  const totalPrice = subtotal + serviceFee;
+  if (loading) {
+     return <div className="min-h-screen bg-background text-on-background flex justify-center items-center text-primary font-black animate-pulse">LOADING SEATS...</div>;
+  }
 
   return (
-    <div className="bg-background text-on-background font-body antialiased min-h-screen">
+    <div className="bg-background text-on-background font-body antialiased min-h-screen flex flex-col">
       {/* TopAppBar */}
-      <header className="bg-surface-container-lowest dark:bg-slate-900 w-full sticky top-0 z-50 flex justify-between items-center px-8 h-20 border-b border-surface-container-high md:border-none shadow-sm md:shadow-none">
+      <header className="bg-surface-container-lowest dark:bg-slate-900 w-full sticky top-0 z-50 flex justify-between items-center px-8 h-20 border-b border-surface-container-high shadow-sm">
         <div className="flex items-center gap-8">
           <Link href="/" className="text-2xl font-extrabold text-primary dark:text-blue-500 tracking-tighter uppercase font-['Inter']">TICKETRUSH</Link>
           <nav className="hidden md:flex items-center gap-6">
@@ -87,7 +119,7 @@ export default function InteractiveSeatSelection() {
         </div>
       </header>
 
-      <main className="min-h-[calc(100vh-80px)] flex flex-col md:flex-row overflow-hidden">
+      <main className="flex-1 flex flex-col md:flex-row overflow-hidden">
         {/* Left Section: Seating Map */}
         <section className="flex-1 bg-surface-container-low p-8 overflow-y-auto w-full relative">
           <div className="max-w-5xl mx-auto space-y-8">
@@ -120,32 +152,36 @@ export default function InteractiveSeatSelection() {
             {/* Interactive Map */}
             <div className="bg-surface-container-lowest p-6 md:p-12 overflow-x-auto shadow-sm">
               <div className="grid grid-cols-12 gap-2 min-w-[600px] justify-items-center">
-                {/* Dynamically Generated Seats */}
-                {Array.from({ length: 120 }).map((_, i) => {
-                  let statusClass = 'bg-primary cursor-pointer hover:scale-105';
-                  const isSelected = selectedSeats.includes(i);
-                  const isLocked = i % 13 === 0;
-                  const isSold = i % 7 === 0 && !isLocked;
+                {seatsData.length === 0 ? (
+                    <div className="col-span-12 py-12 text-on-surface-variant font-bold">No seat data available</div>
+                ) : (
+                  seatsData.map((seat) => {
+                    let statusClass = 'bg-primary cursor-pointer hover:scale-105';
+                    const isSelected = selectedSeats.some(s => s.seatId === seat.seatId);
+                    const isLocked = seat.status === 'Locked';
+                    const isSold = seat.status === 'Sold' || seat.status === 'Booked' || !seat.available;
 
-                  if (isSelected) {
-                    statusClass = 'bg-tertiary cursor-pointer hover:scale-105';
-                  } else if (isSold) {
-                    statusClass = 'bg-surface-container-highest cursor-not-allowed opacity-50';
-                  } else if (isLocked) {
-                    statusClass = 'bg-amber-500 cursor-not-allowed';
-                  }
+                    if (isSelected) {
+                      statusClass = 'bg-tertiary cursor-pointer hover:scale-105';
+                    } else if (isSold) {
+                      statusClass = 'bg-surface-container-highest cursor-not-allowed opacity-50';
+                    } else if (isLocked) {
+                      statusClass = 'bg-amber-500 cursor-not-allowed';
+                    }
 
-                  return (
-                    <button
-                      key={i}
-                      onClick={() => toggleSeat(i)}
-                      disabled={isSold || isLocked}
-                      className={`w-6 h-6 sm:w-8 sm:h-8 ${statusClass} transition-all flex items-center justify-center group ${isSelected ? 'shadow-[0_0_8px_rgba(0,105,71,0.6)]' : ''}`}
-                    >
-                      <span className="text-[8px] sm:text-[10px] text-white opacity-0 group-hover:opacity-100 font-bold transition-opacity">{i + 1}</span>
-                    </button>
-                  );
-                })}
+                    return (
+                      <button
+                        key={seat.seatId}
+                        onClick={() => toggleSeat(seat)}
+                        disabled={isSold || isLocked}
+                        className={`w-6 h-6 sm:w-8 sm:h-8 ${statusClass} transition-all flex items-center justify-center group ${isSelected ? 'shadow-[0_0_8px_rgba(0,105,71,0.6)]' : ''}`}
+                        title={`${seat.sectionName} - Row ${seat.rowNumber}, Seat ${seat.seatNumber} | $${seat.price}`}
+                      >
+                        <span className="text-[8px] sm:text-[10px] text-white opacity-0 group-hover:opacity-100 font-bold transition-opacity">{seat.rowNumber}-{seat.seatNumber}</span>
+                      </button>
+                    );
+                  })
+                )}
               </div>
             </div>
 
@@ -153,23 +189,23 @@ export default function InteractiveSeatSelection() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-surface-container-high">
               <div className="bg-surface-container-lowest p-6 shadow-sm">
                 <span className="block text-[10px] font-bold text-secondary uppercase tracking-[0.2em] mb-2">Section Highlight</span>
-                <h3 className="text-xl font-bold tracking-tighter mb-2 uppercase">ORCHESTRA LEFT</h3>
-                <p className="text-sm text-on-surface-variant leading-relaxed font-medium">Prime visibility with clear line-of-sight to center stage. All seats in this section feature premium ergonomic support.</p>
+                <h3 className="text-xl font-bold tracking-tighter mb-2 uppercase">VENUE ACCESSIBILITY</h3>
+                <p className="text-sm text-on-surface-variant leading-relaxed font-medium">Prime visibility with clear line-of-sight to center stage. Real-time updated seat status ensuring you get what you book.</p>
               </div>
               <div className="bg-surface-container-lowest p-6 shadow-sm">
                 <span className="block text-[10px] font-bold text-tertiary uppercase tracking-[0.2em] mb-2">Exclusive Perks</span>
                 <ul className="space-y-3">
                   <li className="flex items-center gap-2">
                     <span className="material-symbols-outlined text-sm text-tertiary" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-                    <span className="text-xs font-bold uppercase">Private Lounge Access</span>
+                    <span className="text-xs font-bold uppercase">Dynamic Seat Assignment</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="material-symbols-outlined text-sm text-tertiary" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-                    <span className="text-xs font-bold uppercase">Early Entry Pass</span>
+                    <span className="text-xs font-bold uppercase">Live Pricing</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="material-symbols-outlined text-sm text-tertiary" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-                    <span className="text-xs font-bold uppercase">Complimentary Welcome Drink</span>
+                    <span className="text-xs font-bold uppercase">Fast Checkout Experience</span>
                   </li>
                 </ul>
               </div>
@@ -192,35 +228,31 @@ export default function InteractiveSeatSelection() {
             <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block pt-2">HOLD TIMER ACTIVE</span>
           </div>
 
-          <div className="space-y-px bg-surface-container-high border-y border-surface-container-high">
+          <div className="flex-1 overflow-y-auto space-y-px bg-surface-container-high border-y border-surface-container-high">
             {/* Selected Items */}
             {selectedSeats.length === 0 ? (
-              <div className="bg-surface-container-lowest py-8 flex justify-center items-center">
+              <div className="bg-surface-container-lowest py-8 flex justify-center items-center h-full">
                 <span className="text-xs text-on-surface-variant font-bold uppercase tracking-widest">No seats selected</span>
               </div>
             ) : (
-              selectedSeats.map(index => {
-                const row = String.fromCharCode(65 + Math.floor(index / 12));
-                const seatNum = index + 1;
-                return (
-                  <div key={index} className="bg-surface-container-lowest py-4 flex justify-between items-center group">
-                    <div>
-                      <div className="text-xs font-bold uppercase tracking-tight text-on-surface">Orchestra Left - Row {row}, Seat {seatNum}</div>
-                      <div className="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest">General Admission</div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-lg font-bold tracking-tighter text-on-surface">${SEAT_PRICE.toFixed(2)}</div>
-                      <button
-                        onClick={() => removeSeat(index)}
-                        className="text-secondary hover:text-on-surface transition-colors opacity-100 md:opacity-0 group-hover:opacity-100 cursor-pointer"
-                        title="Remove seat"
-                      >
-                        <span className="material-symbols-outlined text-sm">close</span>
-                      </button>
-                    </div>
+              selectedSeats.map(seat => (
+                <div key={seat.seatId} className="bg-surface-container-lowest py-4 flex justify-between items-center group px-2">
+                  <div>
+                    <div className="text-xs font-bold uppercase tracking-tight text-on-surface">{seat.sectionName} - Row {seat.rowNumber}, Seat {seat.seatNumber}</div>
+                    <div className="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest">{seat.seatType || 'Standard'} Admission</div>
                   </div>
-                );
-              })
+                  <div className="flex items-center gap-4">
+                    <div className="text-lg font-bold tracking-tighter text-on-surface">${seat.price?.toFixed(2)}</div>
+                    <button
+                      onClick={() => removeSeat(seat.seatId)}
+                      className="text-secondary hover:text-on-surface transition-colors opacity-100 md:opacity-0 group-hover:opacity-100 cursor-pointer"
+                      title="Remove seat"
+                    >
+                      <span className="material-symbols-outlined text-sm">close</span>
+                    </button>
+                  </div>
+                </div>
+              ))
             )}
           </div>
 
@@ -235,7 +267,7 @@ export default function InteractiveSeatSelection() {
             </div>
           </div>
 
-          <div className="space-y-6 pt-4 flex-grow">
+          <div className="space-y-6 pt-4 flex-none">
             <label className="flex items-center gap-4 cursor-pointer group bg-surface-container-low p-4 border border-transparent hover:border-outline-variant transition-colors">
               <div className="relative w-6 h-6 border-2 border-surface-container-highest group-hover:border-primary transition-all flex items-center justify-center bg-white">
                 <input
@@ -256,7 +288,7 @@ export default function InteractiveSeatSelection() {
             </button>
           </div>
 
-          <div className="mt-auto pb-24 md:pb-0">
+          <div className="mt-auto pb-24 md:pb-0 flex-none">
             <div className="p-4 bg-surface-container border border-surface-container-high flex items-start gap-4">
               <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>verified_user</span>
               <div>
@@ -284,5 +316,13 @@ export default function InteractiveSeatSelection() {
         </Link>
       </nav>
     </div>
+  );
+}
+
+export default function InteractiveSeatSelection() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-background text-on-background flex justify-center items-center text-primary font-black animate-pulse">LOADING APP...</div>}>
+      <SeatSelectionContent />
+    </Suspense>
   );
 }

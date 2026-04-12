@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 
 export default function EventDetailPage() {
     const params = useParams(); // Lấy ID từ URL (ví dụ: eventId từ [eventId])
+    const router = useRouter();
     const [event, setEvent] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
@@ -119,7 +120,9 @@ export default function EventDetailPage() {
                             </div>
                             <span className="text-[10px] font-bold text-green-500 uppercase tracking-widest animate-pulse">● Tickets Available</span>
                         </div>
-                        <button className="w-full bg-on-background text-surface py-6 font-black text-sm uppercase tracking-[0.2em] hover:bg-primary transition-all duration-300 shadow-2xl">
+                        <button 
+                            onClick={() => router.push(`/seats?eventId=${params.eventId}`)}
+                            className="w-full bg-on-background text-surface py-6 font-black text-sm uppercase tracking-[0.2em] hover:bg-primary transition-all duration-300 shadow-2xl">
                             Proceed to Booking
                         </button>
                     </div>
