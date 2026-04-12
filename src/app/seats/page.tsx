@@ -13,10 +13,20 @@ function SeatSelectionContent() {
   const [selectedSeats, setSelectedSeats] = useState<any[]>([]);
   const [isNotBot, setIsNotBot] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [expiresAt, setExpiresAt] = useState<string | null>(null);
+  const [timeLeft, setTimeLeft] = useState<string | null>(null);
 
   const SERVICE_FEE_RATE = 0.15;
 
   useEffect(() => {
+    const storedId = localStorage.getItem('userId');
+    const storedToken = localStorage.getItem('token');
+
+    if (storedId) setUserId(storedId);
+    if (storedToken) setToken(storedToken);
+
     if (!eventId) return; // Nếu không có eventId thì không làm gì cả
 
     // 1. Định nghĩa hàm lấy dữ liệu (Fetch)
@@ -56,7 +66,46 @@ function SeatSelectionContent() {
       console.log("Đã dừng cập nhật ghế.");
     };
   }, [eventId]); // Chỉ chạy lại nếu eventId thay đổi
+  useEffect(() => {
+    if (eventId && userId && token) {
+      fetch(`http://localhost:8080/queue/status?eventId=${eventId}&userId=${userId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === "ACTIVE" && data.expiresAt) {
+            setExpiresAt(data.expiresAt);
+          } else if (data.status === "EXPIRED") {
+            // Nếu backend báo EXPIRED ngay từ đầu
+            alert("Phiên làm việc đã hết hạn!");
+            router.push('/events');
+          }
+        });
+    }
+  }, [eventId, userId, token]);
 
+  // 2. Chạy logic đếm ngược
+  useEffect(() => {
+    if (!expiresAt) return;
+    const interval = setInterval(() => {
+      const now = new Date().getTime();
+      const end = new Date(expiresAt).getTime();
+      const diff = end - now;
+
+      if (diff <= 0) {
+        clearInterval(interval);
+        alert("Phiên làm việc đã hết hạn!");
+        router.push('/events');
+      } else {
+        const mins = Math.floor(diff / 60000);
+        const secs = Math.floor((diff % 60000) / 1000);
+        setTimeLeft(`${mins}:${secs < 10 ? '0' : ''}${secs}`);
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [expiresAt]);
   const toggleSeat = (seat: any) => {
     const isLocked = seat.status === 'Locked';
     const isSold = seat.status === 'Sold' || seat.status === 'Booked' || !seat.available;
@@ -82,34 +131,46 @@ function SeatSelectionContent() {
   const serviceFee = subtotal * SERVICE_FEE_RATE;
   const totalPrice = subtotal + serviceFee;
 
-  const handleConfirmSelection = (e: React.MouseEvent) => {
+  const handleConfirmSelection = async (e: React.MouseEvent) => {
     e.preventDefault();
-    if (selectedSeats.length === 0) {
-      alert("Please select at least one seat.");
-      return;
-    }
-    if (!isNotBot) {
-      alert("Please confirm you are not a bot.");
-      return;
-    }
+    if (!isNotBot || selectedSeats.length === 0) return;
 
-    const cartData = {
-      seats: selectedSeats.map(seat => ({
-        id: seat.seatId,
-        row: seat.rowNumber,
-        seatNumber: seat.seatNumber,
-        label: `${seat.sectionName || 'Section'} - Row ${seat.rowNumber}, Seat ${seat.seatNumber}`,
-        type: seat.seatType || 'General Admission',
-        price: seat.price
-      })),
-      subtotal,
-      fee: serviceFee,
-      total: totalPrice,
-      eventId: eventId
-    };
+    setLoading(true); // Bật loading khi đang gọi API
+    try {
+      const response = await fetch(`http://localhost:8080/seats/reservations`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          eventId: eventId,
+          userId: userId,
+          seatIds: selectedSeats.map(s => s.seatId)
+        }),
+      });
 
-    localStorage.setItem('checkoutCart', JSON.stringify(cartData));
-    router.push('/checkout');
+      if (response.ok) {
+        const holdId = await response.json(); // Nhận UUID từ Backend
+
+        const cartData = {
+          holdId: holdId, // LƯU QUAN TRỌNG: Để trang checkout dùng API getHoldDetails
+          seats: selectedSeats,
+          total: totalPrice,
+          eventId: eventId
+        };
+
+        localStorage.setItem('checkoutCart', JSON.stringify(cartData));
+        router.push('/checkout');
+      } else {
+        const errorMsg = await response.text();
+        alert("Không thể giữ ghế: " + errorMsg);
+      }
+    } catch (err) {
+      alert("Lỗi kết nối server!");
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (loading) {
@@ -242,7 +303,7 @@ function SeatSelectionContent() {
               <h2 className="text-3xl font-extrabold tracking-tighter uppercase italic text-on-surface">YOUR SELECTION</h2>
               <div className="bg-secondary text-on-secondary px-3 py-1 flex items-center gap-2 shadow-sm">
                 <span className="material-symbols-outlined text-sm">schedule</span>
-                <span className="text-xs font-bold tracking-widest tabular-nums animate-pulse">09:52</span>
+                <span className="text-xs font-bold tracking-widest tabular-nums animate-pulse">{timeLeft}</span>
               </div>
             </div>
             <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block pt-2">HOLD TIMER ACTIVE</span>
@@ -302,9 +363,10 @@ function SeatSelectionContent() {
             </label>
             <button
               onClick={handleConfirmSelection}
+              disabled={loading}
               className="w-full bg-primary text-on-primary py-5 text-lg font-extrabold uppercase tracking-[0.1em] transition-all hover:bg-primary-dim active:scale-[0.98] flex items-center justify-center shadow-lg hover:shadow-xl"
             >
-              CONFIRM SELECTION
+              {loading ? "PROCESSING..." : "CONFIRM SELECTION"}
             </button>
           </div>
 
