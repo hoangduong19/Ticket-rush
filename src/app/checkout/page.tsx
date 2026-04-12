@@ -1,6 +1,38 @@
+"use client"
+
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function Checkout() {
+  const router = useRouter();
+
+  const handleConfirmPurchase = async () => {
+    const userId = localStorage.getItem('queueUserId');
+    const cartDataStr = localStorage.getItem('checkoutCart');
+    
+    if (userId && cartDataStr) {
+      try {
+        const cartData = JSON.parse(cartDataStr);
+        if (cartData.eventId) {
+          await fetch('http://localhost:8080/queue/complete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ eventId: cartData.eventId, userId: userId })
+          });
+        }
+      } catch (err) {
+        console.error('Error completing queue session', err);
+      }
+    }
+    
+    // Clear session details upon completion
+    localStorage.removeItem('checkoutCart');
+    localStorage.removeItem('queueUserId');
+    
+    alert('Purchase Confirmed! Queue slot released.');
+    router.push('/success');
+  };
+
   return (
     <div className="bg-background text-on-background min-h-screen flex flex-col">
       {/* TopAppBar */}
@@ -122,7 +154,7 @@ export default function Checkout() {
                   </div>
                 </div>
               </div>
-              <button className="w-full bg-primary text-on-primary py-6 text-xl font-black uppercase tracking-widest hover:bg-primary-dim transition-colors active:translate-y-0.5">
+              <button onClick={handleConfirmPurchase} className="w-full bg-primary text-on-primary py-6 text-xl font-black uppercase tracking-widest hover:bg-primary-dim transition-colors active:translate-y-0.5">
                 Confirm Purchase
               </button>
               <p className="text-[0.75rem] text-center text-outline-variant font-bold uppercase tracking-tighter">
