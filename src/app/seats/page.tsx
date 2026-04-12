@@ -17,25 +17,45 @@ function SeatSelectionContent() {
   const SERVICE_FEE_RATE = 0.15;
 
   useEffect(() => {
-    if (eventId) {
-      fetch(`http://localhost:8080/events/${eventId}/seats`)
-        .then(res => res.json())
-        .then(data => {
-          // Sort seats by row and seat number for consistent display
-          setSeatsData(data.sort((a: any, b: any) => {
-            if (a.rowNumber === b.rowNumber) return a.seatNumber - b.seatNumber;
-            return a.rowNumber - b.rowNumber;
-          }));
-          setLoading(false);
+    if (!eventId) return; // Nếu không có eventId thì không làm gì cả
+
+    // 1. Định nghĩa hàm lấy dữ liệu (Fetch)
+    const updateSeatsStatus = () => {
+      fetch(`http://localhost:8080/events/${eventId}/seats`) // Gọi API lấy danh sách ghế
+        .then(res => {
+          if (!res.ok) throw new Error("Status failed");
+          return res.json();
         })
-        .catch(err => {
-          console.error(err);
-          setLoading(false);
-        });
-    } else {
-        setLoading(false);
-    }
-  }, [eventId]);
+        .then(data => {
+          if (Array.isArray(data)) {
+            // Sắp xếp ghế theo hàng và số để vẽ đúng ma trận
+            const sortedData = [...data].sort((a: any, b: any) => {
+              if (a.rowNumber === b.rowNumber) return a.seatNumber - b.seatNumber;
+              return a.rowNumber - b.rowNumber;
+            });
+            setSeatsData(sortedData);
+            setLoading(false);
+            console.log("Trạng thái ghế đã được cập nhật!");
+          }
+        })
+        .catch(err => console.error("Lỗi cập nhật ghế:", err));
+    };
+
+    // 2. Chạy hàm lấy dữ liệu ngay khi vừa vào trang
+    updateSeatsStatus();
+
+    // 3. Thiết lập setInterval để tự động gọi lại sau mỗi 3 giây (3000ms)
+    const intervalId = setInterval(() => {
+      updateSeatsStatus();
+    }, 3000);
+
+    // 4. [QUAN TRỌNG NHẤT] Hàm Cleanup: Xóa bộ đếm khi người dùng rời khỏi trang
+    // Nếu không có dòng này, trình duyệt sẽ bị treo vì gọi API mãi mãi
+    return () => {
+      clearInterval(intervalId);
+      console.log("Đã dừng cập nhật ghế.");
+    };
+  }, [eventId]); // Chỉ chạy lại nếu eventId thay đổi
 
   const toggleSeat = (seat: any) => {
     const isLocked = seat.status === 'Locked';
@@ -47,8 +67,8 @@ function SeatSelectionContent() {
         return prev.filter(s => s.seatId !== seat.seatId);
       } else {
         return [...prev, seat].sort((a, b) => {
-            if (a.rowNumber === b.rowNumber) return a.seatNumber - b.seatNumber;
-            return a.rowNumber - b.rowNumber;
+          if (a.rowNumber === b.rowNumber) return a.seatNumber - b.seatNumber;
+          return a.rowNumber - b.rowNumber;
         });
       }
     });
@@ -93,7 +113,7 @@ function SeatSelectionContent() {
   };
 
   if (loading) {
-     return <div className="min-h-screen bg-background text-on-background flex justify-center items-center text-primary font-black animate-pulse">LOADING SEATS...</div>;
+    return <div className="min-h-screen bg-background text-on-background flex justify-center items-center text-primary font-black animate-pulse">LOADING SEATS...</div>;
   }
 
   return (
@@ -153,7 +173,7 @@ function SeatSelectionContent() {
             <div className="bg-surface-container-lowest p-6 md:p-12 overflow-x-auto shadow-sm">
               <div className="grid grid-cols-12 gap-2 min-w-[600px] justify-items-center">
                 {seatsData.length === 0 ? (
-                    <div className="col-span-12 py-12 text-on-surface-variant font-bold">No seat data available</div>
+                  <div className="col-span-12 py-12 text-on-surface-variant font-bold">No seat data available</div>
                 ) : (
                   seatsData.map((seat) => {
                     let statusClass = 'bg-primary cursor-pointer hover:scale-105';
