@@ -1,6 +1,43 @@
-import Link from 'next/link';
+"use client"
 
-export default function QueueWaitingRoom() {
+import Link from 'next/link';
+import { useEffect, useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+
+function QueueContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const eventId = searchParams.get('eventId');
+  const [position, setPosition] = useState<number | null>(null);
+
+  useEffect(() => {
+    const userId = localStorage.getItem('queueUserId');
+    if (!eventId || !userId) {
+      router.push('/events');
+      return;
+    }
+
+    const checkStatus = async () => {
+      try {
+        const res = await fetch(`http://localhost:8080/queue/status?eventId=${eventId}&userId=${userId}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.status === 'ACTIVE') {
+            router.push(`/seats?eventId=${eventId}`);
+          } else if (data.status === 'WAITING') {
+            setPosition(data.position);
+          }
+        }
+      } catch (err) {
+        console.error('Queue status check failed', err);
+      }
+    };
+
+    checkStatus();
+    const interval = setInterval(checkStatus, 3000); // 3 seconds interval
+    return () => clearInterval(interval);
+  }, [eventId, router]);
+
   return (
     <div className="bg-background text-on-background min-h-screen flex flex-col">
       {/* TopNavBar */}
@@ -47,15 +84,17 @@ export default function QueueWaitingRoom() {
               </p>
             </header>
             
-            {/* Stats Grid (Asymmetric Bento Style) */}
+            {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-surface-container-high border border-surface-container-high">
               <div className="bg-surface-container-lowest p-8 space-y-1">
                 <span className="text-[0.75rem] font-bold text-on-surface-variant uppercase tracking-widest">Position in queue</span>
-                <div className="text-6xl font-black text-on-surface tracking-tighter">105</div>
+                <div className="text-6xl font-black text-on-surface tracking-tighter">{position !== null ? position : '--'}</div>
               </div>
               <div className="bg-surface-container-lowest p-8 space-y-1">
                 <span className="text-[0.75rem] font-bold text-on-surface-variant uppercase tracking-widest">Estimated wait</span>
-                <div className="text-6xl font-black text-primary tracking-tighter">2<span className="text-2xl ml-1">MIN</span></div>
+                <div className="text-6xl font-black text-primary tracking-tighter">
+                  {position !== null ? Math.ceil(position / 50) : '--'}<span className="text-2xl ml-1">MIN</span>
+                </div>
               </div>
             </div>
             
@@ -63,10 +102,10 @@ export default function QueueWaitingRoom() {
             <div className="space-y-4">
               <div className="flex justify-between items-end">
                 <span className="text-[0.75rem] font-bold uppercase tracking-tighter text-on-surface">Queue Progress</span>
-                <span className="text-[0.75rem] font-bold uppercase tracking-tighter text-primary">82% Complete</span>
+                <span className="text-[0.75rem] font-bold uppercase tracking-tighter text-primary">Polling every 3s...</span>
               </div>
-              <div className="h-4 bg-surface-container-high w-full">
-                <div className="h-full bg-primary w-[82%]"></div>
+              <div className="h-4 bg-surface-container-high w-full overflow-hidden">
+                <div className="h-full bg-primary w-1/3 animate-[pulse_2s_ease-in-out_infinite]"></div>
               </div>
             </div>
             
@@ -90,7 +129,7 @@ export default function QueueWaitingRoom() {
             {/* CTA */}
             <div>
               <button className="w-full bg-surface-container-highest text-on-surface py-6 font-extrabold uppercase tracking-widest hover:bg-surface-dim transition-colors duration-100 flex items-center justify-center gap-2">
-                <span className="material-symbols-outlined">sync</span>
+                <span className="material-symbols-outlined animate-spin">sync</span>
                 Checking for early access...
               </button>
             </div>
@@ -99,8 +138,8 @@ export default function QueueWaitingRoom() {
           {/* Footer-like Meta Info */}
           <div className="bg-surface-container-high p-6 flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex gap-4">
-              <span className="text-[0.65rem] font-bold text-on-surface-variant uppercase">Event ID: TR-9921-X</span>
-              <span className="text-[0.65rem] font-bold text-on-surface-variant uppercase">User Node: US-EAST-1</span>
+              <span className="text-[0.65rem] font-bold text-on-surface-variant uppercase">Event ID: {eventId || 'UNKNOWN'}</span>
+              <span className="text-[0.65rem] font-bold text-on-surface-variant uppercase">Polled Session</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="material-symbols-outlined text-sm text-tertiary" style={{ fontVariationSettings: "'FILL' 1" }}>lock</span>
@@ -122,5 +161,13 @@ export default function QueueWaitingRoom() {
         <div className="text-slate-500">© 2024 TicketRush. Precision Engineered.</div>
       </footer>
     </div>
+  );
+}
+
+export default function QueueWaitingRoom() {
+  return (
+    <Suspense fallback={<div>Loading queue...</div>}>
+      <QueueContent />
+    </Suspense>
   );
 }

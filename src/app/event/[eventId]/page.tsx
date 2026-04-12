@@ -47,6 +47,37 @@ export default function EventDetailPage() {
         );
     }
 
+    const handleProceedToBooking = async () => {
+        let userId = localStorage.getItem('queueUserId');
+        if (!userId) {
+            // Fallback for browsers without randomUUID
+            userId = typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : 'user-' + new Date().getTime() + '-' + Math.random().toString(36).substring(2, 9);
+            localStorage.setItem('queueUserId', userId);
+        }
+
+        try {
+            const res = await fetch('http://localhost:8080/queue/join', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ eventId: params.eventId, userId })
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                if (data.status === 'ACTIVE') {
+                    router.push(`/seats?eventId=${params.eventId}`);
+                } else if (data.status === 'WAITING') {
+                    router.push(`/queue?eventId=${params.eventId}`);
+                }
+            } else {
+                router.push(`/seats?eventId=${params.eventId}`);
+            }
+        } catch (error) {
+            console.error('Queue error:', error);
+            router.push(`/seats?eventId=${params.eventId}`);
+        }
+    };
+
     return (
         <div className="bg-background text-on-background min-h-screen flex flex-col">
             {/* Header Điều hướng */}
@@ -121,7 +152,7 @@ export default function EventDetailPage() {
                             <span className="text-[10px] font-bold text-green-500 uppercase tracking-widest animate-pulse">● Tickets Available</span>
                         </div>
                         <button 
-                            onClick={() => router.push(`/seats?eventId=${params.eventId}`)}
+                            onClick={handleProceedToBooking}
                             className="w-full bg-on-background text-surface py-6 font-black text-sm uppercase tracking-[0.2em] hover:bg-primary transition-all duration-300 shadow-2xl">
                             Proceed to Booking
                         </button>
