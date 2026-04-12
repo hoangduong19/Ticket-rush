@@ -60,11 +60,17 @@ export default function CreateEvent() {
     try {
       // Chuẩn bị Payload theo cấu hình Backend đã thống nhất
       const rowConfigs = Object.entries(seatingMap.rowPriceTiers).map(([index, tierLabel]: any) => {
+        // THUẬT TOÁN PHÂN LOẠI:
+        let type = "Standard"; // Mặc định
+        if (tierLabel.includes("PLATINUM")) type = "Platinum";
+        else if (tierLabel.includes("VIP")) type = "VIP";
+        else type = "Standard";
         // Trích xuất giá tiền từ label (Ví dụ: "VIP - $249.00" -> 249.00)
         const price = parseFloat(tierLabel.split('$')[1]) || 0;
         return {
           rowNumber: parseInt(index) + 1,
-          price: price
+          price: price,
+          seatType: type
         };
       });
 
