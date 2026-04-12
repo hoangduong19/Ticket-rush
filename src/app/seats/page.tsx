@@ -41,7 +41,7 @@ export default function InteractiveSeatSelection() {
       alert("Please confirm you are not a bot.");
       return;
     }
-    
+
     const cartData = {
       seats: selectedSeats.map(index => ({
         id: index,
@@ -55,7 +55,7 @@ export default function InteractiveSeatSelection() {
       fee: serviceFee,
       total: totalPrice
     };
-    
+
     localStorage.setItem('checkoutCart', JSON.stringify(cartData));
     router.push('/checkout');
   };
@@ -126,7 +126,7 @@ export default function InteractiveSeatSelection() {
                   const isSelected = selectedSeats.includes(i);
                   const isLocked = i % 13 === 0;
                   const isSold = i % 7 === 0 && !isLocked;
-                  
+
                   if (isSelected) {
                     statusClass = 'bg-tertiary cursor-pointer hover:scale-105';
                   } else if (isSold) {
@@ -136,7 +136,7 @@ export default function InteractiveSeatSelection() {
                   }
 
                   return (
-                    <button 
+                    <button
                       key={i}
                       onClick={() => toggleSeat(i)}
                       disabled={isSold || isLocked}
@@ -210,7 +210,7 @@ export default function InteractiveSeatSelection() {
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="text-lg font-bold tracking-tighter text-on-surface">${SEAT_PRICE.toFixed(2)}</div>
-                      <button 
+                      <button
                         onClick={() => removeSeat(index)}
                         className="text-secondary hover:text-on-surface transition-colors opacity-100 md:opacity-0 group-hover:opacity-100 cursor-pointer"
                         title="Remove seat"
@@ -238,9 +238,9 @@ export default function InteractiveSeatSelection() {
           <div className="space-y-6 pt-4 flex-grow">
             <label className="flex items-center gap-4 cursor-pointer group bg-surface-container-low p-4 border border-transparent hover:border-outline-variant transition-colors">
               <div className="relative w-6 h-6 border-2 border-surface-container-highest group-hover:border-primary transition-all flex items-center justify-center bg-white">
-                <input 
-                  className="peer hidden" 
-                  type="checkbox" 
+                <input
+                  className="peer hidden"
+                  type="checkbox"
                   checked={isNotBot}
                   onChange={(e) => setIsNotBot(e.target.checked)}
                 />
@@ -248,7 +248,7 @@ export default function InteractiveSeatSelection() {
               </div>
               <span className="text-xs font-bold uppercase tracking-tight text-on-surface-variant group-hover:text-on-surface transition-colors">I AM NOT A BOT</span>
             </label>
-            <button 
+            <button
               onClick={handleConfirmSelection}
               className="w-full bg-primary text-on-primary py-5 text-lg font-extrabold uppercase tracking-[0.1em] transition-all hover:bg-primary-dim active:scale-[0.98] flex items-center justify-center shadow-lg hover:shadow-xl"
             >
