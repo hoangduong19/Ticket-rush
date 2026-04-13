@@ -1,6 +1,59 @@
 import Link from 'next/link';
 
-export default function AudienceAnalytics() {
+interface User {
+  userId: string;
+  username: string;
+  age: number;
+  displayName: string;
+  gender: string;
+  avatarUrl: string | null;
+}
+
+export default async function AudienceAnalytics() {
+  let users: User[] = [];
+  try {
+    const res = await fetch('http://localhost:8080/users', { cache: 'no-store' });
+    if (res.ok) {
+      users = await res.json();
+    }
+  } catch (err) {
+    console.error("Failed to fetch users:", err);
+  }
+
+  const totalUsers = users.length;
+  const validAges = users.filter((u) => u.age && u.age > 0).map((u) => u.age);
+  const avgAge = validAges.length > 0 ? (validAges.reduce((a, b) => a + b, 0) / validAges.length).toFixed(1) : 'N/A';
+
+  let males = 0, females = 0, other = 0;
+  users.forEach((u) => {
+    if (u.gender === 'MALE') males++;
+    else if (u.gender === 'FEMALE') females++;
+    else other++;
+  });
+
+  const getPctStr = (count: number) => totalUsers > 0 ? ((count / totalUsers) * 100).toFixed(1) : '0.0';
+  const getPctNum = (count: number) => totalUsers > 0 ? (count / totalUsers) * 100 : 0;
+  
+  const malePct = getPctStr(males);
+  const femalePct = getPctStr(females);
+  const otherPct = getPctStr(other);
+
+  const maleW = getPctNum(males) + '%';
+  const femaleW = getPctNum(females) + '%';
+  const otherW = getPctNum(other) + '%';
+
+  const ageDist = { '<25': 0, '25-34': 0, '35-44': 0, '45+': 0 };
+  users.forEach((u) => {
+    if (u.age == null) return;
+    if (u.age < 25) ageDist['<25']++;
+    else if (u.age <= 34) ageDist['25-34']++;
+    else if (u.age <= 44) ageDist['35-44']++;
+    else ageDist['45+']++;
+  });
+
+  const maxAgeDist = Math.max(1, ...Object.values(ageDist));
+  const getAgeH = (count: number) => count > 0 ? `${(count / maxAgeDist) * 100}%` : '5%';
+
   return (
     <div className="flex min-h-screen bg-surface text-on-surface selection:bg-primary selection:text-on-primary font-body">
       {/* Sidebar Navigation */}
@@ -17,10 +70,6 @@ export default function AudienceAnalytics() {
             <span className="material-symbols-outlined">event</span>
             <span>Create Event</span>
           </Link>
-          {/* <Link href="/admin/seating-map" className="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-highest transition-colors font-medium">
-            <span className="material-symbols-outlined">stadium</span>
-            <span>Map Configurator</span>
-          </Link> */}
           <Link href="/admin/monitor" className="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-highest transition-colors font-medium">
             <span className="material-symbols-outlined">map</span>
             <span>Live Monitor</span>
@@ -29,10 +78,6 @@ export default function AudienceAnalytics() {
             <span className="material-symbols-outlined">monitoring</span>
             <span>Analytics</span>
           </Link>
-          {/* <Link href="/orders" className="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-highest transition-colors font-medium">
-            <span className="material-symbols-outlined">receipt_long</span>
-            <span>Orders</span>
-          </Link> */}
         </nav>
         <div className="p-6 bg-surface-container-highest">
           <div className="flex items-center gap-3">
@@ -45,7 +90,6 @@ export default function AudienceAnalytics() {
         </div>
       </aside>
 
-      {/* Main Content Area */}
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* TopNavBar */}
@@ -76,7 +120,7 @@ export default function AudienceAnalytics() {
               <h3 className="text-[3.5rem] font-extrabold leading-none tracking-tighter text-slate-900 dark:text-white">Audience Insights</h3>
             </div>
             <div className="bg-surface-container-high p-1 flex items-center">
-              <button className="px-6 py-2 bg-surface-container-lowest font-bold text-sm text-on-surface">OCT 01 — OCT 31</button>
+              <button className="px-6 py-2 bg-surface-container-lowest font-bold text-sm text-on-surface">ALL TIME</button>
               <button className="px-4 py-2 material-symbols-outlined text-slate-500">calendar_today</button>
             </div>
           </div>
@@ -85,14 +129,14 @@ export default function AudienceAnalytics() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-0 mb-12 border-l-4 border-primary">
             <div className="bg-surface-container-lowest p-8 border-r border-background">
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-4">Total Active Users</p>
-              <p className="text-4xl font-black text-primary">128,402</p>
+              <p className="text-4xl font-black text-primary">{totalUsers.toLocaleString()}</p>
               <div className="mt-4 flex items-center gap-1 text-tertiary font-bold text-xs">
-                <span className="material-symbols-outlined text-sm">trending_up</span> +14%
+                <span className="material-symbols-outlined text-sm">trending_up</span> Realtime
               </div>
             </div>
             <div className="bg-surface-container-lowest p-8 border-r border-background">
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-4">Avg. Age</p>
-              <p className="text-4xl font-black text-slate-900">24.8</p>
+              <p className="text-4xl font-black text-slate-900">{avgAge}</p>
               <div className="mt-4 flex items-center gap-1 text-slate-400 font-bold text-xs uppercase">
                 Median Target Group
               </div>
@@ -100,21 +144,21 @@ export default function AudienceAnalytics() {
             <div className="bg-surface-container-lowest p-8 border-r border-background">
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-4">Gender Split %</p>
               <div className="flex h-6 w-full bg-surface-container-high mt-4">
-                <div className="h-full bg-primary" style={{ width: '48%' }}></div>
-                <div className="h-full bg-secondary" style={{ width: '32%' }}></div>
-                <div className="h-full bg-tertiary" style={{ width: '20%' }}></div>
+                <div className="h-full bg-primary" style={{ width: maleW }}></div>
+                <div className="h-full bg-secondary" style={{ width: femaleW }}></div>
+                <div className="h-full bg-tertiary" style={{ width: otherW }}></div>
               </div>
-              <div className="mt-4 flex justify-between text-[9px] font-bold uppercase text-slate-400">
-                <span>M: 48%</span>
-                <span>F: 32%</span>
-                <span>NB: 20%</span>
+              <div className="mt-4 flex flex-wrap gap-2 justify-between text-[9px] font-bold uppercase text-slate-400">
+                <span>M: {malePct}%</span>
+                <span>F: {femalePct}%</span>
+                <span>O: {otherPct}%</span>
               </div>
             </div>
             <div className="bg-surface-container-lowest p-8">
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-4">Top Region</p>
-              <p className="text-4xl font-black text-slate-900">London</p>
+              <p className="text-4xl font-black text-slate-900">Global</p>
               <div className="mt-4 flex items-center gap-1 text-slate-400 font-bold text-xs uppercase">
-                Greater Metropolitan Area
+                All Regions
               </div>
             </div>
           </div>
@@ -130,21 +174,25 @@ export default function AudienceAnalytics() {
                   <span className="text-[10px] font-bold text-slate-500 uppercase">Registered Users</span>
                 </div>
               </div>
-              <div className="flex items-end gap-12 h-64 border-b-2 border-slate-900 relative">
-                <div className="flex-1 flex flex-col items-center gap-4 group">
-                  <div className="w-full bg-primary transition-all duration-300 group-hover:bg-primary-dim" style={{ height: '35%' }}></div>
-                  <span className="text-[11px] font-black text-slate-900 absolute -bottom-8">18-24</span>
+              <div className="flex items-end gap-12 h-64 border-b-2 border-slate-900 relative mt-8">
+                <div className="flex-1 flex flex-col items-center gap-4 group h-full justify-end">
+                  <span className="text-xs font-black text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity absolute top-[-20px]">{ageDist['<25']}</span>
+                  <div className="w-full bg-primary transition-all duration-300 group-hover:bg-primary-dim" style={{ height: getAgeH(ageDist['<25']) }}></div>
+                  <span className="text-[11px] font-black text-slate-900 absolute -bottom-8">{'<25'}</span>
                 </div>
-                <div className="flex-1 flex flex-col items-center gap-4 group">
-                  <div className="w-full bg-primary transition-all duration-300 group-hover:bg-primary-dim" style={{ height: '85%' }}></div>
+                <div className="flex-1 flex flex-col items-center gap-4 group h-full justify-end">
+                  <span className="text-xs font-black text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity absolute top-[-20px]">{ageDist['25-34']}</span>
+                  <div className="w-full bg-primary transition-all duration-300 group-hover:bg-primary-dim" style={{ height: getAgeH(ageDist['25-34']) }}></div>
                   <span className="text-[11px] font-black text-slate-900 absolute -bottom-8">25-34</span>
                 </div>
-                <div className="flex-1 flex flex-col items-center gap-4 group">
-                  <div className="w-full bg-primary transition-all duration-300 group-hover:bg-primary-dim" style={{ height: '55%' }}></div>
+                <div className="flex-1 flex flex-col items-center gap-4 group h-full justify-end">
+                  <span className="text-xs font-black text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity absolute top-[-20px]">{ageDist['35-44']}</span>
+                  <div className="w-full bg-primary transition-all duration-300 group-hover:bg-primary-dim" style={{ height: getAgeH(ageDist['35-44']) }}></div>
                   <span className="text-[11px] font-black text-slate-900 absolute -bottom-8">35-44</span>
                 </div>
-                <div className="flex-1 flex flex-col items-center gap-4 group">
-                  <div className="w-full bg-primary transition-all duration-300 group-hover:bg-primary-dim" style={{ height: '20%' }}></div>
+                <div className="flex-1 flex flex-col items-center gap-4 group h-full justify-end">
+                  <span className="text-xs font-black text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity absolute top-[-20px]">{ageDist['45+']}</span>
+                  <div className="w-full bg-primary transition-all duration-300 group-hover:bg-primary-dim" style={{ height: getAgeH(ageDist['45+']) }}></div>
                   <span className="text-[11px] font-black text-slate-900 absolute -bottom-8">45+</span>
                 </div>
               </div>
@@ -153,11 +201,10 @@ export default function AudienceAnalytics() {
             {/* Gender Identification (Geometric Block Pie Chart) */}
             <div className="bg-surface-container-lowest p-8 flex flex-col shadow-sm">
               <h4 className="text-xl font-bold tracking-tight text-slate-900 uppercase mb-10">Gender ID</h4>
-              <div className="relative w-48 h-48 mx-auto mb-8 border-4 border-slate-900 flex flex-wrap shadow-sm">
-                <div className="w-1/2 h-1/2 bg-primary flex items-center justify-center text-on-primary font-black">48%</div>
-                <div className="w-1/2 h-1/2 bg-secondary flex items-center justify-center text-on-secondary font-black">32%</div>
-                <div className="w-1/3 h-1/2 bg-tertiary flex items-center justify-center text-on-tertiary font-black">15%</div>
-                <div className="w-2/3 h-1/2 bg-surface-container-highest flex items-center justify-center text-slate-600 font-black">5%</div>
+              <div className="relative w-full h-48 mx-auto mb-8 border-4 border-slate-900 flex shadow-sm overflow-hidden">
+                {males > 0 && <div className="h-full bg-primary flex flex-col items-center justify-center text-on-primary font-black px-1" style={{ width: maleW }}><span className="text-xs">M</span><span>{Math.round(getPctNum(males))}%</span></div>}
+                {females > 0 && <div className="h-full bg-secondary flex flex-col items-center justify-center text-on-secondary font-black px-1" style={{ width: femaleW }}><span className="text-xs">F</span><span>{Math.round(getPctNum(females))}%</span></div>}
+                {other > 0 && <div className="h-full bg-tertiary flex flex-col items-center justify-center text-on-tertiary font-black px-1" style={{ width: otherW }}><span className="text-xs">O</span><span>{Math.round(getPctNum(other))}%</span></div>}
               </div>
               <div className="space-y-3 mt-auto">
                 <div className="flex justify-between items-center">
@@ -165,21 +212,21 @@ export default function AudienceAnalytics() {
                     <span className="w-3 h-3 bg-primary"></span>
                     <span className="text-xs font-bold text-slate-600 uppercase">Male</span>
                   </div>
-                  <span className="text-xs font-black text-slate-900">48.2%</span>
+                  <span className="text-xs font-black text-slate-900">{malePct}%</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-2">
                     <span className="w-3 h-3 bg-secondary"></span>
                     <span className="text-xs font-bold text-slate-600 uppercase">Female</span>
                   </div>
-                  <span className="text-xs font-black text-slate-900">31.8%</span>
+                  <span className="text-xs font-black text-slate-900">{femalePct}%</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-2">
                     <span className="w-3 h-3 bg-tertiary"></span>
-                    <span className="text-xs font-bold text-slate-600 uppercase">Non-binary</span>
+                    <span className="text-xs font-bold text-slate-600 uppercase">Other/Non-binary</span>
                   </div>
-                  <span className="text-xs font-black text-slate-900">14.9%</span>
+                  <span className="text-xs font-black text-slate-900">{otherPct}%</span>
                 </div>
               </div>
             </div>
@@ -197,56 +244,33 @@ export default function AudienceAnalytics() {
                     <th className="px-8 py-4">User</th>
                     <th className="px-8 py-4">Age</th>
                     <th className="px-8 py-4">Gender</th>
-                    <th className="px-8 py-4">Location</th>
-                    <th className="px-8 py-4">Loyalty Tier</th>
                     <th className="px-8 py-4 text-right">Join Date</th>
                   </tr>
                 </thead>
                 <tbody className="text-sm font-semibold text-on-surface">
-                  <tr className="border-b border-surface-container-low hover:bg-slate-50 transition-colors">
-                    <td className="px-8 py-6 flex items-center gap-3">
-                      <div className="w-8 h-8 bg-primary text-on-primary flex items-center justify-center font-black text-xs">JW</div>
-                      <span className="text-slate-900">Jacob Wright</span>
-                    </td>
-                    <td className="px-8 py-6 text-slate-900">24</td>
-                    <td className="px-8 py-6"><span className="px-2 py-1 bg-primary text-on-primary text-[10px] font-bold uppercase">Male</span></td>
-                    <td className="px-8 py-6 text-slate-900">London, UK</td>
-                    <td className="px-8 py-6"><span className="text-secondary font-black uppercase tracking-tighter">Gold</span></td>
-                    <td className="px-8 py-6 text-right font-medium text-slate-400 uppercase text-xs">Today, 14:02</td>
-                  </tr>
-                  <tr className="border-b border-surface-container-low hover:bg-slate-50 transition-colors">
-                    <td className="px-8 py-6 flex items-center gap-3">
-                      <div className="w-8 h-8 bg-secondary text-on-secondary flex items-center justify-center font-black text-xs">EL</div>
-                      <span className="text-slate-900">Elena Lopez</span>
-                    </td>
-                    <td className="px-8 py-6 text-slate-900">31</td>
-                    <td className="px-8 py-6"><span className="px-2 py-1 bg-secondary text-on-secondary text-[10px] font-bold uppercase">Female</span></td>
-                    <td className="px-8 py-6 text-slate-900">Madrid, ES</td>
-                    <td className="px-8 py-6"><span className="text-tertiary font-black uppercase tracking-tighter">Platinum</span></td>
-                    <td className="px-8 py-6 text-right font-medium text-slate-400 uppercase text-xs">Today, 13:45</td>
-                  </tr>
-                  <tr className="border-b border-surface-container-low hover:bg-slate-50 transition-colors">
-                    <td className="px-8 py-6 flex items-center gap-3">
-                      <div className="w-8 h-8 bg-tertiary text-on-tertiary flex items-center justify-center font-black text-xs">AX</div>
-                      <span className="text-slate-900">Alex Thorne</span>
-                    </td>
-                    <td className="px-8 py-6 text-slate-900">19</td>
-                    <td className="px-8 py-6"><span className="px-2 py-1 bg-tertiary text-on-tertiary text-[10px] font-bold uppercase">Non-binary</span></td>
-                    <td className="px-8 py-6 text-slate-900">Berlin, DE</td>
-                    <td className="px-8 py-6"><span className="text-slate-500 font-black uppercase tracking-tighter">Standard</span></td>
-                    <td className="px-8 py-6 text-right font-medium text-slate-400 uppercase text-xs">Today, 12:20</td>
-                  </tr>
-                  <tr className="hover:bg-slate-50 transition-colors">
-                    <td className="px-8 py-6 flex items-center gap-3">
-                      <div className="w-8 h-8 bg-surface-container-highest text-slate-700 flex items-center justify-center font-black text-xs">MK</div>
-                      <span className="text-slate-900">Mika Kim</span>
-                    </td>
-                    <td className="px-8 py-6 text-slate-900">42</td>
-                    <td className="px-8 py-6"><span className="px-2 py-1 bg-surface-container-highest text-slate-600 text-[10px] font-bold uppercase">Other</span></td>
-                    <td className="px-8 py-6 text-slate-900">Seoul, KR</td>
-                    <td className="px-8 py-6"><span className="text-primary font-black uppercase tracking-tighter">Diamond</span></td>
-                    <td className="px-8 py-6 text-right font-medium text-slate-400 uppercase text-xs">Today, 09:12</td>
-                  </tr>
+                  {users.map((u, i) => {
+                    const isMale = u.gender === 'MALE';
+                    const isFemale = u.gender === 'FEMALE';
+                    const bgClass = isMale ? 'bg-primary text-on-primary' : isFemale ? 'bg-secondary text-on-secondary' : 'bg-tertiary text-on-tertiary';
+                    
+                    return (
+                      <tr key={u.userId || i} className="border-b border-surface-container-low hover:bg-slate-50 transition-colors">
+                        <td className="px-8 py-6 flex items-center gap-3">
+                          <div className={`w-8 h-8 flex items-center justify-center font-black text-xs ${bgClass}`}>
+                            {u.displayName && u.displayName.length >= 2 ? u.displayName.substring(0, 2).toUpperCase() : u.username ? u.username.substring(0, 2).toUpperCase() : 'U'}
+                          </div>
+                          <span className="text-slate-900">{u.displayName || u.username}</span>
+                        </td>
+                        <td className="px-8 py-6 text-slate-900">{u.age || '-'}</td>
+                        <td className="px-8 py-6">
+                          <span className={`px-2 py-1 text-[10px] font-bold uppercase ${bgClass}`}>
+                            {u.gender || 'Other'}
+                          </span>
+                        </td>
+                        <td className="px-8 py-6 text-right font-medium text-slate-400 uppercase text-xs">Recently</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
