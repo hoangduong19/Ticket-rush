@@ -21,6 +21,12 @@ export async function login(email: string, password: string) {
   try {
     const data: LoginResponse = JSON.parse(text);
     if (data.token) setToken(data.token);
+
+    const idToStore = data.userId || data.id;
+    if (idToStore && typeof window !== 'undefined') {
+      localStorage.setItem('userId', idToStore);
+    }
+
     return data;
   } catch {
     // Backend returned plain JWT token
@@ -45,6 +51,12 @@ export async function signup(payload: Record<string, any>) {
   try {
     const data = JSON.parse(text);
     if (data.token) setToken(data.token);
+
+    const idToStore = data.userId || data.id;
+    if (idToStore && typeof window !== 'undefined') {
+      localStorage.setItem('userId', idToStore);
+    }
+
     return data;
   } catch {
     // Backend returned plain JWT token
@@ -75,7 +87,7 @@ export function getToken() {
       const t = localStorage.getItem('token');
       if (t) return t;
     }
-  } catch (e) {}
+  } catch (e) { }
 
   if (typeof document !== 'undefined') {
     const m = document.cookie.match(/(^|;)\s*token=([^;]+)/);
@@ -86,8 +98,11 @@ export function getToken() {
 
 export function clearToken() {
   try {
-    if (typeof window !== 'undefined' && window.localStorage) localStorage.removeItem('token');
-  } catch (e) {}
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('userId');
+    }
+  } catch (e) { }
   if (typeof document !== 'undefined') {
     document.cookie = `token=; path=/; max-age=0; SameSite=Lax`;
   }
