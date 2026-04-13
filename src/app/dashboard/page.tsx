@@ -57,7 +57,6 @@ export default function Dashboard() {
             gender: data.gender || 'OTHER'
           });
           localStorage.setItem('userId', data.userId);
-          localStorage.setItem('queueUserId', data.userId);
         } else if (res.status === 401) {
           console.error("Token hết hạn hoặc không hợp lệ");
         }

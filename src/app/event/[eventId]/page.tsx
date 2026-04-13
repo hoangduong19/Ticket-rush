@@ -48,12 +48,13 @@ export default function EventDetailPage() {
     }
 
     const handleProceedToBooking = async () => {
-        let userId = localStorage.getItem('queueUserId');
+        const userId = localStorage.getItem('userId');
+
         if (!userId) {
-            // Fallback for browsers without randomUUID
-            userId = typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : 'user-' + new Date().getTime() + '-' + Math.random().toString(36).substring(2, 9);
-            localStorage.setItem('queueUserId', userId);
+            router.push('/login');
+            return;
         }
+        localStorage.setItem('queueUserId', userId);
 
         try {
             const res = await fetch('http://localhost:8080/queue/join', {

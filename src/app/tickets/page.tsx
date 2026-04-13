@@ -1,6 +1,42 @@
+"use client";
+
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
-export default function CustomerLanding() {
+
+interface Ticket {
+  ticketId: string;      
+  eventName: string;
+  sectionName: string;
+  rowNumber: number;     
+  seatNumber: number;
+  price: number;         
+  qrCodeData: string;    
+  purchaseDate: string;  
+  bannerUrl: string;     
+}
+export default function MyTicketsPage() {
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [loading, setLoading] = useState(true);
+  const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL;
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    
+    fetch(`${NEXT_PUBLIC_API_URL}/tickets`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+      .then(res => res.json())
+      .then(data => {
+        setTickets(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Failed to fetch tickets", err);
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) return <div className="p-20 text-center font-bold">Loading Tickets...</div>;
   return (
     <div className="bg-background min-h-screen flex flex-col selection:bg-primary-container selection:text-on-primary-container">
       {/* TopNavBar */}
@@ -26,7 +62,7 @@ export default function CustomerLanding() {
       <main className="flex-grow max-w-7xl mx-auto w-full px-8 py-12">
         <header className="mb-16">
           <h1 className="text-[3.5rem] font-extrabold tracking-tight text-on-surface leading-none mb-4">My Tickets</h1>
-          <p className="text-on-surface-variant font-medium tracking-wide uppercase text-sm">Dashboard Overview • 4 Active Passes</p>
+          <p className="text-on-surface-variant font-medium tracking-wide uppercase text-sm">Dashboard Overview • {tickets.length} Active Passes</p>
         </header>
 
         {/* Ticket Section: Upcoming */}
@@ -36,73 +72,64 @@ export default function CustomerLanding() {
             <div className="flex-grow h-[2px] bg-surface-container-high"></div>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Ticket Card 1 */}
-            <div className="bg-surface-container-lowest flex flex-col md:flex-row group transition-all">
-              <div className="w-full md:w-48 h-64 md:h-auto overflow-hidden">
-                <img alt="Event Image" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB7Kh67w9gyT4eb3MWTu-Fnt6Nzn26W7P9I02R4ekaSKsHDl3t77pFAD0tWR41w4CqjyI_VoJETVpPqTVaED9Rdxom4xOCMxBrx8HU0CJJ7BtLccd2ijARRmrxXX3HsNh2avOEAtUlEu3bCU4g8fWJ_X4yLSRP9i0IjuTk_3aAb8U_QqbH4yvZI8OFTed_MU5ytjR-E6uwsoMfdzd5BxwPNTQswsaYEbGBGwv0YXEWf5VlIt8mTud9zpBClGG36sBjf9roSzBcQVIjb" />
+            {tickets.length === 0 ? (
+              <div className="col-span-2 py-20 text-center opacity-50 font-bold uppercase">
+                Bạn chưa có vé nào.
               </div>
-              <div className="p-8 flex flex-col flex-grow relative">
-                <div className="mb-auto">
-                  <p className="text-[0.75rem] font-bold text-primary uppercase tracking-widest mb-2">OCT 24, 2024 • 8:00 PM</p>
-                  <h2 className="text-[1.375rem] font-bold text-on-surface mb-1 leading-tight">Neon Horizon Festival</h2>
-                  <p className="text-on-surface-variant text-sm font-medium mb-6 uppercase tracking-tight">Main Arena • Section A, Row 12, Seat 45</p>
-                  <div className="grid grid-cols-3 gap-4 bg-surface-container-low p-4">
-                    <div>
-                      <p className="text-[0.625rem] font-bold text-outline uppercase">Gate</p>
-                      <p className="text-sm font-bold text-on-surface">NORTH 4</p>
-                    </div>
-                    <div>
-                      <p className="text-[0.625rem] font-bold text-outline uppercase">Price</p>
-                      <p className="text-sm font-bold text-on-surface">$189.00</p>
-                    </div>
-                    <div>
-                      <p className="text-[0.625rem] font-bold text-outline uppercase">Type</p>
-                      <p className="text-sm font-bold text-on-surface">VIP PASS</p>
-                    </div>
+            ) : (
+              tickets.map((ticket) => (
+                <div key={ticket.ticketId} className="bg-surface-container-lowest flex flex-col md:flex-row group transition-all border border-surface-container-high hover:shadow-lg">
+                  {/* Sử dụng bannerUrl từ DTO */}
+                  <div className="w-full md:w-48 h-64 md:h-auto overflow-hidden bg-slate-200">
+                    <img 
+                      alt={ticket.eventName} 
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                      src={ticket.bannerUrl || "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?q=80&w=500"} 
+                    />
                   </div>
-                </div>
-                <div className="mt-8 flex items-center justify-between">
-                  <Link href="/event" className="bg-primary text-on-primary font-bold px-6 py-3 transition-colors hover:bg-primary-dim active:scale-95 text-sm uppercase inline-block text-center">Details</Link>
-                  <div className="w-20 h-20 bg-white border border-surface-container-high p-1">
-                    <img alt="Ticket QR Code" className="w-full h-full grayscale" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCTLTOzQM-rLpL6N65sDA8i2fz8nylIsyOeXfyLaddgIpDflNgzqRjmU4ia3046DcjBtHFby98Pi4wfRGD-OFOVNIna2AZ7VYcNNYCJcmd5Q0qIMjKQdW7YCSnnrIB_m9l51Xk7TlcYbrya5yTHnJNW82Wz2Wy_KdljuTEXdIXPkibEkTs6tW1aO7a4TSsQ_mdFCFOY7UabQ4hAnN8qmh7A3Js3eHe3IZ6mD-hyRlyp71IuRAVV7SKBEybliN6IL0_HQX1a7bkvcB8Q" />
-                  </div>
-                </div>
-              </div>
-            </div>
 
-            {/* Ticket Card 2 */}
-            <div className="bg-surface-container-lowest flex flex-col md:flex-row group transition-all">
-              <div className="w-full md:w-48 h-64 md:h-auto overflow-hidden">
-                <img alt="Event Image" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDAP2XJlDgTr7Q3dyFRqHi3jrKzeDp0sMpmbjBCLfeQftEQqi8V6Cs1FHoddr339XgWcBJ-n5ZXbqVbSSlX0jmHJkC4dboE4uKaZf8qE19UiC868GIxCTRLca02hWfqlUIUzFmf6C1Je7H2GjoCHyv-7hR1_f-kLOnfjzKeZijvYADey5xYjUBsIUb1ziVVdgK4JBDQrcQk7S_3cXsOqXZX1D6YRF4Mfv8j20bVS7RqjW-4Rl-HuIR8za2EYrbl8utrN5ByZ6vQxJam" />
-              </div>
-              <div className="p-8 flex flex-col flex-grow relative">
-                <div className="mb-auto">
-                  <p className="text-[0.75rem] font-bold text-primary uppercase tracking-widest mb-2">NOV 12, 2024 • 9:00 AM</p>
-                  <h2 className="text-[1.375rem] font-bold text-on-surface mb-1 leading-tight">Global Tech Summit</h2>
-                  <p className="text-on-surface-variant text-sm font-medium mb-6 uppercase tracking-tight">Convention Center • Hall 3, Seat B-09</p>
-                  <div className="grid grid-cols-3 gap-4 bg-surface-container-low p-4">
-                    <div>
-                      <p className="text-[0.625rem] font-bold text-outline uppercase">Gate</p>
-                      <p className="text-sm font-bold text-on-surface">LEVEL 2</p>
+                  <div className="p-8 flex flex-col flex-grow relative">
+                    <div className="mb-auto">
+                      <p className="text-[0.75rem] font-bold text-primary uppercase tracking-widest mb-2">
+                        {new Date(ticket.purchaseDate).toLocaleString('vi-VN')}
+                      </p>
+                      <h2 className="text-[1.375rem] font-bold text-on-surface mb-1 leading-tight">
+                        {ticket.eventName}
+                      </h2>
+                      {/* Thêm cả Row Number vào đây cho chi tiết */}
+                      <p className="text-on-surface-variant text-sm font-medium mb-6 uppercase tracking-tight">
+                        {ticket.sectionName} • Hàng {ticket.rowNumber} • Ghế {ticket.seatNumber}
+                      </p>
+
+                      <div className="grid grid-cols-3 gap-4 bg-surface-container-low p-4">
+                        <div className="col-span-1">
+                          <p className="text-[0.625rem] font-bold text-outline uppercase">Giá vé</p>
+                          <p className="text-sm font-bold text-on-surface">${ticket.price.toFixed(2)}</p>
+                        </div>
+                        <div className="col-span-2">
+                          <p className="text-[0.625rem] font-bold text-outline uppercase">Mã giữ chỗ</p>
+                          <p className="text-[10px] font-mono font-bold text-on-surface truncate">
+                            {ticket.ticketId}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-[0.625rem] font-bold text-outline uppercase">Price</p>
-                      <p className="text-sm font-bold text-on-surface">$450.00</p>
-                    </div>
-                    <div>
-                      <p className="text-[0.625rem] font-bold text-outline uppercase">Type</p>
-                      <p className="text-sm font-bold text-on-surface">STANDARD</p>
+
+                    <div className="mt-8 flex items-center justify-between">
+                     
+                      <div className="w-20 h-20 bg-white border border-surface-container-high p-1">
+                        {/* Sử dụng qrCodeData từ DTO để tạo QR */}
+                        <img 
+                          alt="QR Code" 
+                          className="w-full h-full grayscale" 
+                          src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${ticket.qrCodeData}`} 
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
-                <div className="mt-8 flex items-center justify-between">
-                  <button className="bg-primary text-on-primary font-bold px-6 py-3 transition-colors hover:bg-primary-dim active:scale-95 text-sm uppercase">Details</button>
-                  <div className="w-20 h-20 bg-white border border-surface-container-high p-1">
-                    <img alt="Ticket QR Code" className="w-full h-full grayscale" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDMrclZXsP8mi7Fw_xepG2q7tw66SE9RKkWZ45yM4sFmpOX6_e8ibsR891xaC0aHERNLegUwFA9jvwq1Sl306B1yTZoQqGyUt_rue0ExF1rOZjouB2EN1edAbgSwafoP09syMMV0xMXOc6U4fQot8FgvWHhtfMLJ6NJCVp7TeexfgN6lJ0w4934zNNTnaArSzwbCYx3sR8KrHSOyqm6T7yTCilRl1l9lCbi3tp8WsFfmB8OK5RoVu5nqqLtkIpGtEjbQL55QFOXFU11" />
-                  </div>
-                </div>
-              </div>
-            </div>
+              ))
+            )}
           </div>
         </section>
 

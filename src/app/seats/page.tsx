@@ -23,10 +23,16 @@ function SeatSelectionContent() {
   useEffect(() => {
     const storedId = localStorage.getItem('userId');
     const storedToken = localStorage.getItem('token');
-
+    const savedCart = localStorage.getItem('checkoutCart');
     if (storedId) setUserId(storedId);
     if (storedToken) setToken(storedToken);
-
+    if (savedCart) {
+    const { seats, eventId: savedEventId } = JSON.parse(savedCart);
+    // Chỉ khôi phục nếu đúng eventId đang xem
+    if (savedEventId === eventId) {
+      setSelectedSeats(seats);
+    }
+  }
     if (!eventId) return; // Nếu không có eventId thì không làm gì cả
 
     // 1. Định nghĩa hàm lấy dữ liệu (Fetch)
@@ -134,7 +140,22 @@ function SeatSelectionContent() {
   const handleConfirmSelection = async (e: React.MouseEvent) => {
     e.preventDefault();
     if (!isNotBot || selectedSeats.length === 0) return;
+    const savedCartStr = localStorage.getItem('checkoutCart');
+    if (savedCartStr) {
+      const savedCart = JSON.parse(savedCartStr);
+      
+      // Kiểm tra xem danh sách ghế hiện tại có giống hệt ghế đã lưu không
+      const isSameSelection = 
+        savedCart.seats.length === selectedSeats.length &&
+        selectedSeats.every(s => savedCart.seats.some((ss: any) => ss.seatId === s.seatId));
 
+      // Nếu giống hệt và vẫn còn holdId, đi thẳng sang Checkout, không gọi API nữa
+      if (isSameSelection && savedCart.holdId) {
+        console.log("Sử dụng lại Reservation cũ...");
+        router.push('/checkout');
+        return;
+      }
+    }
     setLoading(true); // Bật loading khi đang gọi API
     try {
       const response = await fetch(`http://localhost:8080/seats/reservations`, {
@@ -157,7 +178,8 @@ function SeatSelectionContent() {
           holdId: holdId, // LƯU QUAN TRỌNG: Để trang checkout dùng API getHoldDetails
           seats: selectedSeats,
           total: totalPrice,
-          eventId: eventId
+          eventId: eventId,
+          expiresAt: expiresAt
         };
 
         localStorage.setItem('checkoutCart', JSON.stringify(cartData));

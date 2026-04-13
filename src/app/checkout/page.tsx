@@ -2,36 +2,107 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
 
 export default function Checkout() {
   const router = useRouter();
+  const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL;
+  const [timeLeft, setTimeLeft] = useState<string>("--:--");
+  const [isExpired, setIsExpired] = useState(false);
 
+  useEffect(() => {
+    const cartDataStr = localStorage.getItem('checkoutCart');
+    if (!cartDataStr) {
+      router.push('/events'); // Không có giỏ hàng thì quay về
+      return;
+    }
+
+    const cartData = JSON.parse(cartDataStr);
+    const expiresAt = cartData.expiresAt;
+    
+    if (!expiresAt) return;
+
+    const calculateTime = () => {
+      const now = new Date().getTime();
+      const end = new Date(expiresAt).getTime();
+      const diff = end - now;
+
+      if (diff <= 0) {
+        setTimeLeft("00:00");
+        setIsExpired(true);
+        alert("Phiên thanh toán đã hết hạn!");
+        router.push('/events');
+        return false;
+      }
+
+      const mins = Math.floor(diff / 60000);
+      const secs = Math.floor((diff % 60000) / 1000);
+      setTimeLeft(`${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`);
+      return true;
+    };
+
+    calculateTime(); // Chạy ngay lập tức
+    const interval = setInterval(calculateTime, 1000);
+
+    return () => clearInterval(interval);
+  }, [router]);
   const handleConfirmPurchase = async () => {
+    if (isExpired) {
+      alert("Hết thời gian thanh toán!");
+      return;
+    }
+
+    // 1. Lấy dữ liệu
     const userId = localStorage.getItem('queueUserId');
     const cartDataStr = localStorage.getItem('checkoutCart');
+    const token = localStorage.getItem('token');
     
-    if (userId && cartDataStr) {
-      try {
-        const cartData = JSON.parse(cartDataStr);
-        if (cartData.eventId) {
-          await fetch('http://localhost:8080/queue/complete', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ eventId: cartData.eventId, userId: userId })
-          });
-        }
-      } catch (err) {
-        console.error('Error completing queue session', err);
-      }
+    if (!userId || !token || !cartDataStr) {
+      alert("Thông tin phiên làm việc không hợp lệ!");
+      return;
     }
     
-    // Clear session details upon completion
-    localStorage.removeItem('checkoutCart');
-    localStorage.removeItem('queueUserId');
-    
-    alert('Purchase Confirmed! Queue slot released.');
-    router.push('/success');
-  };
+    const cartData = JSON.parse(cartDataStr);
+    const { holdId, eventId } = cartData;
+
+    try {
+      // BƯỚC 1: Gọi API Checkout của ông (Tạo vé trong DB)
+      const checkoutRes = await fetch(`${NEXT_PUBLIC_API_URL}/checkout?holdId=${holdId}`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (!checkoutRes.ok) {
+        const errMsg = await checkoutRes.text();
+        throw new Error(errMsg || "Lỗi khi xử lý thanh toán");
+      }
+
+      try {
+        await fetch(`${NEXT_PUBLIC_API_URL}/queue/complete`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}` 
+          },
+          body: JSON.stringify({ eventId: eventId, userId: userId })
+        });
+      } catch (queueErr) {
+        console.error("Dọn dẹp hàng chờ thất bại:", queueErr);
+      }
+
+      localStorage.removeItem('checkoutCart');
+      localStorage.removeItem('queueUserId'); 
+      
+      alert('Thanh toán thành công! Vé đã được xuất.');
+      router.push('/tickets');
+      
+      return;
+
+    } catch (err: any) {
+      alert(err.message);
+      console.error("Checkout error:", err);
+    }
+};
 
   return (
     <div className="bg-background text-on-background min-h-screen flex flex-col">
@@ -60,7 +131,7 @@ export default function Checkout() {
             <span className="material-symbols-outlined text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>timer</span>
             <div>
               <p className="text-xs font-bold tracking-widest uppercase opacity-80">Reserved Status</p>
-              <h2 className="text-2xl font-black tracking-tight uppercase">YOUR SEATS ARE HELD FOR 09:45</h2>
+              <h2 className="text-2xl font-black tracking-tight uppercase">YOUR SEATS ARE HELD FOR<span className="tabular-nums">{timeLeft}</span></h2>
             </div>
           </div>
           <div className="hidden lg:block text-right">
@@ -154,8 +225,12 @@ export default function Checkout() {
                   </div>
                 </div>
               </div>
-              <button onClick={handleConfirmPurchase} className="w-full bg-primary text-on-primary py-6 text-xl font-black uppercase tracking-widest hover:bg-primary-dim transition-colors active:translate-y-0.5">
-                Confirm Purchase
+              <button 
+                onClick={handleConfirmPurchase} 
+                disabled={isExpired}
+                className={`w-full py-6 text-xl font-black uppercase tracking-widest transition-colors active:translate-y-0.5 ${isExpired ? 'bg-slate-400 cursor-not-allowed' : 'bg-primary text-on-primary hover:bg-primary-dim'}`}
+              >
+                {isExpired ? "Session Expired" : "Confirm Purchase"}
               </button>
               <p className="text-[0.75rem] text-center text-outline-variant font-bold uppercase tracking-tighter">
                 By clicking confirm, you agree to the TicketRush Terms of Service
