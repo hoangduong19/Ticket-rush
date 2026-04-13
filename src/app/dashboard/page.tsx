@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? '';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080';
 
 export default function Dashboard() {
   const [user, setUser] = useState({
@@ -29,7 +29,7 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const token = localStorage.getItem('token'); 
+        const token = localStorage.getItem('token');
         if (!token) {
           console.warn("Chưa có token, vui lòng đăng nhập!");
           setLoading(false);
@@ -66,7 +66,7 @@ export default function Dashboard() {
         setLoading(false);
       }
     };
-    
+
     fetchUserData();
   }, []);
 
@@ -74,14 +74,14 @@ export default function Dashboard() {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      
+
       const res = await fetch(`${API_BASE}/users/me`, {
         method: 'PUT',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}` 
+          'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(formData), 
+        body: JSON.stringify(formData),
       });
 
       if (res.ok) {
@@ -101,36 +101,36 @@ export default function Dashboard() {
     if (!file) return;
 
     const previewUrl = URL.createObjectURL(file);
-    setAvatarPreview(previewUrl); 
+    setAvatarPreview(previewUrl);
     setIsUploading(true);
 
     const uploadData = new FormData();
     uploadData.append('file', file);
 
     try {
-        const token = localStorage.getItem('token');
+      const token = localStorage.getItem('token');
 
-        const res = await fetch(`${API_BASE}/users/me/avatar`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            },
-            body: uploadData,
-        });
+      const res = await fetch(`${API_BASE}/users/me/avatar`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: uploadData,
+      });
 
-        if (res.ok) {
-            const data = await res.json();
-            setUser(prev => ({ ...prev, avatarUrl: data.url || data.avatarUrl }));
-            alert("Upload thành công!");
-        } else {
-            setAvatarPreview(null);
-            alert("Upload thất bại!");
-        }
-    } catch (err) {
+      if (res.ok) {
+        const data = await res.json();
+        setUser(prev => ({ ...prev, avatarUrl: data.url || data.avatarUrl }));
+        alert("Upload thành công!");
+      } else {
         setAvatarPreview(null);
-        alert("Lỗi kết nối khi upload!");
+        alert("Upload thất bại!");
+      }
+    } catch (err) {
+      setAvatarPreview(null);
+      alert("Lỗi kết nối khi upload!");
     } finally {
-        setIsUploading(false);
+      setIsUploading(false);
     }
   };
 
@@ -146,7 +146,7 @@ export default function Dashboard() {
   return (
     <div className="bg-background text-on-background font-body antialiased min-h-screen flex flex-col">
       {/* TopNavBar */}
-       <nav className="bg-slate-50 dark:bg-slate-950 w-full top-0 left-0 flex justify-between items-center px-8 py-6 max-w-none">
+      <nav className="bg-slate-50 dark:bg-slate-950 w-full top-0 left-0 flex justify-between items-center px-8 py-6 max-w-none">
         <div className="flex items-center gap-12">
           <Link href="/" className="text-2xl font-black italic tracking-tighter text-blue-700 dark:text-blue-500 font-headline">TicketRush</Link>
           <div className="hidden md:flex gap-8 items-center">
@@ -173,7 +173,7 @@ export default function Dashboard() {
           <div className="lg:col-span-8 bg-surface-container-lowest p-12 flex flex-col md:flex-row gap-12 items-start border-2 border-black">
             <div className="w-48 h-48 bg-primary relative shrink-0 border-2 border-black">
               <img className="w-full h-full object-cover contrast-125" alt="Profile" src={avatarPreview || user.avatarUrl || "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"} />
-              
+
               {isUploading && (
                 <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center z-10 transition-opacity">
                   <span className="material-symbols-outlined text-white text-3xl animate-spin mb-2">sync</span>
@@ -182,7 +182,7 @@ export default function Dashboard() {
               )}
 
               {/* Nút Update Avatar */}
-              <button 
+              <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isUploading}
                 className="absolute -bottom-2 -left-2 bg-black text-white w-10 h-10 flex items-center justify-center hover:bg-blue-700 border-2 border-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed z-20"
@@ -190,7 +190,7 @@ export default function Dashboard() {
                 <span className="material-symbols-outlined text-sm">photo_camera</span>
               </button>
               <input type="file" ref={fileInputRef} onChange={handleAvatarChange} className="hidden" accept="image/*" />
-              
+
               <div className="absolute -bottom-4 -right-4 bg-secondary px-4 py-2 text-on-secondary font-bold text-xs uppercase tracking-widest z-20">Verified</div>
             </div>
 
@@ -226,29 +226,29 @@ export default function Dashboard() {
               <form onSubmit={handleUpdateProfile} className="flex flex-col gap-8 p-8">
                 <div className="flex flex-col">
                   <label className="text-[10px] font-black uppercase tracking-widest text-outline mb-2">Full Name</label>
-                  <input 
-                    className="bg-surface-container-high border-none border-b-2 border-transparent focus:border-primary focus:ring-0 p-4 font-bold uppercase tracking-tight outline-none" 
-                    type="text" 
+                  <input
+                    className="bg-surface-container-high border-none border-b-2 border-transparent focus:border-primary focus:ring-0 p-4 font-bold uppercase tracking-tight outline-none"
+                    type="text"
                     value={formData.displayName}
-                    onChange={(e) => setFormData({...formData, displayName: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-8">
                   <div className="flex flex-col">
                     <label className="text-[10px] font-black uppercase tracking-widest text-outline mb-2">Age</label>
-                    <input 
-                      className="bg-surface-container-high border-none border-b-2 border-transparent focus:border-primary focus:ring-0 p-4 font-bold uppercase tracking-tight outline-none" 
-                      type="number" 
+                    <input
+                      className="bg-surface-container-high border-none border-b-2 border-transparent focus:border-primary focus:ring-0 p-4 font-bold uppercase tracking-tight outline-none"
+                      type="number"
                       value={formData.age}
-                      onChange={(e) => setFormData({...formData, age: parseInt(e.target.value) || 0})}
+                      onChange={(e) => setFormData({ ...formData, age: parseInt(e.target.value) || 0 })}
                     />
                   </div>
                   <div className="flex flex-col">
                     <label className="text-[10px] font-black uppercase tracking-widest text-outline mb-2">Gender</label>
-                    <select 
+                    <select
                       className="bg-surface-container-high border-none border-b-2 border-transparent focus:border-primary focus:ring-0 p-4 font-bold uppercase tracking-tight h-[58px] outline-none"
                       value={formData.gender}
-                      onChange={(e) => setFormData({...formData, gender: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
                     >
                       <option value="MALE">Male</option>
                       <option value="FEMALE">Female</option>

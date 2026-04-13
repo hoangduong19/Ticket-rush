@@ -27,12 +27,12 @@ function SeatSelectionContent() {
     if (storedId) setUserId(storedId);
     if (storedToken) setToken(storedToken);
     if (savedCart) {
-    const { seats, eventId: savedEventId } = JSON.parse(savedCart);
-    // Chỉ khôi phục nếu đúng eventId đang xem
-    if (savedEventId === eventId) {
-      setSelectedSeats(seats);
+      const { seats, eventId: savedEventId } = JSON.parse(savedCart);
+      // Chỉ khôi phục nếu đúng eventId đang xem
+      if (savedEventId === eventId) {
+        setSelectedSeats(seats);
+      }
     }
-  }
     if (!eventId) return; // Nếu không có eventId thì không làm gì cả
 
     // 1. Định nghĩa hàm lấy dữ liệu (Fetch)
@@ -143,9 +143,9 @@ function SeatSelectionContent() {
     const savedCartStr = localStorage.getItem('checkoutCart');
     if (savedCartStr) {
       const savedCart = JSON.parse(savedCartStr);
-      
+
       // Kiểm tra xem danh sách ghế hiện tại có giống hệt ghế đã lưu không
-      const isSameSelection = 
+      const isSameSelection =
         savedCart.seats.length === selectedSeats.length &&
         selectedSeats.every(s => savedCart.seats.some((ss: any) => ss.seatId === s.seatId));
 
@@ -173,6 +173,8 @@ function SeatSelectionContent() {
 
       if (response.ok) {
         const holdId = await response.json(); // Nhận UUID từ Backend
+
+        setSelectedSeats([]); // Xóa các ghế đang chọn ở local để hiển thị màu từ Server
 
         const cartData = {
           holdId: holdId, // LƯU QUAN TRỌNG: Để trang checkout dùng API getHoldDetails
@@ -266,11 +268,12 @@ function SeatSelectionContent() {
 
                     if (isSelected) {
                       statusClass = 'bg-tertiary cursor-pointer hover:scale-105';
-                    } else if (isSold) {
-                      statusClass = 'bg-surface-container-highest cursor-not-allowed opacity-50';
                     } else if (isLocked) {
                       statusClass = 'bg-amber-500 cursor-not-allowed';
+                    } else if (isSold) {
+                      statusClass = 'bg-surface-container-highest cursor-not-allowed opacity-50';
                     }
+
 
                     return (
                       <button
