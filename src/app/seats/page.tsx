@@ -17,6 +17,9 @@ function SeatSelectionContent() {
   const [token, setToken] = useState<string | null>(null);
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState<string | null>(null);
+  // Danh sách seatId mà người dùng đang giữ (từ hold cũ trong localStorage)
+  // Dùng để phân biệt "Locked bởi mình" vs "Locked bởi người khác"
+  const [myHeldSeatIds, setMyHeldSeatIds] = useState<Set<string>>(new Set());
 
   const SERVICE_FEE_RATE = 0.15;
 
@@ -27,10 +30,21 @@ function SeatSelectionContent() {
     if (storedId) setUserId(storedId);
     if (storedToken) setToken(storedToken);
     if (savedCart) {
-      const { seats, eventId: savedEventId } = JSON.parse(savedCart);
-      // Chỉ khôi phục nếu đúng eventId đang xem
-      if (savedEventId === eventId) {
-        setSelectedSeats(seats);
+      try {
+        const { seats, eventId: savedEventId, holdId } = JSON.parse(savedCart);
+        // Chỉ khôi phục nếu đúng eventId đang xem
+        if (savedEventId === eventId && Array.isArray(seats)) {
+          setSelectedSeats(seats);
+          // Nếu có holdId → các ghế này đang bị Locked BỞI MÌNH
+          // Lưu lại để toggleSeat có thể phân biệt
+          if (holdId) {
+            setMyHeldSeatIds(new Set(seats.map((s: any) => s.seatId)));
+            // User đã xác nhận "not a bot" từ lần trước → tự check lại
+            setIsNotBot(true);
+          }
+        }
+      } catch {
+        // localStorage corrupted, bỏ qua
       }
     }
     if (!eventId) return; // Nếu không có eventId thì không làm gì cả
@@ -113,20 +127,41 @@ function SeatSelectionContent() {
     return () => clearInterval(interval);
   }, [expiresAt]);
   const toggleSeat = (seat: any) => {
-    const isLocked = seat.status === 'Locked';
-    const isSold = seat.status === 'Sold' || seat.status === 'Booked' || !seat.available;
-    if (isLocked || isSold) return;
+    const isAlreadySelected = selectedSeats.some(s => s.seatId === seat.seatId);
 
-    setSelectedSeats(prev => {
-      if (prev.some(s => s.seatId === seat.seatId)) {
-        return prev.filter(s => s.seatId !== seat.seatId);
-      } else {
-        return [...prev, seat].sort((a, b) => {
-          if (a.rowNumber === b.rowNumber) return a.seatNumber - b.seatNumber;
-          return a.rowNumber - b.rowNumber;
-        });
-      }
-    });
+    // [ƯU TIÊN SỐ 1] Luôn cho phép bỏ chọn ghế đang selected
+    // Không được check bất kỳ status nào ở đây,
+    // vì backend trả về available=false khi Locked → sẽ bị chặn sai
+    if (isAlreadySelected) {
+      setSelectedSeats(prev => prev.filter(s => s.seatId !== seat.seatId));
+      return;
+    }
+
+    // Từ đây chỉ xử lý trường hợp THÊM ghế mới
+    const isLocked = seat.status === 'Locked';
+    // Dùng status thay vì !available để tránh false-positive với ghế Locked
+    const isSold = seat.status === 'Sold' || seat.status === 'Booked';
+    const isMyHeldSeat = myHeldSeatIds.has(seat.seatId);
+
+    if (isSold) return;
+    if (isLocked && !isMyHeldSeat) return;
+
+    // Khi re-add ghế từ hold cũ, ưu tiên dùng dữ liệu đã lưu (có price, sectionName, ...)
+    const savedCartStr = localStorage.getItem('checkoutCart');
+    let seatToAdd = seat;
+    if (savedCartStr && isMyHeldSeat) {
+      try {
+        const savedCart = JSON.parse(savedCartStr);
+        const savedSeat = savedCart.seats?.find((s: any) => s.seatId === seat.seatId);
+        if (savedSeat) seatToAdd = savedSeat;
+      } catch { /* ignore */ }
+    }
+    setSelectedSeats(prev =>
+      [...prev, seatToAdd].sort((a, b) => {
+        if (a.rowNumber === b.rowNumber) return a.seatNumber - b.seatNumber;
+        return a.rowNumber - b.rowNumber;
+      })
+    );
   };
 
   const removeSeat = (seatId: string) => {
@@ -139,7 +174,14 @@ function SeatSelectionContent() {
 
   const handleConfirmSelection = async (e: React.MouseEvent) => {
     e.preventDefault();
-    if (!isNotBot || selectedSeats.length === 0) return;
+    if (selectedSeats.length === 0) {
+      alert("Vui lòng chọn ít nhất một ghế!");
+      return;
+    }
+    if (!isNotBot) {
+      alert("Vui lòng xác nhận bạn không phải bot trước khi tiếp tục!");
+      return;
+    }
     const savedCartStr = localStorage.getItem('checkoutCart');
     if (savedCartStr) {
       const savedCart = JSON.parse(savedCartStr);
@@ -261,27 +303,35 @@ function SeatSelectionContent() {
                   <div className="col-span-12 py-12 text-on-surface-variant font-bold">No seat data available</div>
                 ) : (
                   seatsData.map((seat) => {
-                    let statusClass = 'bg-primary cursor-pointer hover:scale-105';
                     const isSelected = selectedSeats.some(s => s.seatId === seat.seatId);
                     const isLocked = seat.status === 'Locked';
                     const isSold = seat.status === 'Sold' || seat.status === 'Booked' || !seat.available;
+                    const isMyHeld = myHeldSeatIds.has(seat.seatId);
 
+                    let statusClass = 'bg-primary cursor-pointer hover:scale-105';
                     if (isSelected) {
                       statusClass = 'bg-tertiary cursor-pointer hover:scale-105';
+                    } else if (isLocked && isMyHeld) {
+                      // Ghế bị locked bởi chính mình → hiển thị như available để user biết có thể re-add
+                      statusClass = 'bg-tertiary/50 cursor-pointer hover:scale-105 ring-2 ring-tertiary ring-offset-1';
                     } else if (isLocked) {
                       statusClass = 'bg-amber-500 cursor-not-allowed';
                     } else if (isSold) {
                       statusClass = 'bg-surface-container-highest cursor-not-allowed opacity-50';
                     }
 
+                    // Ghế đang selected → KHÔNG BAO GIỜ disable (luôn cho phép bỏ chọn)
+                    // Ghế available=false khi Locked → dùng status thay vì available
+                    const isSoldStrict = seat.status === 'Sold' || seat.status === 'Booked';
+                    const isDisabled = !isSelected && (isSoldStrict || (isLocked && !isMyHeld));
 
                     return (
                       <button
                         key={seat.seatId}
                         onClick={() => toggleSeat(seat)}
-                        disabled={isSold || isLocked}
+                        disabled={isDisabled}
                         className={`w-6 h-6 sm:w-8 sm:h-8 ${statusClass} transition-all flex items-center justify-center group ${isSelected ? 'shadow-[0_0_8px_rgba(0,105,71,0.6)]' : ''}`}
-                        title={`${seat.sectionName} - Row ${seat.rowNumber}, Seat ${seat.seatNumber} | $${seat.price}`}
+                        title={`${seat.sectionName} - Row ${seat.rowNumber}, Seat ${seat.seatNumber} | $${seat.price}${isMyHeld ? ' (your hold)' : ''}`}
                       >
                         <span className="text-[8px] sm:text-[10px] text-white opacity-0 group-hover:opacity-100 font-bold transition-opacity">{seat.rowNumber}-{seat.seatNumber}</span>
                       </button>
