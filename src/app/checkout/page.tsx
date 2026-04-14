@@ -4,22 +4,49 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 
+const SERVICE_FEE_RATE = 0.15;
+
 export default function Checkout() {
   const router = useRouter();
   const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL;
+
   const [timeLeft, setTimeLeft] = useState<string>("--:--");
   const [isExpired, setIsExpired] = useState(false);
+
+  // Cart state — đọc từ localStorage
+  const [seats, setSeats] = useState<any[]>([]);
+  const [holdId, setHoldId] = useState<string | null>(null);
+  const [eventId, setEventId] = useState<string | null>(null);
+
+  // Tính toán giá động từ seats
+  const subtotal = seats.reduce((sum, seat) => sum + (seat.price || 0), 0);
+  const serviceFee = subtotal * SERVICE_FEE_RATE;
+  const total = subtotal + serviceFee;
 
   useEffect(() => {
     const cartDataStr = localStorage.getItem('checkoutCart');
     if (!cartDataStr) {
-      router.push('/events'); // Không có giỏ hàng thì quay về
+      router.push('/events');
       return;
     }
 
-    const cartData = JSON.parse(cartDataStr);
+    let cartData: any;
+    try {
+      cartData = JSON.parse(cartDataStr);
+    } catch {
+      router.push('/events');
+      return;
+    }
+
+    // Load cart vào state
+    if (Array.isArray(cartData.seats)) {
+      setSeats(cartData.seats);
+    }
+    if (cartData.holdId) setHoldId(cartData.holdId);
+    if (cartData.eventId) setEventId(cartData.eventId);
+
+    // Countdown timer
     const expiresAt = cartData.expiresAt;
-    
     if (!expiresAt) return;
 
     const calculateTime = () => {
@@ -41,32 +68,27 @@ export default function Checkout() {
       return true;
     };
 
-    calculateTime(); // Chạy ngay lập tức
+    calculateTime();
     const interval = setInterval(calculateTime, 1000);
-
     return () => clearInterval(interval);
   }, [router]);
+
   const handleConfirmPurchase = async () => {
     if (isExpired) {
       alert("Hết thời gian thanh toán!");
       return;
     }
 
-    // 1. Lấy dữ liệu
-    const userId = localStorage.getItem('queueUserId');
-    const cartDataStr = localStorage.getItem('checkoutCart');
+    // FIX: Dùng 'userId' thay vì 'queueUserId' cho đồng nhất với seats page
+    const userId = localStorage.getItem('userId');
     const token = localStorage.getItem('token');
-    
-    if (!userId || !token || !cartDataStr) {
+
+    if (!userId || !token || !holdId) {
       alert("Thông tin phiên làm việc không hợp lệ!");
       return;
     }
-    
-    const cartData = JSON.parse(cartDataStr);
-    const { holdId, eventId } = cartData;
 
     try {
-      // BƯỚC 1: Gọi API Checkout của ông (Tạo vé trong DB)
       const checkoutRes = await fetch(`${NEXT_PUBLIC_API_URL}/checkout?holdId=${holdId}`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
@@ -77,32 +99,28 @@ export default function Checkout() {
         throw new Error(errMsg || "Lỗi khi xử lý thanh toán");
       }
 
+      // Dọn dẹp queue (best effort, không throw nếu thất bại)
       try {
         await fetch(`${NEXT_PUBLIC_API_URL}/queue/complete`, {
           method: 'POST',
-          headers: { 
+          headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}` 
+            'Authorization': `Bearer ${token}`
           },
-          body: JSON.stringify({ eventId: eventId, userId: userId })
+          body: JSON.stringify({ eventId, userId })
         });
       } catch (queueErr) {
         console.error("Dọn dẹp hàng chờ thất bại:", queueErr);
       }
 
       localStorage.removeItem('checkoutCart');
-      localStorage.removeItem('queueUserId'); 
-      
       alert('Thanh toán thành công! Vé đã được xuất.');
       router.push('/tickets');
-      
-      return;
-
     } catch (err: any) {
       alert(err.message);
       console.error("Checkout error:", err);
     }
-};
+  };
 
   return (
     <div className="bg-background text-on-background min-h-screen flex flex-col">
@@ -125,18 +143,20 @@ export default function Checkout() {
 
       {/* Main Content Canvas */}
       <main className="flex-grow w-full max-w-7xl mx-auto px-8 py-12">
-        {/* Urgency Banner: Tonal Block */}
+        {/* Urgency Banner */}
         <div className="bg-secondary text-on-secondary p-6 mb-12 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <span className="material-symbols-outlined text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>timer</span>
             <div>
               <p className="text-xs font-bold tracking-widest uppercase opacity-80">Reserved Status</p>
-              <h2 className="text-2xl font-black tracking-tight uppercase">YOUR SEATS ARE HELD FOR<span className="tabular-nums">{timeLeft}</span></h2>
+              <h2 className="text-2xl font-black tracking-tight uppercase">
+                YOUR SEATS ARE HELD FOR&nbsp;<span className="tabular-nums">{timeLeft}</span>
+              </h2>
             </div>
           </div>
           <div className="hidden lg:block text-right">
-            <p className="text-xs font-bold tracking-widest uppercase opacity-80">Session ID</p>
-            <p className="font-mono text-sm">TR-99283-X</p>
+            <p className="text-xs font-bold tracking-widest uppercase opacity-80">Hold ID</p>
+            <p className="font-mono text-xs opacity-70 truncate max-w-[180px]">{holdId ?? '—'}</p>
           </div>
         </div>
 
@@ -144,9 +164,9 @@ export default function Checkout() {
           {/* Left Column: Checkout Form (8 cols) */}
           <div className="lg:col-span-8 bg-surface-container-lowest p-8 lg:p-12">
             <h1 className="text-[3.5rem] font-extrabold tracking-tighter leading-none mb-12 text-primary">CHECKOUT</h1>
-            
-            {/* Payment Form Section */}
+
             <section className="space-y-12">
+              {/* Step 1: Delivery */}
               <div>
                 <div className="flex items-center gap-2 mb-6">
                   <span className="bg-primary text-on-primary w-8 h-8 flex items-center justify-center font-bold">1</span>
@@ -155,31 +175,32 @@ export default function Checkout() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-2">
                     <label className="text-[0.75rem] font-bold uppercase tracking-widest text-outline">First Name</label>
-                    <input 
-                      className="w-full bg-surface-container-high p-4 focus:ring-0 focus:outline-none border-b-2 border-transparent focus:border-primary placeholder:opacity-30" 
-                      placeholder="Alex" 
+                    <input
+                      className="w-full bg-surface-container-high p-4 focus:ring-0 focus:outline-none border-b-2 border-transparent focus:border-primary placeholder:opacity-30"
+                      placeholder="Alex"
                       type="text"
                     />
                   </div>
                   <div className="space-y-2">
                     <label className="text-[0.75rem] font-bold uppercase tracking-widest text-outline">Last Name</label>
-                    <input 
-                      className="w-full bg-surface-container-high p-4 focus:ring-0 focus:outline-none border-b-2 border-transparent focus:border-primary placeholder:opacity-30" 
-                      placeholder="Russo" 
+                    <input
+                      className="w-full bg-surface-container-high p-4 focus:ring-0 focus:outline-none border-b-2 border-transparent focus:border-primary placeholder:opacity-30"
+                      placeholder="Russo"
                       type="text"
                     />
                   </div>
                   <div className="md:col-span-2 space-y-2">
                     <label className="text-[0.75rem] font-bold uppercase tracking-widest text-outline">Email Address</label>
-                    <input 
-                      className="w-full bg-surface-container-high p-4 focus:ring-0 focus:outline-none border-b-2 border-transparent focus:border-primary placeholder:opacity-30" 
-                      placeholder="alex.russo@example.com" 
+                    <input
+                      className="w-full bg-surface-container-high p-4 focus:ring-0 focus:outline-none border-b-2 border-transparent focus:border-primary placeholder:opacity-30"
+                      placeholder="alex.russo@example.com"
                       type="email"
                     />
                   </div>
                 </div>
               </div>
 
+              {/* Step 2: Payment */}
               <div>
                 <div className="flex items-center gap-2 mb-6">
                   <span className="bg-primary text-on-primary w-8 h-8 flex items-center justify-center font-bold">2</span>
@@ -189,9 +210,9 @@ export default function Checkout() {
                   <div className="space-y-2">
                     <label className="text-[0.75rem] font-bold uppercase tracking-widest text-outline">Card Number</label>
                     <div className="relative">
-                      <input 
-                        className="w-full bg-surface-container-high p-4 focus:ring-0 focus:outline-none border-b-2 border-transparent focus:border-primary font-mono tracking-widest" 
-                        placeholder="0000 0000 0000 0000" 
+                      <input
+                        className="w-full bg-surface-container-high p-4 focus:ring-0 focus:outline-none border-b-2 border-transparent focus:border-primary font-mono tracking-widest"
+                        placeholder="0000 0000 0000 0000"
                         type="text"
                       />
                       <span className="absolute right-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline">credit_card</span>
@@ -200,35 +221,38 @@ export default function Checkout() {
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-8">
                     <div className="space-y-2">
                       <label className="text-[0.75rem] font-bold uppercase tracking-widest text-outline">Expiry</label>
-                      <input 
-                        className="w-full bg-surface-container-high p-4 focus:ring-0 focus:outline-none border-b-2 border-transparent focus:border-primary" 
-                        placeholder="MM/YY" 
+                      <input
+                        className="w-full bg-surface-container-high p-4 focus:ring-0 focus:outline-none border-b-2 border-transparent focus:border-primary"
+                        placeholder="MM/YY"
                         type="text"
                       />
                     </div>
                     <div className="space-y-2">
                       <label className="text-[0.75rem] font-bold uppercase tracking-widest text-outline">CVV</label>
-                      <input 
-                        className="w-full bg-surface-container-high p-4 focus:ring-0 focus:outline-none border-b-2 border-transparent focus:border-primary" 
-                        placeholder="***" 
+                      <input
+                        className="w-full bg-surface-container-high p-4 focus:ring-0 focus:outline-none border-b-2 border-transparent focus:border-primary"
+                        placeholder="***"
                         type="text"
                       />
                     </div>
                     <div className="col-span-2 md:col-span-1 space-y-2">
                       <label className="text-[0.75rem] font-bold uppercase tracking-widest text-outline">Zip Code</label>
-                      <input 
-                        className="w-full bg-surface-container-high p-4 focus:ring-0 focus:outline-none border-b-2 border-transparent focus:border-primary" 
-                        placeholder="10001" 
+                      <input
+                        className="w-full bg-surface-container-high p-4 focus:ring-0 focus:outline-none border-b-2 border-transparent focus:border-primary"
+                        placeholder="10001"
                         type="text"
                       />
                     </div>
                   </div>
                 </div>
               </div>
-              <button 
-                onClick={handleConfirmPurchase} 
+
+              <button
+                onClick={handleConfirmPurchase}
                 disabled={isExpired}
-                className={`w-full py-6 text-xl font-black uppercase tracking-widest transition-colors active:translate-y-0.5 ${isExpired ? 'bg-slate-400 cursor-not-allowed' : 'bg-primary text-on-primary hover:bg-primary-dim'}`}
+                className={`w-full py-6 text-xl font-black uppercase tracking-widest transition-colors active:translate-y-0.5 ${
+                  isExpired ? 'bg-slate-400 cursor-not-allowed' : 'bg-primary text-on-primary hover:bg-primary-dim'
+                }`}
               >
                 {isExpired ? "Session Expired" : "Confirm Purchase"}
               </button>
@@ -243,9 +267,9 @@ export default function Checkout() {
             {/* Event Identity */}
             <div className="bg-surface-container-low p-8">
               <div className="h-48 w-full bg-surface-dim overflow-hidden mb-6">
-                <img 
-                  className="w-full h-full object-cover grayscale contrast-125 hover:grayscale-0 transition-all duration-500" 
-                  alt="Event Overview" 
+                <img
+                  className="w-full h-full object-cover grayscale contrast-125 hover:grayscale-0 transition-all duration-500"
+                  alt="Event Overview"
                   src="https://lh3.googleusercontent.com/aida-public/AB6AXuD2E-oOcRh6hIgv8jfIRDGS6DF7BuxRI2Bb25uJrfHGpWpVFBXiu9qQBDWr9-aitUfMgOG4YjV07lprXHcVEYvFnDGpofIzRrOXPJB_SNIGL1diezkNx4Y6ndlYP0ioDOqKqtUIh50rhXjyn0GkUShghLFLuvIuLgPVP4kbNWB1FC-e3KrvCifNo1dhmz7QvhGtGYqpR8oTyghyUHifTf6BgugFtYtYVpy3vIoDiGSsWBKVw1MPUbEW-Dn2k8g3_A_avoa2j3guByn6"
                 />
               </div>
@@ -263,42 +287,41 @@ export default function Checkout() {
               </div>
             </div>
 
-            {/* Seat Breakdown */}
+            {/* Seat Breakdown — DYNAMIC từ localStorage */}
             <div className="bg-surface-container-lowest p-8 flex-grow">
               <h3 className="text-sm font-black uppercase tracking-widest mb-6 border-b-2 border-primary pb-2 inline-block">Order Summary</h3>
-              <div className="space-y-6">
-                {/* Ticket Item 1 */}
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-xs font-bold text-outline uppercase tracking-widest">General Admission</p>
-                    <p className="text-lg font-black leading-none">SECTION A, SEAT 12</p>
-                  </div>
-                  <p className="font-bold text-primary">$185.00</p>
-                </div>
-                {/* Ticket Item 2 */}
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-xs font-bold text-outline uppercase tracking-widest">General Admission</p>
-                    <p className="text-lg font-black leading-none">SECTION A, SEAT 13</p>
-                  </div>
-                  <p className="font-bold text-primary">$185.00</p>
-                </div>
-                <div className="pt-6 mt-6 border-t border-surface-container-highest space-y-4">
+
+              <div className="space-y-4">
+                {seats.length === 0 ? (
+                  <p className="text-sm text-on-surface-variant font-bold">Không có ghế nào được chọn.</p>
+                ) : (
+                  seats.map((seat) => (
+                    <div key={seat.seatId} className="flex justify-between items-start">
+                      <div>
+                        <p className="text-xs font-bold text-outline uppercase tracking-widest">
+                          {seat.seatType || 'Standard'} Admission
+                        </p>
+                        <p className="text-base font-black leading-snug uppercase">
+                          {seat.sectionName} — Row {seat.rowNumber}, Seat {seat.seatNumber}
+                        </p>
+                      </div>
+                      <p className="font-bold text-primary whitespace-nowrap ml-4">${seat.price?.toFixed(2)}</p>
+                    </div>
+                  ))
+                )}
+
+                <div className="pt-6 mt-2 border-t border-surface-container-highest space-y-3">
                   <div className="flex justify-between text-on-surface-variant text-sm font-bold uppercase">
                     <span>Subtotal</span>
-                    <span>$370.00</span>
+                    <span>${subtotal.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-on-surface-variant text-sm font-bold uppercase">
-                    <span>Service Fee</span>
-                    <span>$42.50</span>
+                    <span>Service Fee (15%)</span>
+                    <span>${serviceFee.toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between text-on-surface-variant text-sm font-bold uppercase">
-                    <span>Tax</span>
-                    <span>$12.30</span>
-                  </div>
-                  <div className="pt-6 border-t-4 border-inverse-surface flex justify-between items-end">
+                  <div className="pt-4 border-t-4 border-inverse-surface flex justify-between items-end">
                     <span className="text-sm font-black uppercase tracking-widest">Total</span>
-                    <span className="text-4xl font-black text-primary leading-none">$424.80</span>
+                    <span className="text-4xl font-black text-primary leading-none">${total.toFixed(2)}</span>
                   </div>
                 </div>
               </div>
@@ -306,7 +329,7 @@ export default function Checkout() {
           </aside>
         </div>
 
-        {/* Help Section: Asymmetric Layout */}
+        {/* Help Section */}
         <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="p-8 bg-surface-container-low">
             <span className="material-symbols-outlined text-primary text-3xl mb-4">shield</span>
