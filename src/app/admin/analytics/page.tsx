@@ -33,7 +33,7 @@ export default async function AudienceAnalytics() {
 
   const getPctStr = (count: number) => totalUsers > 0 ? ((count / totalUsers) * 100).toFixed(1) : '0.0';
   const getPctNum = (count: number) => totalUsers > 0 ? (count / totalUsers) * 100 : 0;
-  
+
   const malePct = getPctStr(males);
   const femalePct = getPctStr(females);
   const otherPct = getPctStr(other);
@@ -81,7 +81,7 @@ export default async function AudienceAnalytics() {
         </nav>
         <div className="p-6 bg-surface-container-highest">
           <div className="flex items-center gap-3">
-            <img alt="Admin Avatar" className="w-10 h-10 object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD8XpUv4yqBXDrN1KvICMpWaJHrMpiDTWZwMrNjzP_2ur60ZDgE4MHY2yIyw9IN5k7zr2zIL7fBUtyiBCmVcdnXG0oyYWfTaPF7NFxvWdAt9ajMfjdTw58llPabfSMKOjyPHIrBgNPQezsReKnl1wkkdmvVEPQhdPkJHmyXElIqk1YtkbVyfWnPRd-2xP_9EI2eDvJJ8zRt2fGSY1tTHmsHwCOEGCnav0-zIk1bz6TXw0KYAGS0L1vlKoHDKUWa2507n-DGciQmvUXv"/>
+            <img alt="Admin Avatar" className="w-10 h-10 object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD8XpUv4yqBXDrN1KvICMpWaJHrMpiDTWZwMrNjzP_2ur60ZDgE4MHY2yIyw9IN5k7zr2zIL7fBUtyiBCmVcdnXG0oyYWfTaPF7NFxvWdAt9ajMfjdTw58llPabfSMKOjyPHIrBgNPQezsReKnl1wkkdmvVEPQhdPkJHmyXElIqk1YtkbVyfWnPRd-2xP_9EI2eDvJJ8zRt2fGSY1tTHmsHwCOEGCnav0-zIk1bz6TXw0KYAGS0L1vlKoHDKUWa2507n-DGciQmvUXv" />
             <div>
               <p className="text-sm font-bold">Admin User</p>
               <p className="text-xs text-on-surface-variant">System Architect</p>
@@ -104,10 +104,10 @@ export default async function AudienceAnalytics() {
           </div>
           <div className="flex items-center gap-4">
             <div className="relative hidden sm:block">
-              <input className="bg-surface-container-high border-none px-4 py-2 text-sm w-64 focus:ring-0 focus:border-b-2 border-primary" placeholder="Search events..." type="text"/>
+              <input className="bg-surface-container-high border-none px-4 py-2 text-sm w-64 focus:ring-0 focus:border-b-2 border-primary" placeholder="Search events..." type="text" />
             </div>
             <button className="material-symbols-outlined text-on-surface-variant">notifications</button>
-            <img alt="User profile avatar" className="w-8 h-8 object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBCkfDv5XrdLhl0SVFaGkaQKNQI2HrMIvOjuEFugFnByZ3OcXLpuF33BrZg9iI2kWevmD0EZMznmBkQRjpLdN2SsBvteG-zWQiYliaCyAwwejbEPJe76K3obv40A8e8bu54MVfm12PNJ1Xv32OYTRpCtTktQiKqyf3ikCAZ5bJvhYWGtwPf4ydnLlnYShtxlVA9Aw918CoVoJupO010a3wEEiWU3tqo1WzUFOFz4W6e8y_ZURoRWmytRDtuX4jQ-zLcrC6WsyIyxtBX"/>
+            <img alt="User profile avatar" className="w-8 h-8 object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBCkfDv5XrdLhl0SVFaGkaQKNQI2HrMIvOjuEFugFnByZ3OcXLpuF33BrZg9iI2kWevmD0EZMznmBkQRjpLdN2SsBvteG-zWQiYliaCyAwwejbEPJe76K3obv40A8e8bu54MVfm12PNJ1Xv32OYTRpCtTktQiKqyf3ikCAZ5bJvhYWGtwPf4ydnLlnYShtxlVA9Aw918CoVoJupO010a3wEEiWU3tqo1WzUFOFz4W6e8y_ZURoRWmytRDtuX4jQ-zLcrC6WsyIyxtBX" />
           </div>
         </header>
 
@@ -252,7 +252,7 @@ export default async function AudienceAnalytics() {
                     const isMale = u.gender === 'MALE';
                     const isFemale = u.gender === 'FEMALE';
                     const bgClass = isMale ? 'bg-primary text-on-primary' : isFemale ? 'bg-secondary text-on-secondary' : 'bg-tertiary text-on-tertiary';
-                    
+
                     return (
                       <tr key={u.userId || i} className="border-b border-surface-container-low hover:bg-slate-50 transition-colors">
                         <td className="px-8 py-6 flex items-center gap-3">
