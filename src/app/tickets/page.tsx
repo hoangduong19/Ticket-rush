@@ -27,7 +27,7 @@ export default function MyTicketsPage() {
     })
       .then(res => res.json())
       .then(data => {
-        setTickets(data);
+        setTickets(Array.isArray(data) ? data : []);
         setLoading(false);
       })
       .catch(err => {
@@ -106,23 +106,25 @@ export default function MyTicketsPage() {
                           <p className="text-[0.625rem] font-bold text-outline uppercase">Giá vé</p>
                           <p className="text-sm font-bold text-on-surface">${ticket.price.toFixed(2)}</p>
                         </div>
-                        <div className="col-span-2">
-                          <p className="text-[0.625rem] font-bold text-outline uppercase">Mã giữ chỗ</p>
-                          <p className="text-[10px] font-mono font-bold text-on-surface truncate">
-                            {ticket.ticketId}
-                          </p>
-                        </div>
                       </div>
                     </div>
 
                     <div className="mt-8 flex items-center justify-between">
                      
                       <div className="w-20 h-20 bg-white border border-surface-container-high p-1">
-                        {/* Sử dụng qrCodeData từ DTO để tạo QR */}
-                        <img 
-                          alt="QR Code" 
-                          className="w-full h-full grayscale" 
-                          src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${ticket.qrCodeData}`} 
+                        {/* QR encode toàn bộ ticket JSON — khi quét sẽ ra đầy đủ thông tin */}
+                        <img
+                          alt="QR Code"
+                          className="w-full h-full grayscale"
+                          src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(JSON.stringify({
+                            ticketId: ticket.ticketId,
+                            eventName: ticket.eventName,
+                            sectionName: ticket.sectionName,
+                            rowNumber: ticket.rowNumber,
+                            seatNumber: ticket.seatNumber,
+                            price: ticket.price,
+                            purchaseDate: ticket.purchaseDate
+                          }, null, 2))}`}
                         />
                       </div>
                     </div>
