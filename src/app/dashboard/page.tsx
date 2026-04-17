@@ -25,6 +25,7 @@ export default function Dashboard() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -152,8 +153,6 @@ export default function Dashboard() {
           <div className="hidden md:flex gap-8 items-center">
             <Link href="/events" className="text-slate-900 dark:text-slate-100 font-bold opacity-60 font-['Inter'] uppercase tracking-tight hover:bg-blue-700 hover:text-white transition-colors duration-100 px-2 py-1 active:translate-y-0.5">Events</Link>
             <Link href="/tickets" className="text-slate-900 dark:text-slate-100 font-bold opacity-60 font-['Inter'] uppercase tracking-tight hover:bg-blue-700 hover:text-white transition-colors duration-100 px-2 py-1 active:translate-y-0.5">My Tickets</Link>
-            <Link href="/dashboard" className="text-blue-700 dark:text-blue-400 border-b-4 border-blue-700 dark:border-blue-400 pb-1 font-['Inter'] font-bold tracking-tight uppercase active:translate-y-0.5">Dashboard</Link>
-            <Link href="/orders" className="text-slate-900 dark:text-slate-100 font-bold opacity-60 font-['Inter'] uppercase tracking-tight hover:bg-blue-700 hover:text-white transition-colors duration-100 px-2 py-1 active:translate-y-0.5">Orders</Link>
           </div>
         </div>
         <div className="flex items-center gap-4">
@@ -161,9 +160,28 @@ export default function Dashboard() {
             <span className="material-symbols-outlined text-outline">search</span>
             <input className="bg-transparent border-none focus:ring-0 text-xs font-bold uppercase tracking-widest w-48" placeholder="SEARCH EVENTS" type="text" />
           </div>
-          <button className="text-slate-900 dark:text-slate-100 hover:bg-blue-700 hover:text-white p-2 transition-colors flex items-center justify-center">
-            <span className="material-symbols-outlined">account_circle</span>
-          </button>
+          <div className="relative">
+            <button onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="w-10 h-10 bg-surface-container-highest overflow-hidden focus:outline-none hover:ring-2 ring-primary">
+              <img className="w-full h-full object-cover" alt="User profile avatar" src={user.avatarUrl} />
+            </button>
+            {isDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl z-50 flex flex-col">
+                <Link href="/dashboard" className="px-4 py-3 text-sm font-bold uppercase tracking-widest text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-3">
+                  <span className="material-symbols-outlined text-[18px]">person</span> Profile
+                </Link>
+                <div className="h-px bg-slate-200 dark:bg-slate-700 w-full"></div>
+                <button onClick={() => {
+                  localStorage.removeItem('token');
+                  localStorage.removeItem('userId');
+                  localStorage.removeItem('queueUserId');
+                  document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
+                  window.location.href = '/login';
+                }} className="px-4 py-3 text-sm font-bold uppercase tracking-widest text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 text-left transition-colors flex items-center gap-3">
+                  <span className="material-symbols-outlined text-[18px]">logout</span> Logout
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </nav>
       <div className="bg-slate-200 dark:bg-slate-800 h-[2px] w-full"></div>

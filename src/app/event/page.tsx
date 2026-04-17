@@ -12,7 +12,6 @@ export default function EventDetail() {
               <Link href="/events" className="text-blue-700 dark:text-blue-400 font-bold border-b-4 border-blue-700 dark:border-blue-400 pb-1">Events</Link>
               <Link href="/tickets" className="text-slate-600 dark:text-slate-400 font-medium hover:text-blue-600 dark:hover:text-blue-300 transition-colors duration-150">My Tickets</Link>
               <Link href="/dashboard" className="text-slate-600 dark:text-slate-400 font-medium hover:text-blue-600 dark:hover:text-blue-300 transition-colors duration-150">Dashboard</Link>
-              <Link href="/orders" className="text-slate-600 dark:text-slate-400 font-medium hover:text-blue-600 dark:hover:text-blue-300 transition-colors duration-150">Orders</Link>
             </nav>
           </div>
           <div className="flex items-center gap-6">

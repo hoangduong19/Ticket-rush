@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 
 export default function Home() {
   const [avatarUrl, setAvatarUrl] = useState('https://api.dicebear.com/7.x/avataaars/svg?seed=Felix');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   useEffect(() => {
     const fetchAvatar = async () => {
@@ -43,7 +44,6 @@ export default function Home() {
             <nav className="hidden md:flex gap-8 items-center">
               <Link className="text-blue-600 dark:text-blue-500 font-bold border-b-4 border-blue-600 dark:border-blue-500 active:transform active:scale-95 transition-colors duration-100" href="/events">Events</Link>
               <Link className="text-slate-600 dark:text-slate-400 font-medium hover:bg-slate-200 dark:hover:bg-slate-800 active:transform active:scale-95 transition-colors duration-100 px-2 py-1" href="/tickets">My Tickets</Link>
-              <Link className="text-slate-600 dark:text-slate-400 font-medium hover:bg-slate-200 dark:hover:bg-slate-800 active:transform active:scale-95 transition-colors duration-100 px-2 py-1" href="/dashboard">Dashboard</Link>
             </nav>
           </div>
           <div className="flex items-center gap-6">
@@ -53,8 +53,27 @@ export default function Home() {
             </div>
             <div className="flex items-center gap-4">
               <button className="material-symbols-outlined text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 p-2 transition-colors">notifications</button>
-              <div className="w-10 h-10 bg-surface-container-highest overflow-hidden">
-                <img className="w-full h-full object-cover" alt="User profile avatar" src={avatarUrl} />
+              <div className="relative">
+                <button onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="w-10 h-10 bg-surface-container-highest overflow-hidden focus:outline-none hover:ring-2 ring-primary">
+                  <img className="w-full h-full object-cover" alt="User profile avatar" src={avatarUrl} />
+                </button>
+                {isDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl z-50 flex flex-col">
+                    <Link href="/dashboard" className="px-4 py-3 text-sm font-bold uppercase tracking-widest text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-3">
+                      <span className="material-symbols-outlined text-[18px]">person</span> Profile
+                    </Link>
+                    <div className="h-px bg-slate-200 dark:bg-slate-700 w-full"></div>
+                    <button onClick={() => {
+                      localStorage.removeItem('token');
+                      localStorage.removeItem('userId');
+                      localStorage.removeItem('queueUserId');
+                      document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
+                      window.location.href = '/login';
+                    }} className="px-4 py-3 text-sm font-bold uppercase tracking-widest text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 text-left transition-colors flex items-center gap-3">
+                      <span className="material-symbols-outlined text-[18px]">logout</span> Logout
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>

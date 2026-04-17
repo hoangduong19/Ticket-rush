@@ -9,6 +9,7 @@ export default function BrowseEvents() {
   const [searchQuery, setSearchQuery] = useState(""); // Từ khóa tìm kiếm
   const [loading, setLoading] = useState(true); // Trạng thái đang tải
   const [avatarUrl, setAvatarUrl] = useState('https://api.dicebear.com/7.x/avataaars/svg?seed=Felix');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   // 2. Fetch dữ liệu từ Backend Java (Spring Boot)
   useEffect(() => {
@@ -57,13 +58,30 @@ export default function BrowseEvents() {
           <nav className="hidden md:flex items-center gap-8">
             <Link href="/events" className="text-blue-700 dark:text-blue-400 border-b-4 border-blue-700 dark:border-blue-400 pb-1 font-['Inter'] font-bold tracking-tight uppercase">Events</Link>
             <Link href="/tickets" className="text-slate-900 dark:text-slate-100 font-bold opacity-60 hover:bg-blue-700 hover:text-white transition-colors duration-100 font-['Inter'] tracking-tight uppercase">My Tickets</Link>
-            <Link href="/dashboard" className="text-slate-900 dark:text-slate-100 font-bold opacity-60 hover:bg-blue-700 hover:text-white transition-colors duration-100 font-['Inter'] tracking-tight uppercase">Dashboard</Link>
-            <Link href="/orders" className="text-slate-900 dark:text-slate-100 font-bold opacity-60 hover:bg-blue-700 hover:text-white transition-colors duration-100 font-['Inter'] tracking-tight uppercase">Orders</Link>
           </nav>
           <div className="flex items-center gap-4">
             <button className="material-symbols-outlined text-slate-900 dark:text-slate-100 p-2 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors">notifications</button>
-            <div className="w-10 h-10 bg-surface-container-highest overflow-hidden">
-               <img className="w-full h-full object-cover" alt="User profile avatar" src={avatarUrl} />
+            <div className="relative">
+              <button onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="w-10 h-10 bg-surface-container-highest overflow-hidden focus:outline-none hover:ring-2 ring-primary">
+                <img className="w-full h-full object-cover" alt="User profile avatar" src={avatarUrl} />
+              </button>
+              {isDropdownOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl z-50 flex flex-col">
+                  <Link href="/dashboard" className="px-4 py-3 text-sm font-bold uppercase tracking-widest text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-3">
+                    <span className="material-symbols-outlined text-[18px]">person</span> Profile
+                  </Link>
+                  <div className="h-px bg-slate-200 dark:bg-slate-700 w-full"></div>
+                  <button onClick={() => {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('userId');
+                    localStorage.removeItem('queueUserId');
+                    document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
+                    window.location.href = '/login';
+                  }} className="px-4 py-3 text-sm font-bold uppercase tracking-widest text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 text-left transition-colors flex items-center gap-3">
+                    <span className="material-symbols-outlined text-[18px]">logout</span> Logout
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
