@@ -1,6 +1,38 @@
+'use client';
+
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
 
 export default function Home() {
+  const [avatarUrl, setAvatarUrl] = useState('https://api.dicebear.com/7.x/avataaars/svg?seed=Felix');
+
+  useEffect(() => {
+    const fetchAvatar = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080';
+        const res = await fetch(`${API_BASE}/users/me`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.avatarUrl || data.url) {
+            setAvatarUrl(data.avatarUrl || data.url);
+          }
+        }
+      } catch (err) {
+        console.error("Lỗi fetch avatar:", err);
+      }
+    };
+    fetchAvatar();
+  }, []);
+
   return (
     <>
       {/* TopNavBar Component */}
@@ -22,7 +54,7 @@ export default function Home() {
             <div className="flex items-center gap-4">
               <button className="material-symbols-outlined text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 p-2 transition-colors">notifications</button>
               <div className="w-10 h-10 bg-surface-container-highest overflow-hidden">
-                <img alt="User profile avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAfayA0-l2O9QajwUtysoLaQQaz0yo1FqSuNBhIrOT99GNfcuCgfWmQKBC9apr1NitDGKly7WmqVEmdgWOYzM3dIjZfhVAAZyE66DCCWaI2wJDhaGMr0l5g2q8Q31BiA246ny5vfeXm3YXcPLvaBL4LA5bFpcphkqVKpzz4AI3WQ36ZrN-NJPe6qvwGTIkxbueDYfu_I3JM2F4u3EvMylSpdfnUDHgaBojfRNbnk5vd-d7_oqlaEeuMBe-Z5s1mKTdJPNyqom6vJlQx"/>
+                <img className="w-full h-full object-cover" alt="User profile avatar" src={avatarUrl} />
               </div>
             </div>
           </div>

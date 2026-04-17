@@ -8,6 +8,7 @@ export default function BrowseEvents() {
   const [events, setEvents] = useState([]); // Danh sách sự kiện từ API
   const [searchQuery, setSearchQuery] = useState(""); // Từ khóa tìm kiếm
   const [loading, setLoading] = useState(true); // Trạng thái đang tải
+  const [avatarUrl, setAvatarUrl] = useState('https://api.dicebear.com/7.x/avataaars/svg?seed=Felix');
 
   // 2. Fetch dữ liệu từ Backend Java (Spring Boot)
   useEffect(() => {
@@ -24,6 +25,21 @@ export default function BrowseEvents() {
         console.error("Lỗi kết nối Backend:", err);
         setLoading(false);
       });
+
+    const token = localStorage.getItem('token');
+    if (token) {
+      const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080';
+      fetch(`${API_BASE}/users/me`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.avatarUrl || data.url) {
+            setAvatarUrl(data.avatarUrl || data.url);
+          }
+        })
+        .catch(err => console.error("Lỗi fetch avatar:", err));
+    }
   }, []);
 
   // 3. Logic tìm kiếm: Lọc danh sách dựa trên tiêu đề hoặc địa điểm
@@ -45,7 +61,10 @@ export default function BrowseEvents() {
             <Link href="/orders" className="text-slate-900 dark:text-slate-100 font-bold opacity-60 hover:bg-blue-700 hover:text-white transition-colors duration-100 font-['Inter'] tracking-tight uppercase">Orders</Link>
           </nav>
           <div className="flex items-center gap-4">
-            <button className="material-symbols-outlined text-slate-900 dark:text-slate-100 p-2">account_circle</button>
+            <button className="material-symbols-outlined text-slate-900 dark:text-slate-100 p-2 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors">notifications</button>
+            <div className="w-10 h-10 bg-surface-container-highest overflow-hidden">
+               <img className="w-full h-full object-cover" alt="User profile avatar" src={avatarUrl} />
+            </div>
           </div>
         </div>
         <div className="bg-slate-200 dark:bg-slate-800 h-[2px] w-full"></div>

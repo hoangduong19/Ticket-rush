@@ -18,6 +18,7 @@ interface Ticket {
 export default function MyTicketsPage() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
+  const [avatarUrl, setAvatarUrl] = useState('https://api.dicebear.com/7.x/avataaars/svg?seed=Felix');
   const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL;
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -34,6 +35,19 @@ export default function MyTicketsPage() {
         console.error("Failed to fetch tickets", err);
         setLoading(false);
       });
+
+    if (token) {
+      fetch(`${NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/users/me`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.avatarUrl || data.url) {
+            setAvatarUrl(data.avatarUrl || data.url);
+          }
+        })
+        .catch(err => console.error("Failed to fetch avatar", err));
+    }
   }, []);
 
   if (loading) return <div className="p-20 text-center font-bold">Loading Tickets...</div>;
@@ -52,7 +66,7 @@ export default function MyTicketsPage() {
           <div className="flex items-center gap-4">
             <button className="material-symbols-outlined text-slate-600 dark:text-slate-400 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-all active:scale-95">notifications</button>
             <div className="w-10 h-10 bg-surface-container-high overflow-hidden">
-              <img alt="User profile" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDHOpIOpTbZuj4oyI3iklh8gVxENKWWrN9IFESFtSFs9ylUcUr5G0hYn8dJfGAQ7RHLsGMWYnzZwJB-O1wBYfp_eU4Fb-eQFqB6ZGRCO9iU9Ma1c1ZPAM8H9RethPR70iV0Rs_SMNXDMPrUAHa5Wvkiajmprg4EpJf9-0uN1GRnhzJK7Rk1RMHSUrj7dFDEhOth7tMJy7C4h_eabjLUs4DTvPh75i0mbT_pWqUYGNcMVXWYKg0bVnedID8UkJkgtzZ6Rw7JqtidvBs7" />
+              <img alt="User profile" className="w-full h-full object-cover" src={avatarUrl} />
             </div>
           </div>
         </div>
