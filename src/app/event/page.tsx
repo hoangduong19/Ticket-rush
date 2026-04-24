@@ -179,7 +179,7 @@ export default function EventDetail() {
         <div className="flex flex-col md:flex-row justify-between items-center py-12 px-8 gap-6 max-w-full mx-auto">
           <div className="flex flex-col gap-4">
             <Link href="/" className="text-3xl font-black text-white italic">TicketRush</Link>
-            <span className="text-slate-400 font-medium normal-case tracking-normal">© 2024 TicketRush. Built for Precision.</span>
+            <span className="text-slate-400 font-medium normal-case tracking-normal">© 2026 TicketRush. Built for Precision.</span>
           </div>
           <div className="flex flex-wrap justify-center gap-8">
             <Link href="#" className="text-slate-400 hover:text-white transition-colors duration-200">Terms of Service</Link>

@@ -255,7 +255,7 @@ export default function BrowseEvents() {
         <div className="flex flex-col md:flex-row justify-between items-center px-12 py-16 w-full gap-8">
           <div className="flex flex-col items-center md:items-start gap-4">
             <Link href="/" className="text-lg font-black text-white">TICKETRUSH</Link>
-            <div className="font-['Inter'] font-bold text-xs uppercase tracking-widest text-slate-400">© 2024 TICKETRUSH. ARCHITECTURAL PRECISION IN TICKETING.</div>
+            <div className="font-['Inter'] font-bold text-xs uppercase tracking-widest text-slate-400">© 2026 TicketRush. ARCHITECTURAL PRECISION IN TICKETING.</div>
           </div>
           <nav className="flex gap-8">
             <Link href="#" className="font-['Inter'] font-bold text-xs uppercase tracking-widest text-slate-400 hover:text-blue-500 transition-colors">Support</Link>

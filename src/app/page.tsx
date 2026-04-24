@@ -256,7 +256,7 @@ export default function Home() {
         <div className="w-full py-12 px-6 flex flex-col md:flex-row justify-between items-center gap-8">
           <div className="flex flex-col gap-4 items-center md:items-start">
             <Link href="/" className="text-lg font-extrabold uppercase text-slate-900 dark:text-slate-100">TicketRush</Link>
-            <p className="text-slate-500 dark:text-slate-400">© 2024 TicketRush. Precision Engineered.</p>
+            <p className="text-slate-500 dark:text-slate-400">© 2026 TicketRush. Precision Engineered.</p>
           </div>
           <div className="flex gap-8 flex-wrap justify-center">
             <a className="text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-opacity duration-200" href="#">Help Center</a>

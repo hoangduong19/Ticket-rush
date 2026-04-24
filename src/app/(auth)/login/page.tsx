@@ -134,7 +134,7 @@ export default function Login() {
           <Link href="#" className="font-['Inter'] text-sm tracking-wide uppercase font-bold text-slate-400 hover:text-white transition-colors duration-200">Contact</Link>
         </div>
         <div className="flex flex-col items-end">
-          <span className="font-['Inter'] text-sm tracking-wide uppercase font-bold text-slate-400">© 2024 TicketRush. Built for Precision.</span>
+          <span className="font-['Inter'] text-sm tracking-wide uppercase font-bold text-slate-400">© 2026 TicketRush. Built for Precision.</span>
         </div>
       </footer>
     </div>

@@ -158,7 +158,7 @@ function QueueContent() {
           <Link href="#" className="text-slate-500 hover:text-blue-600 transition-opacity duration-200">Terms of Service</Link>
           <Link href="#" className="text-slate-500 hover:text-blue-600 transition-opacity duration-200">Contact</Link>
         </div>
-        <div className="text-slate-500">© 2024 TicketRush. Precision Engineered.</div>
+        <div className="text-slate-500">© 2026 TicketRush. Precision Engineered.</div>
       </footer>
     </div>
   );

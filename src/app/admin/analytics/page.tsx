@@ -280,7 +280,7 @@ export default async function AudienceAnalytics() {
         {/* Footer / Credits */}
         <footer className="p-8 mt-auto border-t-2 border-slate-200 bg-white">
           <div className="flex justify-between items-center">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">© 2024 TicketRush Intelligence Platform</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">© 2026 TicketRush Intelligence Platform</p>
             <div className="flex gap-4">
               <Link href="#" className="text-[10px] font-bold uppercase tracking-widest text-primary cursor-pointer hover:underline">Privacy Policy</Link>
               <Link href="#" className="text-[10px] font-bold uppercase tracking-widest text-primary cursor-pointer hover:underline">API Docs</Link>

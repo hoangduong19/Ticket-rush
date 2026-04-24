@@ -256,7 +256,7 @@ export default function AdminDashboard() {
         <footer className="bg-slate-100 dark:bg-slate-900 w-full py-12 px-6 flex flex-col md:flex-row justify-between items-center gap-8 border-t-2 border-slate-200 dark:border-slate-800">
           <div className="flex flex-col gap-2">
             <span className="text-lg font-extrabold uppercase text-slate-900 dark:text-slate-100">TicketRush</span>
-            <p className="font-['Inter'] text-sm tracking-tight text-slate-500 dark:text-slate-400">© 2024 TicketRush. Precision Engineered.</p>
+            <p className="font-['Inter'] text-sm tracking-tight text-slate-500 dark:text-slate-400">© 2026 TicketRush. Precision Engineered.</p>
           </div>
           <div className="flex flex-wrap gap-8 justify-center">
             <Link href="#" className="font-['Inter'] text-sm tracking-tight text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-opacity duration-200">Help Center</Link>

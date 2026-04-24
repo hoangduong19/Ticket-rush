@@ -227,7 +227,7 @@ export default function MyTicketsPage() {
             <Link href="/admin" className="text-slate-400 hover:text-white transition-colors duration-200">Admin Control</Link>
           </div>
           <div className="font-['Inter'] text-sm tracking-wide uppercase font-bold text-slate-400">
-            © 2024 TicketRush. Built for Precision.
+            © 2026 TicketRush. Built for Precision.
           </div>
         </div>
       </footer>

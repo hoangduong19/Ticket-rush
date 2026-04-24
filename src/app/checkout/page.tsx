@@ -360,7 +360,7 @@ export default function Checkout() {
             <Link href="#" className="font-['Inter'] font-bold text-xs uppercase tracking-widest text-slate-400 hover:text-blue-500 transition-colors">Careers</Link>
           </nav>
           <div className="font-['Inter'] font-bold text-xs uppercase tracking-widest text-white text-center md:text-right">
-            © 2024 TICKETRUSH. ARCHITECTURAL PRECISION IN TICKETING.
+            © 2026 TicketRush. ARCHITECTURAL PRECISION IN TICKETING.
           </div>
         </div>
       </footer>

@@ -72,7 +72,7 @@ export default function AccountRecovery() {
           <Link href="/" className="text-lg font-black text-white uppercase tracking-tighter italic">TicketRush</Link>
           <div className="bg-blue-600 h-2 w-16"></div>
           <p className="font-['Inter'] font-bold text-xs uppercase tracking-widest text-white opacity-90">
-            © 2024 TICKETRUSH. ARCHITECTURAL PRECISION IN TICKETING.
+            © 2026 TicketRush. ARCHITECTURAL PRECISION IN TICKETING.
           </p>
         </div>
         <nav className="flex gap-8">

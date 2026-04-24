@@ -232,7 +232,7 @@ export default function SignUp() {
             <Link href="#" className="font-['Inter'] text-sm tracking-wide uppercase font-bold text-slate-400 hover:text-white transition-colors duration-200">Contact</Link>
           </div>
           <div className="md:ml-auto">
-            <p className="font-['Inter'] text-sm tracking-wide uppercase font-bold text-white">© 2024 TicketRush. Built for Precision.</p>
+            <p className="font-['Inter'] text-sm tracking-wide uppercase font-bold text-white">© 2026 TicketRush. Built for Precision.</p>
           </div>
         </div>
       </footer>
