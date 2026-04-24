@@ -1,9 +1,9 @@
 "use client";
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { login as apiLogin } from '../../../lib/auth';
+import { login as apiLogin, getToken } from '../../../lib/auth';
 
 const onFinishFailed = (errorInfo: any) => {
   console.log('Failed:', errorInfo);
@@ -15,6 +15,13 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Nếu đã đăng nhập (token còn hạn) → redirect về trang chủ
+  useEffect(() => {
+    if (getToken()) {
+      router.replace('/');
+    }
+  }, [router]);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
