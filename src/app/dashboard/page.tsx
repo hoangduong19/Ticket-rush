@@ -2,10 +2,13 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { useAuthGuard } from '@/lib/useAuthGuard';
+import { getToken, clearToken } from '@/lib/auth';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080';
 
 export default function Dashboard() {
+  useAuthGuard();
   const [user, setUser] = useState({
     displayName: '',
     email: '',
@@ -30,7 +33,7 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const token = localStorage.getItem('token');
+        const token = getToken();
         if (!token) {
           console.warn("Chưa có token, vui lòng đăng nhập!");
           setLoading(false);
@@ -171,10 +174,9 @@ export default function Dashboard() {
                 </Link>
                 <div className="h-px bg-slate-200 dark:bg-slate-700 w-full"></div>
                 <button onClick={() => {
-                  localStorage.removeItem('token');
+                  clearToken();
                   localStorage.removeItem('userId');
                   localStorage.removeItem('queueUserId');
-                  document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
                   window.location.href = '/login';
                 }} className="px-4 py-3 text-sm font-bold uppercase tracking-widest text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 text-left transition-colors flex items-center gap-3">
                   <span className="material-symbols-outlined text-[18px]">logout</span> Logout

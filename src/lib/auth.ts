@@ -1,5 +1,33 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080';
 
+/**
+ * Decode JWT payload (client-side only, không verify signature).
+ * Trả về payload object hoặc null nếu token không hợp lệ.
+ */
+function decodeJwtPayload(token: string): Record<string, any> | null {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    // Base64url → Base64 → JSON
+    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const json = atob(base64);
+    return JSON.parse(json);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Kiểm tra token JWT đã hết hạn chưa dựa trên claim `exp`.
+ * Trả về true nếu token hết hạn hoặc không thể đọc được.
+ */
+export function isTokenExpired(token: string): boolean {
+  const payload = decodeJwtPayload(token);
+  if (!payload || typeof payload.exp !== 'number') return true;
+  // exp là Unix timestamp (giây), cộng thêm 10s buffer để tránh race condition
+  return Date.now() >= (payload.exp - 10) * 1000;
+}
+
 type LoginResponse = {
   token?: string;
   [key: string]: any;
@@ -81,19 +109,27 @@ export function setToken(token: string) {
   }
 }
 
-export function getToken() {
+export function getToken(): string | null {
+  let token: string | null = null;
+
   try {
     if (typeof window !== 'undefined' && window.localStorage) {
-      const t = localStorage.getItem('token');
-      if (t) return t;
+      token = localStorage.getItem('token');
     }
   } catch (e) { }
 
-  if (typeof document !== 'undefined') {
+  if (!token && typeof document !== 'undefined') {
     const m = document.cookie.match(/(^|;)\s*token=([^;]+)/);
-    if (m) return decodeURIComponent(m[2]);
+    if (m) token = decodeURIComponent(m[2]);
   }
-  return null;
+
+  // Tự động xóa và trả về null nếu token đã hết hạn
+  if (token && isTokenExpired(token)) {
+    clearToken();
+    return null;
+  }
+
+  return token;
 }
 
 export function clearToken() {
@@ -110,8 +146,27 @@ export function clearToken() {
 
 export async function authedFetch(input: RequestInfo, init?: RequestInit) {
   const token = getToken();
+
+  // Nếu token đã expire trước khi gọi API, redirect ngay
+  if (!token && typeof window !== 'undefined') {
+    const loginUrl = new URL('/login', window.location.href);
+    loginUrl.searchParams.set('redirect', window.location.pathname);
+    window.location.replace(loginUrl.toString());
+    // Trả về Response rỗng để tránh lỗi runtime
+    return new Response(null, { status: 401 });
+  }
+
   const headers = new Headers(init?.headers as HeadersInit);
   if (token) headers.set('Authorization', `Bearer ${token}`);
   const res = await fetch(input, { ...init, headers });
+
+  // Backend trả 401 → token hết hạn phía server → clear và redirect
+  if (res.status === 401 && typeof window !== 'undefined') {
+    clearToken();
+    const loginUrl = new URL('/login', window.location.href);
+    loginUrl.searchParams.set('redirect', window.location.pathname);
+    window.location.replace(loginUrl.toString());
+  }
+
   return res;
 }

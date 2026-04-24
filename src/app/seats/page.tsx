@@ -3,8 +3,11 @@
 import Link from 'next/link';
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useAuthGuard } from '@/lib/useAuthGuard';
+import { getToken, clearToken } from '@/lib/auth';
 
 function SeatSelectionContent() {
+  useAuthGuard();
   const router = useRouter();
   const searchParams = useSearchParams();
   const eventId = searchParams.get('eventId');
@@ -25,7 +28,7 @@ function SeatSelectionContent() {
 
   useEffect(() => {
     const storedId = localStorage.getItem('userId');
-    const storedToken = localStorage.getItem('token');
+    const storedToken = getToken();
     const savedCart = localStorage.getItem('checkoutCart');
     if (storedId) setUserId(storedId);
     if (storedToken) setToken(storedToken);
