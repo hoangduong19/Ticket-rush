@@ -30,6 +30,12 @@ export default function Dashboard() {
   const [isUploading, setIsUploading] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
+  // Password change state
+  const [pwForm, setPwForm] = useState({ oldPassword: '', newPassword: '', confirmPassword: '' });
+  const [pwErrors, setPwErrors] = useState<{ oldPassword?: string; newPassword?: string; confirmPassword?: string }>({});
+  const [pwLoading, setPwLoading] = useState(false);
+  const [pwSuccess, setPwSuccess] = useState('');
+
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -62,7 +68,11 @@ export default function Dashboard() {
           });
           localStorage.setItem('userId', data.userId);
         } else if (res.status === 401) {
-          console.error("Token hết hạn hoặc không hợp lệ");
+          // Token không hợp lệ hoặc hết hạn phía server → xóa và redirect
+          clearToken();
+          localStorage.removeItem('userId');
+          window.location.replace('/login?redirect=/dashboard');
+          return;
         }
       } catch (err) {
         console.error("Lỗi kết nối Backend:", err);
@@ -138,6 +148,72 @@ export default function Dashboard() {
     }
   };
 
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPwSuccess('');
+
+    // Frontend validation
+    const errors: typeof pwErrors = {};
+    if (!pwForm.oldPassword.trim()) {
+      errors.oldPassword = 'Mật khẩu cũ không được để trống';
+    }
+    const pwRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,32}$/;
+    if (!pwForm.newPassword) {
+      errors.newPassword = 'Mật khẩu mới không được để trống';
+    } else if (!pwRegex.test(pwForm.newPassword)) {
+      errors.newPassword = 'Mật khẩu mới phải từ 8–32 ký tự, chứa chữ hoa, chữ thường và số';
+    }
+    if (!pwForm.confirmPassword) {
+      errors.confirmPassword = 'Vui lòng xác nhận mật khẩu mới';
+    } else if (pwForm.confirmPassword !== pwForm.newPassword) {
+      errors.confirmPassword = 'Mật khẩu xác nhận không khớp';
+    }
+    if (Object.keys(errors).length > 0) {
+      setPwErrors(errors);
+      return;
+    }
+    setPwErrors({});
+
+    setPwLoading(true);
+    try {
+      const token = getToken();
+      const res = await fetch(`${API_BASE}/change-password`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          oldPassword: pwForm.oldPassword,
+          newPassword: pwForm.newPassword
+        }),
+      });
+
+      if (res.ok) {
+        setPwSuccess('Thay đổi mật khẩu thành công!');
+        setPwForm({ oldPassword: '', newPassword: '', confirmPassword: '' });
+      } else {
+        let errMsg = 'Đổi mật khẩu thất bại. Vui lòng thử lại.';
+        try {
+          const errData = await res.json();
+          const raw = errData.message || errData.MESSAGE || errData.error || '';
+          if (raw.toLowerCase().includes('wrong') || raw.toLowerCase().includes('incorrect')) {
+            errMsg = 'Mật khẩu cũ không đúng.';
+          } else if (raw) {
+            errMsg = raw;
+          }
+        } catch {
+          // response không phải JSON, dùng message mặc định
+        }
+        setPwErrors({ oldPassword: errMsg });
+      }
+    } catch {
+      setPwErrors({ oldPassword: 'Lỗi kết nối server.' });
+    } finally {
+      setPwLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -283,7 +359,7 @@ export default function Dashboard() {
             </div>
           </section>
 
-          {/* Security - GIỮ LẠI PHẦN NHẬP MẬT KHẨU */}
+          {/* Security */}
           <section>
             <div className="flex items-center gap-4 mb-8 ">
               <div className="w-12 h-12 bg-secondary flex items-center justify-center">
@@ -292,37 +368,79 @@ export default function Dashboard() {
               <h3 className="text-4xl font-extrabold tracking-tighter uppercase">Security</h3>
             </div>
             <div className="bg-surface-container-lowest p-1 h-full flex flex-col border-2 border-black">
-              <form className="flex flex-col gap-8 p-8 flex-grow">
+              <form onSubmit={handleChangePassword} className="flex flex-col gap-8 p-8 flex-grow">
+
+                {/* Old Password */}
                 <div className="flex flex-col">
                   <label className="text-[10px] font-black uppercase tracking-widest text-outline mb-2">Current Password</label>
                   <input
-                    className="bg-surface-container-high border-none border-b-2 border-transparent focus:border-secondary focus:ring-0 p-4 font-bold tracking-tight outline-none"
+                    className={`bg-surface-container-high border-none border-b-2 border-transparent focus:ring-0 p-4 font-bold tracking-tight outline-none transition-colors ${
+                      pwErrors.oldPassword ? 'border-b-red-500 focus:border-red-500' : 'focus:border-secondary'
+                    }`}
                     placeholder="••••••••••••"
                     type="password"
+                    value={pwForm.oldPassword}
+                    onChange={(e) => setPwForm({ ...pwForm, oldPassword: e.target.value })}
                   />
+                  {pwErrors.oldPassword && (
+                    <span className="text-red-500 text-[10px] font-bold uppercase tracking-widest mt-1">{pwErrors.oldPassword}</span>
+                  )}
                 </div>
+
+                {/* New Password */}
                 <div className="flex flex-col">
                   <label className="text-[10px] font-black uppercase tracking-widest text-outline mb-2">New Password</label>
                   <input
-                    className="bg-surface-container-high border-none border-b-2 border-transparent focus:border-secondary focus:ring-0 p-4 font-bold tracking-tight outline-none"
-                    placeholder="MIN. 12 CHARACTERS"
+                    className={`bg-surface-container-high border-none border-b-2 border-transparent focus:ring-0 p-4 font-bold tracking-tight outline-none transition-colors ${
+                      pwErrors.newPassword ? 'border-b-red-500 focus:border-red-500' : 'focus:border-secondary'
+                    }`}
+                    placeholder="MIN. 8 CHARACTERS"
                     type="password"
+                    value={pwForm.newPassword}
+                    onChange={(e) => setPwForm({ ...pwForm, newPassword: e.target.value })}
                   />
+                  {pwErrors.newPassword && (
+                    <span className="text-red-500 text-[10px] font-bold uppercase tracking-widest mt-1">{pwErrors.newPassword}</span>
+                  )}
                 </div>
+
+                {/* Confirm Password */}
                 <div className="flex flex-col">
                   <label className="text-[10px] font-black uppercase tracking-widest text-outline mb-2">Confirm New Password</label>
                   <input
-                    className="bg-surface-container-high border-none border-b-2 border-transparent focus:border-secondary focus:ring-0 p-4 font-bold tracking-tight outline-none"
+                    className={`bg-surface-container-high border-none border-b-2 border-transparent focus:ring-0 p-4 font-bold tracking-tight outline-none transition-colors ${
+                      pwErrors.confirmPassword ? 'border-b-red-500 focus:border-red-500' : 'focus:border-secondary'
+                    }`}
                     placeholder="REPEAT PASSWORD"
                     type="password"
+                    value={pwForm.confirmPassword}
+                    onChange={(e) => setPwForm({ ...pwForm, confirmPassword: e.target.value })}
                   />
+                  {pwErrors.confirmPassword && (
+                    <span className="text-red-500 text-[10px] font-bold uppercase tracking-widest mt-1">{pwErrors.confirmPassword}</span>
+                  )}
                 </div>
+
+                {/* Security Advice */}
                 <div className="bg-secondary-container p-6">
                   <p className="text-on-secondary-container text-xs font-bold uppercase tracking-widest mb-2">Security Advice</p>
-                  <p className="text-on-secondary-container text-sm leading-relaxed">Passwords must contain at least one special character and a number.</p>
+                  <p className="text-on-secondary-container text-sm leading-relaxed">Mật khẩu phải từ 8–32 ký tự, chứa ít nhất 1 chữ hoa, 1 chữ thường và 1 số.</p>
                 </div>
-                <button className="bg-secondary text-on-secondary py-6 px-12 font-black uppercase tracking-[0.2em] self-start hover:bg-secondary-dim transition-all mt-auto" type="submit">
-                  Update Password
+
+                {/* Success message */}
+                {pwSuccess && (
+                  <div className="bg-green-50 border border-green-200 p-4 flex items-center gap-3">
+                    <span className="material-symbols-outlined text-green-600 text-sm">check_circle</span>
+                    <span className="text-green-700 text-xs font-bold uppercase tracking-widest">{pwSuccess}</span>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={pwLoading}
+                  className="bg-secondary text-on-secondary py-6 px-12 font-black uppercase tracking-[0.2em] self-start hover:bg-secondary-dim transition-all mt-auto disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {pwLoading ? 'ĐANG XỬ LÝ...' : 'Update Password'}
                 </button>
               </form>
             </div>
