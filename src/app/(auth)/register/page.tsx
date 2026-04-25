@@ -5,6 +5,48 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { signup as apiSignup } from '../../../lib/auth';
 
+// --- Validation helpers (mirrors backend DTO rules) ---
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PWD_RE   = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/;
+
+// --- Friendly server error messages ---
+function parseServerError(raw: string): string {
+  if (!raw) return 'Đã xảy ra lỗi, vui lòng thử lại.';
+  if (/duplicate key.*users_email_key/i.test(raw) || /already exists/i.test(raw))
+    return 'Email này đã được đăng ký. Vui lòng dùng email khác hoặc đăng nhập.';
+  if (/không đúng định dạng JSON|sai kiểu dữ liệu/i.test(raw))
+    return 'Dữ liệu gửi lên không hợp lệ. Vui lòng kiểm tra lại thông tin.';
+  return raw;
+}
+
+function validateEmail(v: string) {
+  if (!v.trim()) return 'Email không được để trống';
+  if (!EMAIL_RE.test(v)) return 'Email không hợp lệ';
+  return '';
+}
+function validatePassword(v: string) {
+  if (!v) return 'Mật khẩu không được để trống';
+  if (v.length < 8) return 'Mật khẩu phải có ít nhất 8 ký tự';
+  if (!PWD_RE.test(v)) return 'Mật khẩu phải chứa chữ hoa, chữ thường và số';
+  return '';
+}
+function validateConfirm(pwd: string, cfm: string) {
+  if (!cfm) return 'Vui lòng xác nhận mật khẩu';
+  if (pwd !== cfm) return 'Mật khẩu xác nhận không khớp';
+  return '';
+}
+function validateAge(v: string) {
+  if (v === '') return '';               // optional field
+  const n = Number(v);
+  if (isNaN(n) || n < 0 || n > 120) return 'Tuổi không hợp lệ (0–120)';
+  return '';
+}
+function validateDisplayName(v: string) {
+  if (v === '') return '';               // optional field
+  if (v.length < 2) return 'Tên hiển thị phải có ít nhất 2 ký tự';
+  return '';
+}
+
 export default function SignUp() {
   const router = useRouter();
   const [email, setEmail] = useState('');
@@ -17,41 +59,51 @@ export default function SignUp() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Field-level errors — only shown after user touches the field
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const touch = (field: string) => setTouched(t => ({ ...t, [field]: true }));
+
+  const fieldErrors = {
+    email:       validateEmail(email),
+    password:    validatePassword(password),
+    confirm:     validateConfirm(password, confirm),
+    age:         validateAge(age),
+    displayName: validateDisplayName(displayName),
+  };
+  const hasErrors = Object.values(fieldErrors).some(Boolean);
+
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Mark all fields as touched so errors are visible on submit
+    setTouched({ email: true, password: true, confirm: true, age: true, displayName: true });
+    if (hasErrors) return;
     setError(null);
-    if (password !== confirm) return setError('Passwords do not match');
     setLoading(true);
     try {
       const normalizeGender = (g: string) => {
         switch (g) {
-          case 'male':
-            return 'MALE';
-          case 'female':
-            return 'FEMALE';
-          case 'other':
-            return 'OTHER';
-          case 'prefer-not-to-say':
-            return 'OTHER';
-          default:
-            return undefined;
+          case 'male':            return 'MALE';
+          case 'female':          return 'FEMALE';
+          case 'other':           return 'OTHER';
+          case 'prefer-not-to-say': return 'OTHER';
+          default:                return undefined;
         }
       };
 
       const payload: Record<string, any> = {
         username: email,
         password,
-        ...(age && { age: Number(age) }),
+        ...(age         && { age: Number(age) }),
         ...(displayName && { displayName }),
-        ...(gender && { gender: normalizeGender(gender) }),
-        ...(avatarUrl && { avatarUrl }),
+        ...(gender      && { gender: normalizeGender(gender) }),
+        ...(avatarUrl   && { avatarUrl }),
       };
 
       await apiSignup(payload);
-      // after successful signup, navigate to dashboard
       router.push('/dashboard');
     } catch (err: any) {
-      setError(err?.message || 'Signup failed');
+      const raw = err?.message || 'Đã xảy ra lỗi, vui lòng thử lại.';
+      setError(parseServerError(raw));
     } finally {
       setLoading(false);
     }
@@ -109,11 +161,12 @@ export default function SignUp() {
                 <input
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-surface-container-high border-0 border-b-2 border-transparent h-14 px-4 font-medium text-on-surface placeholder:text-outline-variant focus:outline-none focus:border-primary focus:ring-0 transition-colors"
+                  onBlur={() => touch('email')}
+                  className={`w-full bg-surface-container-high border-0 border-b-2 h-14 px-4 font-medium text-on-surface placeholder:text-outline-variant focus:outline-none focus:ring-0 transition-colors ${touched.email && fieldErrors.email ? 'border-error' : 'border-transparent focus:border-primary'}`}
                   placeholder="name@example.com"
                   type="email"
-                  required
                 />
+                {touched.email && fieldErrors.email && <p className="text-error text-xs font-semibold mt-1">{fieldErrors.email}</p>}
               </div>
 
               <div className="space-y-1">
@@ -121,10 +174,12 @@ export default function SignUp() {
                 <input
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
-                  className="w-full bg-surface-container-high border-0 border-b-2 border-transparent h-14 px-4 font-medium text-on-surface placeholder:text-outline-variant focus:outline-none focus:border-primary focus:ring-0 transition-colors"
+                  onBlur={() => touch('displayName')}
+                  className={`w-full bg-surface-container-high border-0 border-b-2 h-14 px-4 font-medium text-on-surface placeholder:text-outline-variant focus:outline-none focus:ring-0 transition-colors ${touched.displayName && fieldErrors.displayName ? 'border-error' : 'border-transparent focus:border-primary'}`}
                   placeholder="Hoang Quoc Duong"
                   type="text"
                 />
+                {touched.displayName && fieldErrors.displayName && <p className="text-error text-xs font-semibold mt-1">{fieldErrors.displayName}</p>}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -134,11 +189,12 @@ export default function SignUp() {
                   <input
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full bg-surface-container-high border-0 border-b-2 border-transparent h-14 px-4 font-medium text-on-surface focus:outline-none focus:border-primary focus:ring-0 transition-colors"
+                    onBlur={() => touch('password')}
+                    className={`w-full bg-surface-container-high border-0 border-b-2 h-14 px-4 font-medium text-on-surface focus:outline-none focus:ring-0 transition-colors ${touched.password && fieldErrors.password ? 'border-error' : 'border-transparent focus:border-primary'}`}
                     placeholder="••••••••"
                     type="password"
-                    required
                   />
+                  {touched.password && fieldErrors.password && <p className="text-error text-xs font-semibold mt-1">{fieldErrors.password}</p>}
                 </div>
                 {/* Confirm Password Field */}
                 <div className="space-y-1">
@@ -146,11 +202,12 @@ export default function SignUp() {
                   <input
                     value={confirm}
                     onChange={(e) => setConfirm(e.target.value)}
-                    className="w-full bg-surface-container-high border-0 border-b-2 border-transparent h-14 px-4 font-medium text-on-surface focus:outline-none focus:border-primary focus:ring-0 transition-colors"
+                    onBlur={() => touch('confirm')}
+                    className={`w-full bg-surface-container-high border-0 border-b-2 h-14 px-4 font-medium text-on-surface focus:outline-none focus:ring-0 transition-colors ${touched.confirm && fieldErrors.confirm ? 'border-error' : 'border-transparent focus:border-primary'}`}
                     placeholder="••••••••"
                     type="password"
-                    required
                   />
+                  {touched.confirm && fieldErrors.confirm && <p className="text-error text-xs font-semibold mt-1">{fieldErrors.confirm}</p>}
                 </div>
               </div>
 
@@ -158,28 +215,32 @@ export default function SignUp() {
                 {/* Age Field */}
                 <div className="space-y-1">
                   <label className="block text-[0.75rem] font-bold tracking-wide uppercase text-on-surface-variant">Age</label>
-                    <input
-                      value={age}
-                      onChange={(e) => setAge(e.target.value)}
-                      className="w-full bg-surface-container-high border-0 border-b-2 border-transparent h-14 px-4 font-medium text-on-surface focus:outline-none focus:border-primary focus:ring-0 transition-colors"
-                      placeholder="21"
-                      type="number"
-                    />
+                  <input
+                    value={age}
+                    onChange={(e) => setAge(e.target.value)}
+                    onBlur={() => touch('age')}
+                    className={`w-full bg-surface-container-high border-0 border-b-2 h-14 px-4 font-medium text-on-surface focus:outline-none focus:ring-0 transition-colors ${touched.age && fieldErrors.age ? 'border-error' : 'border-transparent focus:border-primary'}`}
+                    placeholder="21"
+                    type="number"
+                    min={0}
+                    max={120}
+                  />
+                  {touched.age && fieldErrors.age && <p className="text-error text-xs font-semibold mt-1">{fieldErrors.age}</p>}
                 </div>
                 {/* Gender Selection */}
                 <div className="space-y-1">
                   <label className="block text-[0.75rem] font-bold tracking-wide uppercase text-on-surface-variant">Gender</label>
-                    <select
-                      value={gender}
-                      onChange={(e) => setGender(e.target.value)}
-                      className="w-full bg-surface-container-high border-0 border-b-2 border-transparent h-14 px-4 font-medium text-on-surface appearance-none focus:outline-none focus:border-primary focus:ring-0 transition-colors"
-                    >
-                      <option disabled value="">Select Gender</option>
-                      <option value="male">Male</option>
-                      <option value="female">Female</option>
-                      <option value="other">Other</option>
-                      <option value="prefer-not-to-say">Prefer not to say</option>
-                    </select>
+                  <select
+                    value={gender}
+                    onChange={(e) => setGender(e.target.value)}
+                    className="w-full bg-surface-container-high border-0 border-b-2 border-transparent h-14 px-4 font-medium text-on-surface appearance-none focus:outline-none focus:border-primary focus:ring-0 transition-colors"
+                  >
+                    <option disabled value="">Select Gender</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                    <option value="prefer-not-to-say">Prefer not to say</option>
+                  </select>
                 </div>
               </div>
 
@@ -201,14 +262,19 @@ export default function SignUp() {
 
               {/* Submit Button */}
               <button
-                className="w-full bg-primary h-16 flex items-center justify-center gap-2 group hover:bg-primary-dim transition-colors"
+                className={`w-full h-16 flex items-center justify-center gap-2 group transition-colors ${loading || hasErrors ? 'bg-primary opacity-60 cursor-not-allowed' : 'bg-primary hover:bg-primary-dim'}`}
                 type="submit"
                 disabled={loading}
               >
                 <span className="text-on-primary font-black uppercase tracking-widest text-lg">{loading ? 'Creating...' : 'Complete Registration'}</span>
                 <span className="material-symbols-outlined text-on-primary group-active:translate-x-1 transition-transform">arrow_forward</span>
               </button>
-              {error && <div className="text-negative font-bold text-center">{error}</div>}
+              {error && (
+                <div className="flex items-start gap-3 bg-error-container/20 border border-error text-error px-4 py-3">
+                  <span className="material-symbols-outlined text-xl shrink-0 mt-0.5">error</span>
+                  <p className="text-sm font-semibold leading-snug">{error}</p>
+                </div>
+              )}
 
               <p className="text-[0.7rem] text-on-surface-variant text-center uppercase font-bold tracking-wider leading-relaxed">
                 By clicking registration, you agree to our <br/>
