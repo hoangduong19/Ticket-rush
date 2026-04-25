@@ -18,7 +18,7 @@ export default function Login() {
 
   // Nếu đã đăng nhập (token còn hạn) → redirect về trang chủ
   useEffect(() => {
-    if (getToken()) {
+    if (getToken('user')) {
       router.replace('/');
     }
   }, [router]);

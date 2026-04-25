@@ -1,9 +1,9 @@
 "use client";
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { login as apiLogin } from '../../../lib/auth';
+import { adminLogin as apiLogin, getToken } from '../../../lib/auth';
 
 const onFinishFailed = (errorInfo: any) => {
   console.log('Failed:', errorInfo);
@@ -16,12 +16,19 @@ export default function AdminLogin() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Nếu đã đăng nhập (token còn hạn) → redirect về trang chủ
+  useEffect(() => {
+    if (getToken('admin')) {
+      router.replace('/admin/');
+    }
+  }, [router]);
+
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
     try {
-      // await apiLogin(email, password);
+      await apiLogin(email, password);
       router.push('/admin');
     } catch (err: any) {
       setError(err?.message || 'Login failed');

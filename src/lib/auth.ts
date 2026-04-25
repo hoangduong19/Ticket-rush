@@ -1,170 +1,253 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080';
 
-/**
- * Decode JWT payload (client-side only, không verify signature).
- * Trả về payload object hoặc null nếu token không hợp lệ.
- */
+type AuthType = 'user' | 'admin';
+
+const STORAGE_KEYS = {
+  user: {
+    token: 'token',
+    userId: 'userId',
+    cookie: 'token',
+  },
+  admin: {
+    token: 'adminToken',
+    userId: 'adminId',
+    cookie: 'adminToken',
+  },
+} as const;
+
+function getStorage(type: AuthType) {
+  return STORAGE_KEYS[type];
+}
+
 function decodeJwtPayload(token: string): Record<string, any> | null {
   try {
     const parts = token.split('.');
     if (parts.length !== 3) return null;
-    // Base64url → Base64 → JSON
-    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
-    const json = atob(base64);
-    return JSON.parse(json);
+
+    const base64 = parts[1]
+      .replace(/-/g, '+')
+      .replace(/_/g, '/');
+
+    return JSON.parse(atob(base64));
   } catch {
     return null;
   }
 }
 
-/**
- * Kiểm tra token JWT đã hết hạn chưa dựa trên claim `exp`.
- * Trả về true nếu token hết hạn hoặc không thể đọc được.
- */
 export function isTokenExpired(token: string): boolean {
   const payload = decodeJwtPayload(token);
-  if (!payload || typeof payload.exp !== 'number') return true;
-  // exp là Unix timestamp (giây), cộng thêm 10s buffer để tránh race condition
+
+  if (!payload || typeof payload.exp !== 'number') {
+    return true;
+  }
+
   return Date.now() >= (payload.exp - 10) * 1000;
 }
 
 type LoginResponse = {
   token?: string;
+  userId?: string;
+  id?: string;
   [key: string]: any;
 };
 
-export async function login(email: string, password: string) {
-  const res = await fetch(`${API_BASE}/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username: email, password }),
-  });
-
+async function parseAuthResponse(
+  res: Response,
+  type: AuthType
+): Promise<LoginResponse> {
   if (!res.ok) {
     const text = await res.text();
     throw new Error(text || res.statusText);
   }
 
   const text = await res.text();
+
   try {
     const data: LoginResponse = JSON.parse(text);
-    if (data.token) setToken(data.token);
 
-    const idToStore = data.userId || data.id;
-    if (idToStore && typeof window !== 'undefined') {
-      localStorage.setItem('userId', idToStore);
+    if (data.token) {
+      setToken(data.token, type);
+    }
+
+    const id = data.userId || data.id;
+    if (id && typeof window !== 'undefined') {
+      localStorage.setItem(getStorage(type).userId, id);
     }
 
     return data;
   } catch {
-    // Backend returned plain JWT token
-    setToken(text);
+    setToken(text, type);
     return { token: text };
   }
+}
+
+export async function login(email: string, password: string) {
+  const res = await fetch(`${API_BASE}/login`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      username: email,
+      password,
+    }),
+  });
+
+  return parseAuthResponse(res, 'user');
+}
+
+export async function adminLogin(email: string, password: string) {
+  const res = await fetch(`${API_BASE}/adminLogin`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      username: email,
+      password,
+    }),
+  });
+
+  return parseAuthResponse(res, 'admin');
 }
 
 export async function signup(payload: Record<string, any>) {
   const res = await fetch(`${API_BASE}/register`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+    },
     body: JSON.stringify(payload),
   });
 
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text || res.statusText);
-  }
-
-  const text = await res.text();
-  try {
-    const data = JSON.parse(text);
-    if (data.token) setToken(data.token);
-
-    const idToStore = data.userId || data.id;
-    if (idToStore && typeof window !== 'undefined') {
-      localStorage.setItem('userId', idToStore);
-    }
-
-    return data;
-  } catch {
-    // Backend returned plain JWT token
-    setToken(text);
-    return { token: text };
-  }
+  return parseAuthResponse(res, 'user');
 }
 
-export function setToken(token: string) {
-  try {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      localStorage.setItem('token', token);
-    }
-  } catch (e) {
-    // ignore
-  }
+export function setToken(
+  token: string,
+  type: AuthType = 'user'
+) {
+  const storage = getStorage(type);
 
-  // set a non-httpOnly cookie for client usage (not secure for sensitive tokens)
+  try {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(storage.token, token);
+    }
+  } catch {}
+
   if (typeof document !== 'undefined') {
-    const maxAge = 60 * 60 * 24 * 7; // 7 days
-    document.cookie = `token=${token}; path=/; max-age=${maxAge}; SameSite=Lax`;
+    const maxAge = 60 * 60 * 24 * 7;
+
+    document.cookie =
+      `${storage.cookie}=${encodeURIComponent(token)}; ` +
+      `path=/; max-age=${maxAge}; SameSite=Lax`;
   }
 }
 
-export function getToken(): string | null {
+export function getToken(
+  type: AuthType = 'user'
+): string | null {
+  const storage = getStorage(type);
   let token: string | null = null;
 
   try {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      token = localStorage.getItem('token');
+    if (typeof window !== 'undefined') {
+      token = localStorage.getItem(storage.token);
     }
-  } catch (e) { }
+  } catch {}
 
   if (!token && typeof document !== 'undefined') {
-    const m = document.cookie.match(/(^|;)\s*token=([^;]+)/);
-    if (m) token = decodeURIComponent(m[2]);
+    const match = document.cookie.match(
+      new RegExp(`(?:^|; )${storage.cookie}=([^;]*)`)
+    );
+
+    if (match) {
+      token = decodeURIComponent(match[1]);
+    }
   }
 
-  // Tự động xóa và trả về null nếu token đã hết hạn
   if (token && isTokenExpired(token)) {
-    clearToken();
+    clearToken(type);
     return null;
   }
 
   return token;
 }
 
-export function clearToken() {
+export function clearToken(
+  type: AuthType = 'user'
+) {
+  const storage = getStorage(type);
+
   try {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('userId');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(storage.token);
+      localStorage.removeItem(storage.userId);
     }
-  } catch (e) { }
+  } catch {}
+
   if (typeof document !== 'undefined') {
-    document.cookie = `token=; path=/; max-age=0; SameSite=Lax`;
+    document.cookie =
+      `${storage.cookie}=; path=/; max-age=0; SameSite=Lax`;
   }
 }
 
-export async function authedFetch(input: RequestInfo, init?: RequestInit) {
-  const token = getToken();
+export async function authedFetch(
+  input: RequestInfo | URL,
+  init?: RequestInit,
+  type: AuthType = 'user'
+) {
+  const token = getToken(type);
 
-  // Nếu token đã expire trước khi gọi API, redirect ngay
   if (!token && typeof window !== 'undefined') {
-    const loginUrl = new URL('/login', window.location.href);
-    loginUrl.searchParams.set('redirect', window.location.pathname);
+    const loginPath =
+      type === 'admin' ? '/admin/login' : '/login';
+
+    const loginUrl = new URL(
+      loginPath,
+      window.location.origin
+    );
+
+    loginUrl.searchParams.set(
+      'redirect',
+      window.location.pathname
+    );
+
     window.location.replace(loginUrl.toString());
-    // Trả về Response rỗng để tránh lỗi runtime
-    return new Response(null, { status: 401 });
+
+    return new Response(null, {
+      status: 401,
+      statusText: 'Unauthorized',
+    });
   }
 
-  const headers = new Headers(init?.headers as HeadersInit);
-  if (token) headers.set('Authorization', `Bearer ${token}`);
-  const res = await fetch(input, { ...init, headers });
+  const headers = new Headers(init?.headers);
 
-  // Backend trả 401 → token hết hạn phía server → clear và redirect
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+
+  const res = await fetch(input, {
+    ...init,
+    headers,
+  });
+
   if (res.status === 401 && typeof window !== 'undefined') {
-    clearToken();
-    const loginUrl = new URL('/login', window.location.href);
-    loginUrl.searchParams.set('redirect', window.location.pathname);
+    clearToken(type);
+
+    const loginPath =
+      type === 'admin' ? '/admin/login' : '/login';
+
+    const loginUrl = new URL(
+      loginPath,
+      window.location.origin
+    );
+
+    loginUrl.searchParams.set(
+      'redirect',
+      window.location.pathname
+    );
+
     window.location.replace(loginUrl.toString());
   }
 
