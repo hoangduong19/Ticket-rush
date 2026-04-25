@@ -1,5 +1,7 @@
 import Link from 'next/link';
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080';
+
 interface User {
   userId: string;
   username: string;
@@ -12,7 +14,7 @@ interface User {
 export default async function AudienceAnalytics() {
   let users: User[] = [];
   try {
-    const res = await fetch('http://localhost:8080/users', { cache: 'no-store' });
+    const res = await fetch(`${API_BASE}/users`, { cache: 'no-store' });
     if (res.ok) {
       users = await res.json();
     }
