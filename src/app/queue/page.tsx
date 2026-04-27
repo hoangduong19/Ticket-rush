@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080';
+
 function QueueContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -19,7 +21,7 @@ function QueueContent() {
 
     const checkStatus = async () => {
       try {
-        const res = await fetch(`http://localhost:8080/queue/status?eventId=${eventId}&userId=${userId}`);
+        const res = await fetch(`${API_BASE}/queue/status?eventId=${eventId}&userId=${userId}`);
         if (res.ok) {
           const data = await res.json();
           if (data.status === 'ACTIVE') {

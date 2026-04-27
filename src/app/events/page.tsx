@@ -13,7 +13,8 @@ export default function BrowseEvents() {
 
   // 2. Fetch dữ liệu từ Backend Java (Spring Boot)
   useEffect(() => {
-    fetch("http://localhost:8080/events")
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080';
+    fetch(`${API_BASE}/events`)
       .then((res) => {
         if (!res.ok) throw new Error("Network response was not ok");
         return res.json();
@@ -29,7 +30,6 @@ export default function BrowseEvents() {
 
     const token = localStorage.getItem('token');
     if (token) {
-      const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080';
       fetch(`${API_BASE}/users/me`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })

@@ -6,6 +6,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthGuard } from '@/lib/useAuthGuard';
 import { getToken, clearToken } from '@/lib/auth';
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080';
+
 function SeatSelectionContent() {
   useAuthGuard();
   const router = useRouter();
@@ -54,7 +56,7 @@ function SeatSelectionContent() {
 
     // 1. Định nghĩa hàm lấy dữ liệu (Fetch)
     const updateSeatsStatus = () => {
-      fetch(`http://localhost:8080/events/${eventId}/seats`) // Gọi API lấy danh sách ghế
+      fetch(`${API_BASE}/events/${eventId}/seats`) // Gọi API lấy danh sách ghế
         .then(res => {
           if (!res.ok) throw new Error("Status failed");
           return res.json();
@@ -91,7 +93,7 @@ function SeatSelectionContent() {
   }, [eventId]); // Chỉ chạy lại nếu eventId thay đổi
   useEffect(() => {
     if (eventId && userId && token) {
-      fetch(`http://localhost:8080/queue/status?eventId=${eventId}&userId=${userId}`, {
+      fetch(`${API_BASE}/queue/status?eventId=${eventId}&userId=${userId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -203,7 +205,7 @@ function SeatSelectionContent() {
     }
     setLoading(true); // Bật loading khi đang gọi API
     try {
-      const response = await fetch(`http://localhost:8080/seats/reservations`, {
+      const response = await fetch(`${API_BASE}/seats/reservations`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

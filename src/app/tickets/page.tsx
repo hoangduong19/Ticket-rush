@@ -23,11 +23,11 @@ export default function MyTicketsPage() {
   const [loading, setLoading] = useState(true);
   const [avatarUrl, setAvatarUrl] = useState('https://api.dicebear.com/7.x/avataaars/svg?seed=Felix');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL;
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080';
   useEffect(() => {
     const token = getToken();
     
-    fetch(`${NEXT_PUBLIC_API_URL}/tickets`, {
+    fetch(`${API_BASE}/tickets`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
       .then(res => res.json())
@@ -41,7 +41,7 @@ export default function MyTicketsPage() {
       });
 
     if (token) {
-      fetch(`${NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/users/me`, {
+      fetch(`${API_BASE}/users/me`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
         .then(res => res.json())

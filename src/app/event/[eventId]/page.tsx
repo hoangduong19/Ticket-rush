@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080';
+
 export default function EventDetailPage() {
     const params = useParams(); // Lấy ID từ URL (ví dụ: eventId từ [eventId])
     const router = useRouter();
@@ -12,7 +14,7 @@ export default function EventDetailPage() {
 
     useEffect(() => {
         if (params.eventId) {
-            fetch(`http://localhost:8080/events/${params.eventId}`)
+            fetch(`${API_BASE}/events/${params.eventId}`)
                 .then((res) => {
                     if (!res.ok) throw new Error("Event not found");
                     return res.json();
@@ -57,7 +59,7 @@ export default function EventDetailPage() {
         localStorage.setItem('queueUserId', userId);
 
         try {
-            const res = await fetch('http://localhost:8080/queue/join', {
+            const res = await fetch(`${API_BASE}/queue/join`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ eventId: params.eventId, userId })
