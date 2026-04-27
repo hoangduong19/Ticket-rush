@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080';
+
 // Định nghĩa kiểu dữ liệu ghế
 interface Seat {
   seatId: string;
@@ -36,7 +38,13 @@ function MonitorContent() {
 
     const fetchMonitorData = async () => {
       try {
-        const res = await fetch(`http://localhost:8080/events/${eventId}/seats`, { cache: 'no-store' });
+        const adminToken = localStorage.getItem('adminToken') ?? '';
+        const res = await fetch(`${API_BASE}/events/${eventId}/seats`, {
+          cache: 'no-store',
+          headers: {
+            'Authorization': `Bearer ${adminToken}`,
+          },
+        });
         if (res.ok) {
           const data = await res.json();
           setSeats(data);

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { cookies } from 'next/headers';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080';
 
@@ -12,9 +13,17 @@ interface User {
 }
 
 export default async function AudienceAnalytics() {
+  const cookieStore = await cookies();
+  const adminToken = cookieStore.get('adminToken')?.value ?? '';
+
   let users: User[] = [];
   try {
-    const res = await fetch(`${API_BASE}/users`, { cache: 'no-store' });
+    const res = await fetch(`${API_BASE}/users`, {
+      cache: 'no-store',
+      headers: {
+        'Authorization': `Bearer ${adminToken}`,
+      },
+    });
     if (res.ok) {
       users = await res.json();
     }

@@ -93,7 +93,7 @@ export default function CreateEvent() {
         method: 'POST',
         // LƯU Ý: Không set Content-Type header khi dùng FormData
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
         },
         body: formData,
       });
@@ -128,7 +128,7 @@ export default function CreateEvent() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
         },
         body: JSON.stringify(seatPayload),
       });
