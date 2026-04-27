@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080';
+
 interface Event {
     eventId: string;
     title: string;
@@ -20,7 +22,7 @@ export default function MonitorSelector() {
 
     useEffect(() => {
         // Gọi API lấy danh sách sự kiện
-        fetch('http://localhost:8080/events')
+        fetch(`${API_BASE}/events`)
             .then(res => res.json())
             .then(data => {
                 setEvents(data);

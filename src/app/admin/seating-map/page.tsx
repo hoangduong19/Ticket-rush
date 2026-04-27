@@ -79,7 +79,6 @@ export default function SeatingMapConfigurator() {
         <div className="flex justify-between items-center px-8 py-6 w-full max-w-none">
           <div className="text-2xl font-black italic tracking-tighter text-blue-700 dark:text-blue-500">TICKETRUSH</div>
           <nav className="hidden md:flex gap-8 items-center uppercase text-[10px] font-black tracking-[0.2em]">
-            <Link href="/admin" className="opacity-40 hover:opacity-100 transition-opacity">Dashboard</Link>
             <span className="text-blue-600">Map Configurator</span>
           </nav>
           <div className="flex items-center gap-4">

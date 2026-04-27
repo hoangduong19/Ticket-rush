@@ -83,13 +83,9 @@ function MonitorContent() {
             <span className="material-symbols-outlined">dashboard</span>
             <span>Dashboard</span>
           </Link>
-          <Link href="/admin/monitor" className="flex items-center gap-3 px-4 py-3 bg-primary text-on-primary font-bold transition-colors">
+          <Link href="/admin/monitor/list" className="flex items-center gap-3 px-4 py-3 bg-primary text-on-primary font-bold transition-colors">
             <span className="material-symbols-outlined">map</span>
             <span>Live Monitor</span>
-          </Link>
-          <Link href="/admin/analytics" className="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-highest transition-colors font-medium">
-            <span className="material-symbols-outlined">monitoring</span>
-            <span>Analytics</span>
           </Link>
         </nav>
         <div className="p-6 bg-surface-container-highest">
