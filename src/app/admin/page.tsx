@@ -123,7 +123,7 @@ export default async function AudienceAnalytics() {
           <div className="flex justify-between items-end mb-12">
             <div>
               <span className="bg-secondary text-on-secondary px-3 py-1 text-[10px] font-bold tracking-[0.2em] uppercase mb-2 inline-block">Live Audience Data</span>
-              <h3 className="text-[3.5rem] font-extrabold leading-none tracking-tighter text-slate-900 dark:text-white">Audience Insights</h3>
+              <h3 className="text-[3.5rem] font-extrabold leading-none tracking-tighter text-blue-600">Audience Insights</h3>
             </div>
             <div className="bg-surface-container-high p-1 flex items-center">
               <button className="px-6 py-2 bg-surface-container-lowest font-bold text-sm text-on-surface">ALL TIME</button>

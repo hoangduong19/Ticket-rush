@@ -263,28 +263,6 @@ export default function Checkout() {
 
           {/* Right Column: Order Summary (4 cols) */}
           <aside className="lg:col-span-4 flex flex-col gap-1 bg-surface-container">
-            {/* Event Identity */}
-            <div className="bg-surface-container-low p-8">
-              <div className="h-48 w-full bg-surface-dim overflow-hidden mb-6">
-                <img
-                  className="w-full h-full object-cover grayscale contrast-125 hover:grayscale-0 transition-all duration-500"
-                  alt="Event Overview"
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuD2E-oOcRh6hIgv8jfIRDGS6DF7BuxRI2Bb25uJrfHGpWpVFBXiu9qQBDWr9-aitUfMgOG4YjV07lprXHcVEYvFnDGpofIzRrOXPJB_SNIGL1diezkNx4Y6ndlYP0ioDOqKqtUIh50rhXjyn0GkUShghLFLuvIuLgPVP4kbNWB1FC-e3KrvCifNo1dhmz7QvhGtGYqpR8oTyghyUHifTf6BgugFtYtYVpy3vIoDiGSsWBKVw1MPUbEW-Dn2k8g3_A_avoa2j3guByn6"
-                />
-              </div>
-              <p className="text-secondary font-bold uppercase tracking-widest text-xs mb-2">Live Event</p>
-              <h2 className="text-2xl font-black tracking-tight leading-none mb-4">NEON HORIZON WORLD TOUR</h2>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-on-surface-variant font-bold uppercase text-[0.75rem]">
-                  <span className="material-symbols-outlined text-sm">calendar_today</span>
-                  AUG 24, 2024 • 19:30
-                </div>
-                <div className="flex items-center gap-2 text-on-surface-variant font-bold uppercase text-[0.75rem]">
-                  <span className="material-symbols-outlined text-sm">location_on</span>
-                  METROPLEX ARENA, SECTOR 7
-                </div>
-              </div>
-            </div>
 
             {/* Seat Breakdown — DYNAMIC từ localStorage */}
             <div className="bg-surface-container-lowest p-8 flex-grow">
