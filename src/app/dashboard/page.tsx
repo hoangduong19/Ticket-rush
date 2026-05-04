@@ -30,6 +30,13 @@ export default function Dashboard() {
   const [isUploading, setIsUploading] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
+  // Toast notification
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3500);
+  };
+
   // Password change state
   const [pwForm, setPwForm] = useState({ oldPassword: '', newPassword: '', confirmPassword: '' });
   const [pwErrors, setPwErrors] = useState<{ oldPassword?: string; newPassword?: string; confirmPassword?: string }>({});
@@ -100,13 +107,13 @@ export default function Dashboard() {
 
       if (res.ok) {
         setUser((prev) => ({ ...prev, ...formData }));
-        alert('Thông tin cá nhân đã được lưu!');
+        showToast('Thông tin cá nhân đã được lưu!');
       } else {
         const error = await res.json();
-        alert('Lỗi: ' + (error.message || 'Không thể cập nhật'));
+        showToast('Lỗi: ' + (error.message || 'Không thể cập nhật'), 'error');
       }
     } catch (err) {
-      alert('Lỗi kết nối server.');
+      showToast('Lỗi kết nối server.', 'error');
     }
   };
 
@@ -135,14 +142,14 @@ export default function Dashboard() {
       if (res.ok) {
         const data = await res.json();
         setUser(prev => ({ ...prev, avatarUrl: data.url || data.avatarUrl }));
-        alert("Upload thành công!");
+        showToast('Ảnh đại diện đã được cập nhật!');
       } else {
         setAvatarPreview(null);
-        alert("Upload thất bại!");
+        showToast('Upload thất bại! Vui lòng thử lại.', 'error');
       }
     } catch (err) {
       setAvatarPreview(null);
-      alert("Lỗi kết nối khi upload!");
+      showToast('Lỗi kết nối khi upload!', 'error');
     } finally {
       setIsUploading(false);
     }
@@ -454,6 +461,34 @@ export default function Dashboard() {
           <p className="text-xs opacity-50 uppercase font-bold tracking-widest">© 2026 Architectural Precision in Ticketing.</p>
         </div>
       </footer>
+
+      {/* Toast Notification */}
+      {toast && (
+        <div
+          className={`fixed bottom-8 right-8 z-[9999] flex items-center gap-4 px-6 py-4 shadow-2xl border-l-4 transition-all duration-300 ${
+            toast.type === 'success'
+              ? 'bg-white border-green-500'
+              : 'bg-white border-red-500'
+          }`}
+          style={{ minWidth: 280, maxWidth: 400 }}
+        >
+          <span
+            className={`material-symbols-outlined text-xl ${
+              toast.type === 'success' ? 'text-green-500' : 'text-red-500'
+            }`}
+          >
+            {toast.type === 'success' ? 'check_circle' : 'error'}
+          </span>
+          <span className="text-slate-800 text-sm font-bold tracking-wide flex-1">{toast.message}</span>
+          <button
+            onClick={() => setToast(null)}
+            className="text-slate-400 hover:text-slate-700 transition-colors ml-2"
+            aria-label="Đóng thông báo"
+          >
+            <span className="material-symbols-outlined text-base">close</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -13,6 +13,13 @@ export default function Checkout() {
   const [timeLeft, setTimeLeft] = useState<string>("--:--");
   const [isExpired, setIsExpired] = useState(false);
 
+  // Toast notification
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'warning' } | null>(null);
+  const showToast = (message: string, type: 'success' | 'error' | 'warning' = 'error') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3500);
+  };
+
   // Cart state — đọc từ localStorage
   const [seats, setSeats] = useState<any[]>([]);
   const [holdId, setHoldId] = useState<string | null>(null);
@@ -57,8 +64,8 @@ export default function Checkout() {
       if (diff <= 0) {
         setTimeLeft("00:00");
         setIsExpired(true);
-        alert("Phiên thanh toán đã hết hạn!");
-        router.push('/events');
+        showToast("Phiên thanh toán đã hết hạn! Đang chuyển hướng...", 'warning');
+        setTimeout(() => router.push('/events'), 2000);
         return false;
       }
 
@@ -75,7 +82,7 @@ export default function Checkout() {
 
   const handleConfirmPurchase = async () => {
     if (isExpired) {
-      alert("Hết thời gian thanh toán!");
+      showToast("Hết thời gian thanh toán!", 'warning');
       return;
     }
 
@@ -84,7 +91,7 @@ export default function Checkout() {
     const token = localStorage.getItem('token');
 
     if (!userId || !token || !holdId) {
-      alert("Thông tin phiên làm việc không hợp lệ!");
+      showToast("Thông tin phiên làm việc không hợp lệ!", 'error');
       return;
     }
 
@@ -114,10 +121,10 @@ export default function Checkout() {
       }
 
       localStorage.removeItem('checkoutCart');
-      alert('Thanh toán thành công! Vé đã được xuất.');
-      router.push('/tickets');
+      showToast('Thanh toán thành công! Vé đã được xuất.', 'success');
+      setTimeout(() => router.push('/tickets'), 1500);
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message || 'Lỗi khi xử lý thanh toán.', 'error');
       console.error("Checkout error:", err);
     }
   };
@@ -342,6 +349,30 @@ export default function Checkout() {
           </div>
         </div>
       </footer>
+
+      {/* Toast Notification */}
+      {toast && (
+        <div
+          className={`fixed bottom-8 right-8 z-[9999] flex items-center gap-4 px-6 py-4 shadow-2xl border-l-4 bg-white ${
+            toast.type === 'success' ? 'border-green-500' :
+            toast.type === 'warning' ? 'border-amber-500' :
+            'border-red-500'
+          }`}
+          style={{ minWidth: 280, maxWidth: 400 }}
+        >
+          <span className={`material-symbols-outlined text-xl ${
+            toast.type === 'success' ? 'text-green-500' :
+            toast.type === 'warning' ? 'text-amber-500' :
+            'text-red-500'
+          }`}>
+            {toast.type === 'success' ? 'check_circle' : toast.type === 'warning' ? 'warning' : 'error'}
+          </span>
+          <span className="text-slate-800 text-sm font-bold tracking-wide flex-1">{toast.message}</span>
+          <button onClick={() => setToast(null)} className="text-slate-400 hover:text-slate-700 transition-colors ml-2" aria-label="Đóng thông báo">
+            <span className="material-symbols-outlined text-base">close</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 }

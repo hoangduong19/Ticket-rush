@@ -13,6 +13,13 @@ export default function CreateEvent() {
   const [previewUrl, setPreviewUrl] = useState<string>('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
+  // Toast notification
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'warning' } | null>(null);
+  const showToast = (message: string, type: 'success' | 'error' | 'warning' = 'error') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3500);
+  };
+
   // 1. STATE DỮ LIỆU SỰ KIỆN
   const [eventData, setEventData] = useState({
     title: '',
@@ -63,15 +70,15 @@ export default function CreateEvent() {
   // 4. XỬ LÝ ĐẨY DỮ LIỆU LÊN BACKEND (MULTIPART FORM DATA)
   const handlePublish = async () => {
     if (!eventData.title || !eventData.date) {
-      alert("Please fill in basic event details first.");
+      showToast("Please fill in basic event details first.", 'warning');
       return;
     }
     if (!seatingMap) {
-      alert("Please configure the seating map before publishing.");
+      showToast("Please configure the seating map before publishing.", 'warning');
       return;
     }
     if (!selectedFile) {
-      alert("Please select a banner image for the event.");
+      showToast("Please select a banner image for the event.", 'warning');
       return;
     }
 
@@ -134,16 +141,16 @@ export default function CreateEvent() {
       });
 
       if (seatRes.ok) {
-        alert('Event & Banner & Seating Map Published Successfully!');
+        showToast('Event & Seating Map Published Successfully!', 'success');
         localStorage.removeItem('seatingMapDraft');
         localStorage.removeItem('eventDataDraft');
-        router.push('/events');
+        setTimeout(() => router.push('/events'), 1500);
       } else {
-        alert('Event created with image, but failed to generate seats.');
+        showToast('Event created, but failed to generate seats.', 'warning');
       }
 
     } catch (err: any) {
-      alert('Error: ' + err.message);
+      showToast('Error: ' + err.message, 'error');
     } finally {
       setLoading(false);
     }
@@ -337,6 +344,30 @@ export default function CreateEvent() {
           </aside>
         </div>
       </main>
+
+      {/* Toast Notification */}
+      {toast && (
+        <div
+          className={`fixed bottom-8 right-8 z-[9999] flex items-center gap-4 px-6 py-4 shadow-2xl border-l-4 bg-white ${
+            toast.type === 'success' ? 'border-green-500' :
+            toast.type === 'warning' ? 'border-amber-500' :
+            'border-red-500'
+          }`}
+          style={{ minWidth: 280, maxWidth: 400 }}
+        >
+          <span className={`material-symbols-outlined text-xl ${
+            toast.type === 'success' ? 'text-green-500' :
+            toast.type === 'warning' ? 'text-amber-500' :
+            'text-red-500'
+          }`}>
+            {toast.type === 'success' ? 'check_circle' : toast.type === 'warning' ? 'warning' : 'error'}
+          </span>
+          <span className="text-slate-800 text-sm font-bold tracking-wide flex-1">{toast.message}</span>
+          <button onClick={() => setToast(null)} className="text-slate-400 hover:text-slate-700 transition-colors ml-2" aria-label="Đóng thông báo">
+            <span className="material-symbols-outlined text-base">close</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 }

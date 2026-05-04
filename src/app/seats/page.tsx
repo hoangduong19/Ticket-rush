@@ -24,6 +24,13 @@ function SeatSelectionContent() {
   const [timeLeft, setTimeLeft] = useState<string | null>(null);
   const [myHeldSeatIds, setMyHeldSeatIds] = useState<Set<string>>(new Set());
 
+  // Toast notification
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'warning' } | null>(null);
+  const showToast = (message: string, type: 'success' | 'error' | 'warning' = 'error') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3500);
+  };
+
   const SERVICE_FEE_RATE = 0.15;
 
   useEffect(() => {
@@ -89,8 +96,8 @@ function SeatSelectionContent() {
           if (data.status === "ACTIVE" && data.expiresAt) {
             setExpiresAt(data.expiresAt);
           } else if (data.status === "EXPIRED") {
-            alert("Phiên làm việc đã hết hạn!");
-            router.push('/events');
+            showToast("Phiên làm việc đã hết hạn!", 'warning');
+            setTimeout(() => router.push('/events'), 2000);
           }
         });
     }
@@ -105,8 +112,8 @@ function SeatSelectionContent() {
 
       if (diff <= 0) {
         clearInterval(interval);
-        alert("Phiên làm việc đã hết hạn!");
-        router.push('/events');
+        showToast("Phiên làm việc đã hết hạn! Đang chuyển hướng...", 'warning');
+        setTimeout(() => router.push('/events'), 2000);
       } else {
         const mins = Math.floor(diff / 60000);
         const secs = Math.floor((diff % 60000) / 1000);
@@ -166,11 +173,11 @@ function SeatSelectionContent() {
   const handleConfirmSelection = async (e: React.MouseEvent) => {
     e.preventDefault();
     if (selectedSeats.length === 0) {
-      alert("Vui lòng chọn ít nhất một ghế!");
+      showToast("Vui lòng chọn ít nhất một ghế!", 'warning');
       return;
     }
     if (!isNotBot) {
-      alert("Vui lòng xác nhận bạn không phải bot trước khi tiếp tục!");
+      showToast("Vui lòng xác nhận bạn không phải bot trước khi tiếp tục!", 'warning');
       return;
     }
     const savedCartStr = localStorage.getItem('checkoutCart');
@@ -214,10 +221,10 @@ function SeatSelectionContent() {
         router.push('/checkout');
       } else {
         const errorMsg = await response.text();
-        alert("Không thể giữ ghế: " + errorMsg);
+        showToast("Không thể giữ ghế: " + errorMsg, 'error');
       }
     } catch (err) {
-      alert("Lỗi kết nối server!");
+      showToast("Lỗi kết nối server!", 'error');
     } finally {
       setLoading(false);
     }
@@ -412,6 +419,30 @@ function SeatSelectionContent() {
           </div>
         </aside>
       </main>
+
+      {/* Toast Notification */}
+      {toast && (
+        <div
+          className={`fixed bottom-8 right-8 z-[9999] flex items-center gap-4 px-6 py-4 shadow-2xl border-l-4 transition-all duration-300 bg-white ${
+            toast.type === 'success' ? 'border-green-500' :
+            toast.type === 'warning' ? 'border-amber-500' :
+            'border-red-500'
+          }`}
+          style={{ minWidth: 280, maxWidth: 400 }}
+        >
+          <span className={`material-symbols-outlined text-xl ${
+            toast.type === 'success' ? 'text-green-500' :
+            toast.type === 'warning' ? 'text-amber-500' :
+            'text-red-500'
+          }`}>
+            {toast.type === 'success' ? 'check_circle' : toast.type === 'warning' ? 'warning' : 'error'}
+          </span>
+          <span className="text-slate-800 text-sm font-bold tracking-wide flex-1">{toast.message}</span>
+          <button onClick={() => setToast(null)} className="text-slate-400 hover:text-slate-700 transition-colors ml-2" aria-label="Đóng thông báo">
+            <span className="material-symbols-outlined text-base">close</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 }
