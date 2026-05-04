@@ -14,19 +14,26 @@ export default function BrowseEvents() {
   // 2. Fetch dữ liệu từ Backend Java (Spring Boot)
   useEffect(() => {
     const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080';
-    fetch(`${API_BASE}/events`)
-      .then((res) => {
-        if (!res.ok) throw new Error("Network response was not ok");
-        return res.json();
-      })
-      .then((data) => {
-        setEvents(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error("Lỗi kết nối Backend:", err);
-        setLoading(false);
-      });
+
+    const fetchEvents = () => {
+      fetch(`${API_BASE}/events`)
+        .then((res) => {
+          if (!res.ok) throw new Error("Network response was not ok");
+          return res.json();
+        })
+        .then((data) => {
+          setEvents(data);
+          setLoading(false);
+        })
+        .catch((err) => {
+          console.error("Lỗi kết nối Backend:", err);
+          setLoading(false);
+        });
+    };
+
+    // Fetch ngay lập tức, sau đó poll mỗi 15s để cập nhật status real-time
+    fetchEvents();
+    const eventsIntervalId = setInterval(fetchEvents, 15_000);
 
     const token = localStorage.getItem('token');
     if (token) {
@@ -41,6 +48,8 @@ export default function BrowseEvents() {
         })
         .catch(err => console.error("Lỗi fetch avatar:", err));
     }
+
+    return () => clearInterval(eventsIntervalId);
   }, []);
 
   // 3. Logic tìm kiếm: Lọc danh sách dựa trên tiêu đề hoặc địa điểm
@@ -185,10 +194,17 @@ export default function BrowseEvents() {
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-1">
               {filteredEvents.map((event: any) => (
                 <div key={event.eventId} className="bg-surface-container-lowest p-6 flex flex-col group relative">
-                  {/* Tag Live - Giả định nếu có price thì là Live */}
-                  <div className="absolute top-6 right-6 z-10 bg-secondary text-on-secondary px-3 py-1 font-bold text-[10px] uppercase tracking-tighter">
-                    Live
-                  </div>
+                  {/* Status badge */}
+                  {event.status === 'Ended' ? (
+                    <div className="absolute top-6 right-6 z-10 bg-slate-700 text-slate-300 px-3 py-1 font-bold text-[10px] uppercase tracking-tighter flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[11px]">event_busy</span>
+                      Ended
+                    </div>
+                  ) : (
+                    <div className="absolute top-6 right-6 z-10 bg-secondary text-on-secondary px-3 py-1 font-bold text-[10px] uppercase tracking-tighter">
+                      Live
+                    </div>
+                  )}
 
                   <div className="mb-6 overflow-hidden bg-slate-200">
                     <img
@@ -217,11 +233,17 @@ export default function BrowseEvents() {
                       </span>
                     </div>
                     {/* Chuyển hướng sang trang chi tiết bằng eventId */}
-                    <Link href={`/event/${event.eventId}`}>
-                      <button className="bg-primary text-on-primary px-6 py-3 font-black text-xs uppercase tracking-widest hover:bg-primary-dim transition-colors">
-                        Get Tickets
-                      </button>
-                    </Link>
+                    {event.status === 'Ended' ? (
+                      <div className="bg-slate-200 text-slate-400 px-6 py-3 font-black text-xs uppercase tracking-widest cursor-not-allowed select-none">
+                        Ended
+                      </div>
+                    ) : (
+                      <Link href={`/event/${event.eventId}`}>
+                        <button className="bg-primary text-on-primary px-6 py-3 font-black text-xs uppercase tracking-widest hover:bg-primary-dim transition-colors">
+                          Get Tickets
+                        </button>
+                      </Link>
+                    )}
                   </div>
                 </div>
               ))}

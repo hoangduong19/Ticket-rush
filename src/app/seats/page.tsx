@@ -23,6 +23,7 @@ function SeatSelectionContent() {
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState<string | null>(null);
   const [myHeldSeatIds, setMyHeldSeatIds] = useState<Set<string>>(new Set());
+  const [eventStatus, setEventStatus] = useState<string | null>(null);
 
   // Toast notification
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'warning' } | null>(null);
@@ -56,6 +57,17 @@ function SeatSelectionContent() {
     }
     if (!eventId) return;
 
+    // Fetch event status
+    const fetchEventStatus = () => {
+      fetch(`${API_BASE}/events/${eventId}`)
+        .then(res => { if (!res.ok) throw new Error('Event fetch failed'); return res.json(); })
+        .then(data => { if (data.status) setEventStatus(data.status); })
+        .catch(err => console.error('Lỗi fetch event status:', err));
+    };
+    fetchEventStatus();
+    const statusIntervalId = setInterval(fetchEventStatus, 5_000);
+    // Cleanup for status interval handled by returning a combined cleanup below
+
     const updateSeatsStatus = () => {
       fetch(`${API_BASE}/events/${eventId}/seats`)
         .then(res => {
@@ -82,6 +94,7 @@ function SeatSelectionContent() {
 
     return () => {
       clearInterval(intervalId);
+      clearInterval(statusIntervalId);
       console.log("Đã dừng cập nhật ghế.");
     };
   }, [eventId]);
@@ -123,7 +136,10 @@ function SeatSelectionContent() {
     return () => clearInterval(interval);
   }, [expiresAt, router]);
 
+  const isEventEnded = eventStatus === 'Ended';
+
   const toggleSeat = (seat: any) => {
+    if (isEventEnded) return;
     const isAlreadySelected = selectedSeats.some(s => s.seatId === seat.seatId);
 
     if (isAlreadySelected) {
@@ -252,6 +268,28 @@ function SeatSelectionContent() {
           </button>
         </div>
       </header>
+
+      {/* Ended Event Overlay */}
+      {isEventEnded && (
+        <div className="fixed inset-0 z-[9998] flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm">
+          <div className="bg-surface-container-lowest border border-red-500/30 shadow-2xl p-12 max-w-lg w-full mx-4 flex flex-col items-center text-center gap-6">
+            <div className="w-20 h-20 rounded-full bg-red-500/10 flex items-center justify-center border-2 border-red-500/50">
+              <span className="material-symbols-outlined text-red-500 text-4xl">event_busy</span>
+            </div>
+            <div>
+              <h2 className="text-3xl font-black tracking-tighter uppercase italic text-on-surface mb-2">Event Ended</h2>
+              <p className="text-sm font-bold uppercase tracking-widest text-on-surface-variant opacity-60">Ticket sales for this event have closed.</p>
+            </div>
+            <div className="h-px w-full bg-surface-container-high"></div>
+            <button
+              onClick={() => router.push('/events')}
+              className="w-full bg-primary text-on-primary py-4 text-xs font-black uppercase tracking-[0.3em] hover:bg-primary-dim transition-all shadow-lg"
+            >
+              Browse Other Events
+            </button>
+          </div>
+        </div>
+      )}
 
       <main className="flex-1 flex flex-col md:flex-row overflow-hidden">
         {/* Left Section: Seating Map */}
@@ -411,10 +449,10 @@ function SeatSelectionContent() {
             </label>
             <button
               onClick={handleConfirmSelection}
-              disabled={loading || selectedSeats.length === 0}
+              disabled={loading || selectedSeats.length === 0 || isEventEnded}
               className="w-full bg-primary text-on-primary py-6 text-sm font-black uppercase tracking-[0.3em] transition-all hover:bg-primary-dim active:scale-[0.97] shadow-2xl disabled:opacity-30"
             >
-              {loading ? "INITIALIZING..." : "SECURE TRANSACTION"}
+              {isEventEnded ? "EVENT ENDED" : loading ? "INITIALIZING..." : "SECURE TRANSACTION"}
             </button>
           </div>
         </aside>
