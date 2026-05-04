@@ -134,11 +134,8 @@ export default async function AudienceAnalytics() {
           {/* Top Stats */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-0 mb-12 border-l-4 border-primary">
             <div className="bg-surface-container-lowest p-8 border-r border-background">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-4">Total Active Users</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-4">Total Registered Users</p>
               <p className="text-4xl font-black text-primary">{totalUsers.toLocaleString()}</p>
-              <div className="mt-4 flex items-center gap-1 text-tertiary font-bold text-xs">
-                <span className="material-symbols-outlined text-sm">trending_up</span> Realtime
-              </div>
             </div>
             <div className="bg-surface-container-lowest p-8 border-r border-background">
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-4">Avg. Age</p>
