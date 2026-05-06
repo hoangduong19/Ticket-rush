@@ -166,7 +166,7 @@ function SeatSelectionContent() {
 
     if (isSold) return;
     if (isLocked && !isMyHeldSeat) return;
-    
+
     if (selectedSeats.length >= MAX_SELECTION) {
       showToast(`Bạn chỉ có thể chọn tối đa ${MAX_SELECTION} ghế trong một phiên.`, 'warning');
       return;
@@ -374,7 +374,7 @@ function SeatSelectionContent() {
                           } else if (isLocked) {
                             statusClass = 'bg-amber-500 animate-pulse cursor-not-allowed';
                           } else if (isSold) {
-                            statusClass = 'bg-surface-container-highest opacity-20 cursor-not-allowed';
+                            statusClass = 'bg-black opacity-20 cursor-not-allowed';
                           }
 
                           const isDisabled = !isSelected && (isSold || (isLocked && !isMyHeld));
@@ -484,18 +484,16 @@ function SeatSelectionContent() {
       {/* Toast Notification */}
       {toast && (
         <div
-          className={`fixed bottom-8 right-8 z-[9999] flex items-center gap-4 px-6 py-4 shadow-2xl border-l-4 transition-all duration-300 bg-white ${
-            toast.type === 'success' ? 'border-green-500' :
+          className={`fixed bottom-8 right-8 z-[9999] flex items-center gap-4 px-6 py-4 shadow-2xl border-l-4 transition-all duration-300 bg-white ${toast.type === 'success' ? 'border-green-500' :
             toast.type === 'warning' ? 'border-amber-500' :
-            'border-red-500'
-          }`}
+              'border-red-500'
+            }`}
           style={{ minWidth: 280, maxWidth: 400 }}
         >
-          <span className={`material-symbols-outlined text-xl ${
-            toast.type === 'success' ? 'text-green-500' :
+          <span className={`material-symbols-outlined text-xl ${toast.type === 'success' ? 'text-green-500' :
             toast.type === 'warning' ? 'text-amber-500' :
-            'text-red-500'
-          }`}>
+              'text-red-500'
+            }`}>
             {toast.type === 'success' ? 'check_circle' : toast.type === 'warning' ? 'warning' : 'error'}
           </span>
           <span className="text-slate-800 text-sm font-bold tracking-wide flex-1">{toast.message}</span>

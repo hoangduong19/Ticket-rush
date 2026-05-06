@@ -80,11 +80,11 @@ function MonitorContent() {
           <span className="text-2xl font-black italic tracking-tighter text-blue-600 uppercase">TicketRush</span>
         </div>
         <nav className="flex-1 px-4 space-y-2 mt-4">
-          <Link href="/admin" className="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-highest transition-colors font-medium uppercase text-[10px] tracking-widest">
+          <Link href="/admin" className="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-highest transition-colors font-medium uppercase text-[15px] tracking-widest">
             <span className="material-symbols-outlined text-sm">dashboard</span>
             <span>Dashboard</span>
           </Link>
-          <Link href="/admin/monitor/list" className="flex items-center gap-3 px-4 py-3 bg-primary text-on-primary font-bold transition-colors uppercase text-[10px] tracking-widest">
+          <Link href="/admin/monitor/list" className="flex items-center gap-3 px-4 py-3 bg-primary text-on-primary font-bold transition-colors uppercase text-[15px] tracking-widest">
             <span className="material-symbols-outlined text-sm">map</span>
             <span>Live Monitor</span>
           </Link>
