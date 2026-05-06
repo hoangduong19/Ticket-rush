@@ -33,6 +33,7 @@ function SeatSelectionContent() {
   };
 
   const SERVICE_FEE_RATE = 0.15;
+  const MAX_SELECTION = 5;
 
   useEffect(() => {
     const storedId = localStorage.getItem('userId');
@@ -44,11 +45,21 @@ function SeatSelectionContent() {
     if (savedCart) {
       try {
         const { seats, eventId: savedEventId, holdId } = JSON.parse(savedCart);
-        if (savedEventId === eventId && Array.isArray(seats)) {
-          setSelectedSeats(seats);
-          if (holdId) {
-            setMyHeldSeatIds(new Set(seats.map((s: any) => s.seatId)));
-            setIsNotBot(true);
+        if (savedEventId === eventId && Array.isArray(seats) && seats.length > 0) {
+          if (seats.length > MAX_SELECTION) {
+            showToast(`Giỏ hàng có ${seats.length} ghế. Chỉ giữ ${MAX_SELECTION} ghế đầu tiên cho phiên này.`, 'warning');
+            const trimmed = seats.slice(0, MAX_SELECTION);
+            setSelectedSeats(trimmed);
+            if (holdId) {
+              setMyHeldSeatIds(new Set(trimmed.map((s: any) => s.seatId)));
+              setIsNotBot(true);
+            }
+          } else {
+            setSelectedSeats(seats);
+            if (holdId) {
+              setMyHeldSeatIds(new Set(seats.map((s: any) => s.seatId)));
+              setIsNotBot(true);
+            }
           }
         }
       } catch {
@@ -153,6 +164,11 @@ function SeatSelectionContent() {
 
     if (isSold) return;
     if (isLocked && !isMyHeldSeat) return;
+    
+    if (selectedSeats.length >= MAX_SELECTION) {
+      showToast(`Bạn chỉ có thể chọn tối đa ${MAX_SELECTION} ghế trong một phiên.`, 'warning');
+      return;
+    }
 
     const savedCartStr = localStorage.getItem('checkoutCart');
     let seatToAdd = seat;
@@ -196,6 +212,10 @@ function SeatSelectionContent() {
       showToast("Vui lòng xác nhận bạn không phải bot trước khi tiếp tục!", 'warning');
       return;
     }
+    if (selectedSeats.length > MAX_SELECTION) {
+      showToast(`Không thể tiếp tục: bạn chỉ được chọn tối đa ${MAX_SELECTION} ghế.`, 'warning');
+      return;
+    }
     const savedCartStr = localStorage.getItem('checkoutCart');
     if (savedCartStr) {
       const savedCart = JSON.parse(savedCartStr);
@@ -225,15 +245,16 @@ function SeatSelectionContent() {
 
       if (response.ok) {
         const holdId = await response.json();
-        setSelectedSeats([]);
+        const reservedSeats = [...selectedSeats];
         const cartData = {
-          holdId: holdId,
-          seats: selectedSeats,
+          holdId,
+          seats: reservedSeats,
           total: totalPrice,
-          eventId: eventId,
-          expiresAt: expiresAt
+          eventId,
+          expiresAt
         };
         localStorage.setItem('checkoutCart', JSON.stringify(cartData));
+        setSelectedSeats([]);
         router.push('/checkout');
       } else {
         const errorMsg = await response.text();
