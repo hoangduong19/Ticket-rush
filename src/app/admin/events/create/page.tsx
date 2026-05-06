@@ -144,7 +144,7 @@ export default function CreateEvent() {
         showToast('Event & Seating Map Published Successfully!', 'success');
         localStorage.removeItem('seatingMapDraft');
         localStorage.removeItem('eventDataDraft');
-        setTimeout(() => router.push('/events'), 1500);
+        setTimeout(() => router.push('/admin/monitor/list'), 1500);
       } else {
         showToast('Event created, but failed to generate seats.', 'warning');
       }
@@ -348,18 +348,16 @@ export default function CreateEvent() {
       {/* Toast Notification */}
       {toast && (
         <div
-          className={`fixed bottom-8 right-8 z-[9999] flex items-center gap-4 px-6 py-4 shadow-2xl border-l-4 bg-white ${
-            toast.type === 'success' ? 'border-green-500' :
-            toast.type === 'warning' ? 'border-amber-500' :
-            'border-red-500'
-          }`}
+          className={`fixed bottom-8 right-8 z-[9999] flex items-center gap-4 px-6 py-4 shadow-2xl border-l-4 bg-white ${toast.type === 'success' ? 'border-green-500' :
+              toast.type === 'warning' ? 'border-amber-500' :
+                'border-red-500'
+            }`}
           style={{ minWidth: 280, maxWidth: 400 }}
         >
-          <span className={`material-symbols-outlined text-xl ${
-            toast.type === 'success' ? 'text-green-500' :
-            toast.type === 'warning' ? 'text-amber-500' :
-            'text-red-500'
-          }`}>
+          <span className={`material-symbols-outlined text-xl ${toast.type === 'success' ? 'text-green-500' :
+              toast.type === 'warning' ? 'text-amber-500' :
+                'text-red-500'
+            }`}>
             {toast.type === 'success' ? 'check_circle' : toast.type === 'warning' ? 'warning' : 'error'}
           </span>
           <span className="text-slate-800 text-sm font-bold tracking-wide flex-1">{toast.message}</span>

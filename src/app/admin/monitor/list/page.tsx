@@ -105,7 +105,7 @@ export default function MonitorSelector() {
     return (
         <div className="min-h-screen bg-background text-on-background font-body">
             {/* TopNavBar - Giữ nguyên */}
-            <header className="bg-slate-50 dark:bg-slate-950 w-full px-8 py-6 border-b-2 border-surface-container-high sticky top-0 z-40">
+            <header className="bg-slate-50 w-full px-8 py-6 border-b-2 border-surface-container-high sticky top-0 z-40">
                 <div className="flex justify-between items-center">
                     <div className="flex items-center gap-8">
                         <span className="text-2xl font-black italic tracking-tighter text-blue-700 dark:text-blue-500 uppercase">TicketRush</span>
@@ -130,7 +130,7 @@ export default function MonitorSelector() {
                     {events.map((event) => (
                         <div
                             key={event.eventId}
-                            className="group bg-surface-container-lowest p-8 flex flex-col md:flex-row justify-between items-center hover:bg-slate-100 dark:hover:bg-slate-900 transition-all cursor-pointer border-b border-surface-container"
+                            className="group bg-surface-container-lowest p-8 flex flex-col md:flex-row justify-between items-center hover:bg-slate-100  transition-all cursor-pointer border-b border-surface-container"
                             onClick={() => router.push(`/admin/monitor?eventId=${event.eventId}`)}
                         >
                             <div className="flex flex-col gap-1">
@@ -152,20 +152,20 @@ export default function MonitorSelector() {
                                     <p className="text-xs font-black text-green-500 uppercase">{event.status}</p>
                                 </div>
 
-                                <button className="w-12 h-12 flex items-center justify-center bg-slate-200 dark:bg-slate-800 text-on-surface hover:bg-primary hover:text-white transition-all">
+                                <button className="w-12 h-12 flex items-center justify-center bg-slate-200 text-on-surface hover:bg-primary hover:text-white transition-all">
                                     <span className="material-symbols-outlined text-xl">analytics</span>
                                 </button>
 
                                 <button
                                     onClick={(e) => handleEdit(e, event.eventId)}
-                                    className="w-12 h-12 flex items-center justify-center bg-slate-200 dark:bg-slate-800 text-on-surface hover:bg-blue-600 hover:text-white transition-all"
+                                    className="w-12 h-12 flex items-center justify-center bg-slate-200 text-on-surface hover:bg-blue-600 hover:text-white transition-all"
                                 >
                                     <span className="material-symbols-outlined text-xl">edit</span>
                                 </button>
 
                                 <button
                                     onClick={(e) => handleDelete(e, event.eventId, event.title)}
-                                    className="w-12 h-12 flex items-center justify-center bg-slate-200 dark:bg-slate-800 text-red-500 hover:bg-red-600 hover:text-white transition-all"
+                                    className="w-12 h-12 flex items-center justify-center bg-slate-200 text-red-500 hover:bg-red-600 hover:text-white transition-all"
                                 >
                                     <span className="material-symbols-outlined text-xl">delete</span>
                                 </button>
@@ -178,7 +178,7 @@ export default function MonitorSelector() {
             {/* 3. CẬP NHẬT GIAO DIỆN TOAST (Thêm nút bấm cho phần xác nhận) */}
             {toast && (
                 <div
-                    className={`fixed bottom-8 right-8 z-[9999] flex flex-col gap-4 px-6 py-5 shadow-2xl border-l-4 bg-white dark:bg-slate-900 ${toast.type === 'success' ? 'border-green-500' :
+                    className={`fixed bottom-8 right-8 z-[9999] flex flex-col gap-4 px-6 py-5 shadow-2xl border-l-4 bg-white ${toast.type === 'success' ? 'border-green-500' :
                         toast.type === 'warning' ? 'border-amber-500' :
                             'border-red-500'
                         }`}
@@ -191,7 +191,7 @@ export default function MonitorSelector() {
                             }`}>
                             {toast.type === 'success' ? 'check_circle' : toast.type === 'warning' ? 'report_problem' : 'error'}
                         </span>
-                        <span className="text-slate-800 dark:text-slate-100 text-sm font-black tracking-tight uppercase flex-1">
+                        <span className="text-slate-800 text-sm font-black tracking-tight uppercase flex-1">
                             {toast.message}
                         </span>
                     </div>
