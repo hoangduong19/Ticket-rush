@@ -121,6 +121,8 @@ function SeatSelectionContent() {
     const interval = setInterval(() => {
       const now = new Date().getTime();
       const end = new Date(expiresAt).getTime();
+      console.log("Vercel time:", now)
+      console.log("Railway Time:", end)
       const diff = end - now;
 
       if (diff <= 0) {
