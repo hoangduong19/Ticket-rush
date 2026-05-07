@@ -229,7 +229,9 @@ export default function BrowseEvents() {
                     <div>
                       <span className="text-[10px] font-black text-outline block">FROM</span>
                       <span className="text-2xl font-black tracking-tighter">
-                        ${event.price ? event.price.toFixed(2) : "0.00"}
+                        {event.price && event.price > 0
+                          ? `$${Number(event.price).toFixed(2)}`
+                          : "FREE"}
                       </span>
                     </div>
                     {/* Chuyển hướng sang trang chi tiết bằng eventId */}

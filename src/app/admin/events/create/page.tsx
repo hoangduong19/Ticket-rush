@@ -349,14 +349,14 @@ export default function CreateEvent() {
       {toast && (
         <div
           className={`fixed bottom-8 right-8 z-[9999] flex items-center gap-4 px-6 py-4 shadow-2xl border-l-4 bg-white ${toast.type === 'success' ? 'border-green-500' :
-              toast.type === 'warning' ? 'border-amber-500' :
-                'border-red-500'
+            toast.type === 'warning' ? 'border-amber-500' :
+              'border-red-500'
             }`}
           style={{ minWidth: 280, maxWidth: 400 }}
         >
           <span className={`material-symbols-outlined text-xl ${toast.type === 'success' ? 'text-green-500' :
-              toast.type === 'warning' ? 'text-amber-500' :
-                'text-red-500'
+            toast.type === 'warning' ? 'text-amber-500' :
+              'text-red-500'
             }`}>
             {toast.type === 'success' ? 'check_circle' : toast.type === 'warning' ? 'warning' : 'error'}
           </span>
