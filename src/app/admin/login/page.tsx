@@ -30,8 +30,8 @@ export default function AdminLogin() {
     try {
       await apiLogin(email, password);
       router.push('/admin');
-    } catch (err: any) {
-      setError(err?.message || 'Login failed');
+    } catch {
+      setError('Thông tin đăng nhập không hợp lệ. Vui lòng kiểm tra lại.');
     } finally {
       setLoading(false);
     }
@@ -101,7 +101,12 @@ export default function AdminLogin() {
               {loading ? 'Authenticating...' : 'Admin Login'}
               <span className="material-symbols-outlined">arrow_forward</span>
             </button>
-            {error && <div className="text-error font-bold">{error}</div>}
+            {error && (
+              <div className="flex items-center gap-3 bg-red-50 border-l-4 border-red-500 px-4 py-3 mt-1">
+                <span className="material-symbols-outlined text-red-500 text-lg shrink-0">admin_panel_settings</span>
+                <p className="text-red-700 text-sm font-semibold">{error}</p>
+              </div>
+            )}
           </form>
           
           <div className="flex flex-col gap-6 items-start">

@@ -30,8 +30,8 @@ export default function Login() {
     try {
       await apiLogin(email, password);
       router.push('/dashboard');
-    } catch (err: any) {
-      setError(err?.message || 'Login failed');
+    } catch {
+      setError('Email hoặc mật khẩu không chính xác. Vui lòng thử lại.');
     } finally {
       setLoading(false);
     }
@@ -104,7 +104,12 @@ export default function Login() {
               {loading ? 'Signing in...' : 'Secure Login'}
               <span className="material-symbols-outlined">arrow_forward</span>
             </button>
-            {error && <div className="text-negative font-bold">{error}</div>}
+            {error && (
+              <div className="flex items-center gap-3 bg-red-50 border-l-4 border-red-500 px-4 py-3">
+                <span className="material-symbols-outlined text-red-500 text-lg shrink-0">lock</span>
+                <p className="text-red-700 text-sm font-semibold">{error}</p>
+              </div>
+            )}
           </form>
 
           {/* Secondary Actions */}

@@ -259,8 +259,15 @@ function SeatSelectionContent() {
         setSelectedSeats([]);
         router.push('/checkout');
       } else {
-        const errorMsg = await response.text();
-        showToast("Không thể giữ ghế: " + errorMsg, 'error');
+        const errorText = await response.text();
+        let cleanMsg = "Vui lòng thử lại sau.";
+        try {
+          const errJson = JSON.parse(errorText);
+          if (errJson.message) cleanMsg = errJson.message;
+        } catch {
+          cleanMsg = errorText;
+        }
+        showToast("Không thể giữ ghế: " + cleanMsg, 'error');
       }
     } catch (err) {
       showToast("Lỗi kết nối server!", 'error');

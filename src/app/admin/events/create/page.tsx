@@ -146,11 +146,11 @@ export default function CreateEvent() {
         localStorage.removeItem('eventDataDraft');
         setTimeout(() => router.push('/admin/monitor/list'), 1500);
       } else {
-        showToast('Event created, but failed to generate seats.', 'warning');
+        showToast('Sự kiện đã tạo nhưng không thể khởi tạo ghế. Vui lòng thử lại.', 'warning');
       }
 
     } catch (err: any) {
-      showToast('Error: ' + err.message, 'error');
+      showToast('Không thể tạo sự kiện. Vui lòng kiểm tra lại thông tin.', 'error');
     } finally {
       setLoading(false);
     }

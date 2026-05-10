@@ -124,8 +124,7 @@ export default function Checkout() {
       showToast('Thanh toán thành công! Vé đã được xuất.', 'success');
       setTimeout(() => router.push('/tickets'), 1500);
     } catch (err: any) {
-      showToast(err.message || 'Lỗi khi xử lý thanh toán.', 'error');
-      console.error("Checkout error:", err);
+      showToast('Lỗi khi xử lý thanh toán. Vui lòng kiểm tra lại.', 'error');
     }
   };
 
