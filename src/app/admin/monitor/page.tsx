@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+import AdminLogoutButton from '../AdminLogoutButton';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080';
 
@@ -77,7 +78,7 @@ function MonitorContent() {
       {/* Sidebar Navigation - Giữ nguyên */}
       <aside className="w-64 bg-surface-container-high hidden md:flex flex-col shrink-0 border-r border-outline-variant/10">
         <div className="px-6 py-8">
-          <span className="text-2xl font-black italic tracking-tighter text-blue-600 uppercase">TicketRush</span>
+          <Link href="/admin" className="text-2xl font-black italic tracking-tighter text-blue-600 uppercase hover:text-blue-800 transition-colors">TicketRush</Link>
         </div>
         <nav className="flex-1 px-4 space-y-2 mt-4">
           <Link href="/admin" className="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-highest transition-colors font-medium uppercase text-[15px] tracking-widest">
@@ -89,6 +90,11 @@ function MonitorContent() {
             <span>Live Monitor</span>
           </Link>
         </nav>
+        <div className="p-6 bg-surface-container-highest mt-auto border-t border-outline-variant/20">
+          <div className="flex justify-center">
+            <AdminLogoutButton />
+          </div>
+        </div>
       </aside>
 
       <div className="flex-grow flex flex-col min-w-0 overflow-hidden">

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { clearToken } from '@/lib/auth';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080';
 
@@ -198,13 +199,19 @@ export default function CreateEvent() {
       <nav className="bg-slate-50 dark:bg-slate-950 w-full top-0 left-0 sticky z-50 border-b-2 border-slate-200 dark:border-slate-800">
         <div className="flex justify-between items-center px-8 py-6 w-full max-w-none">
           <div className="flex items-center gap-12">
-            <span className="text-2xl font-black italic tracking-tighter text-blue-700 dark:text-blue-500 uppercase">TicketRush</span>
+            <Link href="/admin" className="text-2xl font-black italic tracking-tighter text-blue-700 dark:text-blue-500 uppercase hover:text-blue-800 transition-colors">TicketRush</Link>
             <div className="hidden md:flex gap-8">
-              <Link href="/admin" className="text-slate-900 dark:text-slate-100 font-bold opacity-60 font-['Inter'] tracking-tight uppercase hover:bg-blue-700 transition-colors px-2 py-1">Dashboard</Link>
+              <Link href="/admin" className="text-slate-900 dark:text-slate-100 font-bold opacity-60 font-['Inter'] tracking-tight uppercase hover:bg-blue-700 hover:text-white hover:opacity-100 transition-colors px-2 py-1">Dashboard</Link>
               <span className="text-blue-700 dark:text-blue-400 font-bold font-['Inter'] tracking-tight uppercase border-b-2 border-blue-700 px-2 py-1">Create Event</span>
             </div>
           </div>
-          <button className="material-symbols-outlined text-3xl">account_circle</button>
+          <button
+            onClick={() => { clearToken('admin'); router.replace('/admin/login'); }}
+            className="flex items-center gap-2 text-red-600 hover:bg-red-50 px-4 py-2 font-bold text-xs uppercase tracking-widest transition-colors"
+          >
+            <span className="material-symbols-outlined text-[18px]">logout</span>
+            Sign Out
+          </button>
         </div>
       </nav>
 

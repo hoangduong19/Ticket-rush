@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
+import AdminLogoutButton from './AdminLogoutButton';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080';
 
@@ -70,7 +71,7 @@ export default async function AudienceAnalytics() {
       {/* Sidebar Navigation */}
       <aside className="w-64 bg-surface-container-high hidden md:flex flex-col shrink-0">
         <div className="px-6 py-8">
-          <span className="text-2xl font-black tracking-tighter text-blue-600 uppercase">TicketRush</span>
+          <Link href="/admin" className="text-2xl font-black tracking-tighter text-blue-600 uppercase hover:text-blue-800 transition-colors">TicketRush</Link>
         </div>
         <nav className="flex-1 px-4 space-y-2 mt-4">
           <Link href="/admin" className="flex items-center gap-3 px-4 py-3 bg-primary text-on-primary font-bold transition-colors">
@@ -86,13 +87,16 @@ export default async function AudienceAnalytics() {
             <span>Live Monitor</span>
           </Link>
         </nav>
-        <div className="p-6 bg-surface-container-highest">
+        <div className="p-6 bg-surface-container-highest border-t border-outline-variant/20">
           <div className="flex items-center gap-3">
             <img alt="Admin Avatar" className="w-10 h-10 object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD8XpUv4yqBXDrN1KvICMpWaJHrMpiDTWZwMrNjzP_2ur60ZDgE4MHY2yIyw9IN5k7zr2zIL7fBUtyiBCmVcdnXG0oyYWfTaPF7NFxvWdAt9ajMfjdTw58llPabfSMKOjyPHIrBgNPQezsReKnl1wkkdmvVEPQhdPkJHmyXElIqk1YtkbVyfWnPRd-2xP_9EI2eDvJJ8zRt2fGSY1tTHmsHwCOEGCnav0-zIk1bz6TXw0KYAGS0L1vlKoHDKUWa2507n-DGciQmvUXv" />
-            <div>
+            <div className="flex-1">
               <p className="text-sm font-bold">Admin User</p>
               <p className="text-xs text-on-surface-variant">System Architect</p>
             </div>
+          </div>
+          <div className="mt-4 flex justify-end">
+            <AdminLogoutButton />
           </div>
         </div>
       </aside>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import AdminLogoutButton from '../../AdminLogoutButton';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080';
 
@@ -108,13 +109,13 @@ export default function MonitorSelector() {
             <header className="bg-slate-50 w-full px-8 py-6 border-b-2 border-surface-container-high sticky top-0 z-40">
                 <div className="flex justify-between items-center">
                     <div className="flex items-center gap-8">
-                        <span className="text-2xl font-black italic tracking-tighter text-blue-700 dark:text-blue-500 uppercase">TicketRush</span>
+                        <Link href="/admin" className="text-2xl font-black italic tracking-tighter text-blue-700 dark:text-blue-500 uppercase hover:text-blue-800 transition-colors">TicketRush</Link>
                         <nav className="flex gap-6 uppercase text-[10px] font-black tracking-widest opacity-60">
                             <Link href="/admin">Dashboard</Link>
                             <span className="text-blue-600">Event Manager</span>
                         </nav>
                     </div>
-                    <button className="material-symbols-outlined text-3xl">account_circle</button>
+                    <AdminLogoutButton />
                 </div>
             </header>
 
