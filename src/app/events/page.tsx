@@ -1,40 +1,88 @@
-"use client" // Bắt buộc phải có để sử dụng useState và useEffect trong App Router
+"use client"
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080';
+
+const CATEGORIES = [
+  { value: 'MUSIC', label: 'Music', icon: 'music_note' },
+  { value: 'SPORT', label: 'Sports', icon: 'sports_soccer' },
+  { value: 'THEATER', label: 'Theater', icon: 'theater_comedy' },
+];
 
 export default function BrowseEvents() {
-  // 1. Khai báo các State để quản lý dữ liệu
-  const [events, setEvents] = useState([]); // Danh sách sự kiện từ API
-  const [searchQuery, setSearchQuery] = useState(""); // Từ khóa tìm kiếm
-  const [loading, setLoading] = useState(true); // Trạng thái đang tải
+  // Data state
+  const [events, setEvents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [avatarUrl, setAvatarUrl] = useState('https://api.dicebear.com/7.x/avataaars/svg?seed=Felix');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  // 2. Fetch dữ liệu từ Backend Java (Spring Boot)
+  // Pagination state (applied/active)
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
+  const PAGE_SIZE = 9;
+
+  // Filter state (pending — not yet applied)
+  const [pendingCategories, setPendingCategories] = useState<string[]>([]);
+  const [pendingDateFrom, setPendingDateFrom] = useState('');
+  const [pendingDateTo, setPendingDateTo] = useState('');
+  const [pendingPriceMin, setPendingPriceMin] = useState('');
+  const [pendingPriceMax, setPendingPriceMax] = useState('');
+
+  // Applied filter state (sent to API)
+  const [appliedCategories, setAppliedCategories] = useState<string[]>([]);
+  const [appliedDateFrom, setAppliedDateFrom] = useState('');
+  const [appliedDateTo, setAppliedDateTo] = useState('');
+  const [appliedPriceMin, setAppliedPriceMin] = useState('');
+  const [appliedPriceMax, setAppliedPriceMax] = useState('');
+
+  // Track if pending differs from applied
+  const hasUnappliedChanges =
+    JSON.stringify(pendingCategories) !== JSON.stringify(appliedCategories) ||
+    pendingDateFrom !== appliedDateFrom ||
+    pendingDateTo !== appliedDateTo ||
+    pendingPriceMin !== appliedPriceMin ||
+    pendingPriceMax !== appliedPriceMax;
+
+  // Fetch events from API
+  const fetchEvents = useCallback(async (page: number) => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      params.set('page', String(page));
+      params.set('size', String(PAGE_SIZE));
+
+      appliedCategories.forEach(cat => params.append('category', cat));
+      if (appliedDateFrom) params.set('dateFrom', appliedDateFrom);
+      if (appliedDateTo) params.set('dateTo', appliedDateTo);
+      if (appliedPriceMin) params.set('priceMin', appliedPriceMin);
+      if (appliedPriceMax) params.set('priceMax', appliedPriceMax);
+
+      const res = await fetch(`${API_BASE}/events?${params.toString()}`);
+      if (!res.ok) throw new Error("Network response was not ok");
+      const data = await res.json();
+
+      // Spring Boot Page object
+      setEvents(data.content ?? []);
+      setTotalPages(data.totalPages ?? 1);
+      setTotalElements(data.totalElements ?? 0);
+      setCurrentPage(data.number ?? page);
+    } catch (err) {
+      console.error("Lỗi kết nối Backend:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [appliedCategories, appliedDateFrom, appliedDateTo, appliedPriceMin, appliedPriceMax]);
+
+  // Fetch on mount + when applied filters or page change
   useEffect(() => {
-    const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080';
+    fetchEvents(currentPage);
+  }, [fetchEvents, currentPage]);
 
-    const fetchEvents = () => {
-      fetch(`${API_BASE}/events`)
-        .then((res) => {
-          if (!res.ok) throw new Error("Network response was not ok");
-          return res.json();
-        })
-        .then((data) => {
-          setEvents(data);
-          setLoading(false);
-        })
-        .catch((err) => {
-          console.error("Lỗi kết nối Backend:", err);
-          setLoading(false);
-        });
-    };
-
-    // Fetch ngay lập tức, sau đó poll mỗi 15s để cập nhật status real-time
-    fetchEvents();
-    const eventsIntervalId = setInterval(fetchEvents, 15_000);
-
+  // Fetch avatar
+  useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
       fetch(`${API_BASE}/users/me`, {
@@ -48,15 +96,66 @@ export default function BrowseEvents() {
         })
         .catch(err => console.error("Lỗi fetch avatar:", err));
     }
-
-    return () => clearInterval(eventsIntervalId);
   }, []);
 
-  // 3. Logic tìm kiếm: Lọc danh sách dựa trên tiêu đề hoặc địa điểm
-  const filteredEvents = events.filter((event: any) =>
-    event.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    event.location?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Toggle category in pending state
+  const toggleCategory = (cat: string) => {
+    setPendingCategories(prev =>
+      prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]
+    );
+  };
+
+  // Apply filters
+  const applyFilters = () => {
+    setAppliedCategories([...pendingCategories]);
+    setAppliedDateFrom(pendingDateFrom);
+    setAppliedDateTo(pendingDateTo);
+    setAppliedPriceMin(pendingPriceMin);
+    setAppliedPriceMax(pendingPriceMax);
+    setCurrentPage(0); // Reset to first page
+  };
+
+  // Reset filters
+  const resetFilters = () => {
+    setPendingCategories([]);
+    setPendingDateFrom('');
+    setPendingDateTo('');
+    setPendingPriceMin('');
+    setPendingPriceMax('');
+    setAppliedCategories([]);
+    setAppliedDateFrom('');
+    setAppliedDateTo('');
+    setAppliedPriceMin('');
+    setAppliedPriceMax('');
+    setCurrentPage(0);
+  };
+
+  // Pagination helpers
+  const goToPage = (page: number) => {
+    if (page >= 0 && page < totalPages) {
+      setCurrentPage(page);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const getVisiblePages = () => {
+    const pages: number[] = [];
+    const maxVisible = 5;
+    let start = Math.max(0, currentPage - Math.floor(maxVisible / 2));
+    let end = Math.min(totalPages, start + maxVisible);
+    if (end - start < maxVisible) {
+      start = Math.max(0, end - maxVisible);
+    }
+    for (let i = start; i < end; i++) {
+      pages.push(i);
+    }
+    return pages;
+  };
+
+  // Active filter count
+  const activeFilterCount = appliedCategories.length +
+    (appliedDateFrom ? 1 : 0) + (appliedDateTo ? 1 : 0) +
+    (appliedPriceMin ? 1 : 0) + (appliedPriceMax ? 1 : 0);
 
   return (
     <div className="bg-background text-on-background min-h-screen flex flex-col">
@@ -101,80 +200,171 @@ export default function BrowseEvents() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div className="max-w-2xl w-full">
             <span className="font-['Inter'] font-bold text-xs uppercase tracking-widest text-primary mb-2 block">Search Directory</span>
-            <h1 className="text-[2rem] font-bold tracking-tighter leading-none mb-6">EXPLORE LIVE EVENTS</h1>
+            <h1 className="text-[2rem] font-bold tracking-tighter leading-none mb-2">EXPLORE LIVE EVENTS</h1>
+          </div>
+          <div className="text-right">
+            <div className="text-[3rem] font-extrabold tracking-tighter leading-none text-primary">{totalElements}</div>
+            <div className="font-bold text-xs uppercase tracking-widest text-on-surface-variant">Events Found</div>
           </div>
         </div>
       </section>
 
       <main className="flex flex-col md:flex-row gap-0 flex-grow">
         {/* Sidebar Filters */}
-        <aside className="w-full md:w-80 bg-surface-container-low p-8 border-r-0">
+        <aside className="w-full md:w-80 bg-surface-container-low p-8 border-r-0 flex-shrink-0">
           <div className="sticky top-32 space-y-10">
+            {/* Category Filter */}
             <div>
               <h3 className="font-bold text-xs uppercase tracking-widest mb-6 border-b-2 border-surface-dim pb-2">Category</h3>
-              <div className="space-y-3">
-                <label className="flex items-center gap-3 cursor-pointer group">
-                  <input defaultChecked className="form-checkbox bg-surface-container-highest border-none text-primary focus:ring-0 w-5 h-5" type="checkbox" />
-                  <span className="font-bold text-sm uppercase group-hover:text-primary">All Genres</span>
-                </label>
-                <label className="flex items-center gap-3 cursor-pointer group">
-                  <input className="form-checkbox bg-surface-container-highest border-none text-primary focus:ring-0 w-5 h-5" type="checkbox" />
-                  <span className="font-bold text-sm uppercase group-hover:text-primary">Music</span>
-                </label>
-                <label className="flex items-center gap-3 cursor-pointer group">
-                  <input className="form-checkbox bg-surface-container-highest border-none text-primary focus:ring-0 w-5 h-5" type="checkbox" />
-                  <span className="font-bold text-sm uppercase group-hover:text-primary">Sports</span>
-                </label>
-                <label className="flex items-center gap-3 cursor-pointer group">
-                  <input className="form-checkbox bg-surface-container-highest border-none text-primary focus:ring-0 w-5 h-5" type="checkbox" />
-                  <span className="font-bold text-sm uppercase group-hover:text-primary">Theater</span>
-                </label>
+              <div className="space-y-2">
+                {CATEGORIES.map(cat => {
+                  const isSelected = pendingCategories.includes(cat.value);
+                  return (
+                    <button
+                      key={cat.value}
+                      onClick={() => toggleCategory(cat.value)}
+                      className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-all duration-200 border ${
+                        isSelected
+                          ? 'bg-primary text-on-primary border-primary shadow-md'
+                          : 'bg-surface-container-lowest border-surface-container-high hover:border-primary hover:bg-surface-container-high'
+                      }`}
+                    >
+                      <span className="material-symbols-outlined text-[18px]">{cat.icon}</span>
+                      <span className="font-bold text-sm uppercase tracking-wide">{cat.label}</span>
+                      {isSelected && <span className="material-symbols-outlined text-[16px] ml-auto">check</span>}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
+            {/* Date Range Filter */}
             <div>
               <h3 className="font-bold text-xs uppercase tracking-widest mb-6 border-b-2 border-surface-dim pb-2">Date Range</h3>
               <div className="space-y-4">
-                <div className="bg-surface-container-highest p-4">
-                  <span className="text-[10px] font-black uppercase text-outline block mb-1">Start Date</span>
-                  <span className="font-bold text-sm uppercase">Oct 24, 2024</span>
+                <div>
+                  <label className="text-[10px] font-black uppercase text-outline block mb-1">From</label>
+                  <input
+                    type="date"
+                    value={pendingDateFrom}
+                    onChange={e => setPendingDateFrom(e.target.value)}
+                    className="w-full bg-surface-container-highest p-3 font-bold text-sm border-0 border-b-2 border-transparent focus:border-primary focus:outline-none focus:ring-0"
+                  />
                 </div>
-                <div className="bg-surface-container-highest p-4">
-                  <span className="text-[10px] font-black uppercase text-outline block mb-1">End Date</span>
-                  <span className="font-bold text-sm uppercase">Dec 31, 2024</span>
+                <div>
+                  <label className="text-[10px] font-black uppercase text-outline block mb-1">To</label>
+                  <input
+                    type="date"
+                    value={pendingDateTo}
+                    onChange={e => setPendingDateTo(e.target.value)}
+                    className="w-full bg-surface-container-highest p-3 font-bold text-sm border-0 border-b-2 border-transparent focus:border-primary focus:outline-none focus:ring-0"
+                  />
                 </div>
               </div>
             </div>
 
+            {/* Price Range Filter */}
             <div>
               <h3 className="font-bold text-xs uppercase tracking-widest mb-6 border-b-2 border-surface-dim pb-2">Price Range</h3>
-              <div className="relative h-2 bg-surface-container-highest mt-8">
-                <div className="absolute left-0 right-1/4 h-full bg-primary"></div>
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-4 h-4 bg-on-background"></div>
-                <div className="absolute right-1/4 top-1/2 -translate-y-1/2 w-4 h-4 bg-on-background"></div>
-              </div>
-              <div className="flex justify-between mt-4">
-                <span className="font-black text-xs">$0</span>
-                <span className="font-black text-xs text-primary">$450+</span>
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <label className="text-[10px] font-black uppercase text-outline block mb-1">Min ($)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    value={pendingPriceMin}
+                    onChange={e => setPendingPriceMin(e.target.value)}
+                    className="w-full bg-surface-container-highest p-3 font-bold text-sm border-0 border-b-2 border-transparent focus:border-primary focus:outline-none focus:ring-0"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="text-[10px] font-black uppercase text-outline block mb-1">Max ($)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="∞"
+                    value={pendingPriceMax}
+                    onChange={e => setPendingPriceMax(e.target.value)}
+                    className="w-full bg-surface-container-highest p-3 font-bold text-sm border-0 border-b-2 border-transparent focus:border-primary focus:outline-none focus:ring-0"
+                  />
+                </div>
               </div>
             </div>
 
-            <button
-              onClick={() => setSearchQuery("")}
-              className="w-full bg-on-background text-surface py-4 font-black text-xs uppercase tracking-widest hover:bg-primary transition-colors"
-            >
-              Reset Filters
-            </button>
+            {/* Action Buttons */}
+            <div className="space-y-3 pt-2">
+              <button
+                onClick={applyFilters}
+                disabled={!hasUnappliedChanges}
+                className={`w-full py-4 font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
+                  hasUnappliedChanges
+                    ? 'bg-primary text-on-primary hover:bg-primary-dim shadow-lg'
+                    : 'bg-surface-container-highest text-on-surface-variant cursor-not-allowed opacity-50'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[16px]">filter_alt</span>
+                Apply Filters
+              </button>
+              {activeFilterCount > 0 && (
+                <button
+                  onClick={resetFilters}
+                  className="w-full py-3 bg-transparent border border-surface-container-highest text-on-surface font-bold text-xs uppercase tracking-widest hover:bg-red-500 hover:text-white hover:border-red-500 transition-all flex items-center justify-center gap-2"
+                >
+                  <span className="material-symbols-outlined text-[16px]">close</span>
+                  Clear All ({activeFilterCount})
+                </button>
+              )}
+            </div>
           </div>
         </aside>
 
-        {/* Event Grid - HIỂN THỊ DỮ LIỆU THẬT */}
+        {/* Event Grid */}
         <section className="flex-grow p-8 bg-surface">
+          {/* Active filters pills */}
+          {activeFilterCount > 0 && (
+            <div className="flex flex-wrap gap-2 mb-8">
+              {appliedCategories.map(cat => (
+                <span key={cat} className="bg-primary/10 text-primary px-3 py-1.5 font-bold text-[10px] uppercase tracking-widest flex items-center gap-1.5">
+                  {CATEGORIES.find(c => c.value === cat)?.label || cat}
+                  <button onClick={() => {
+                    const updated = appliedCategories.filter(c => c !== cat);
+                    setAppliedCategories(updated);
+                    setPendingCategories(updated);
+                    setCurrentPage(0);
+                  }} className="hover:text-red-500 transition-colors">
+                    <span className="material-symbols-outlined text-[12px]">close</span>
+                  </button>
+                </span>
+              ))}
+              {appliedDateFrom && (
+                <span className="bg-primary/10 text-primary px-3 py-1.5 font-bold text-[10px] uppercase tracking-widest">
+                  From: {appliedDateFrom}
+                </span>
+              )}
+              {appliedDateTo && (
+                <span className="bg-primary/10 text-primary px-3 py-1.5 font-bold text-[10px] uppercase tracking-widest">
+                  To: {appliedDateTo}
+                </span>
+              )}
+              {appliedPriceMin && (
+                <span className="bg-primary/10 text-primary px-3 py-1.5 font-bold text-[10px] uppercase tracking-widest">
+                  Min: ${appliedPriceMin}
+                </span>
+              )}
+              {appliedPriceMax && (
+                <span className="bg-primary/10 text-primary px-3 py-1.5 font-bold text-[10px] uppercase tracking-widest">
+                  Max: ${appliedPriceMax}
+                </span>
+              )}
+            </div>
+          )}
+
           {loading ? (
             <div className="text-center py-20 font-bold uppercase tracking-widest animate-pulse">Loading Live Events...</div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-1">
-              {filteredEvents.map((event: any) => (
+              {events.map((event: any) => (
                 <div key={event.eventId} className="bg-surface-container-lowest p-6 flex flex-col group relative">
                   {/* Status badge */}
                   {event.status === 'Ended' ? (
@@ -197,7 +387,7 @@ export default function BrowseEvents() {
                   </div>
 
                   <div className="mb-2 flex items-center gap-2">
-                    <span className="bg-surface-container-high px-2 py-1 font-bold text-[10px] uppercase">Music</span>
+                    <span className="bg-surface-container-high px-2 py-1 font-bold text-[10px] uppercase">{event.category}</span>
                     <span className="font-black text-[10px] uppercase text-outline">
                       {event.location}
                     </span>
@@ -216,7 +406,6 @@ export default function BrowseEvents() {
                           : "FREE"}
                       </span>
                     </div>
-                    {/* Chuyển hướng sang trang chi tiết bằng eventId */}
                     {event.status === 'Ended' ? (
                       <div className="bg-slate-200 text-slate-400 px-6 py-3 font-black text-xs uppercase tracking-widest cursor-not-allowed select-none">
                         Ended
@@ -234,24 +423,61 @@ export default function BrowseEvents() {
             </div>
           )}
 
-          {/* Hiển thị khi không tìm thấy kết quả */}
-          {!loading && filteredEvents.length === 0 && (
+          {/* Empty state */}
+          {!loading && events.length === 0 && (
             <div className="text-center py-24">
-              <h2 className="text-2xl font-black uppercase tracking-tighter text-outline-variant">No events found for "{searchQuery}"</h2>
-              <p className="text-xs uppercase tracking-widest mt-2 text-outline">Try searching for another artist or city</p>
+              <span className="material-symbols-outlined text-6xl text-outline-variant opacity-30 mb-4 block">search_off</span>
+              <h2 className="text-2xl font-black uppercase tracking-tighter text-outline-variant">No events found</h2>
+              <p className="text-xs uppercase tracking-widest mt-2 text-outline">Try adjusting your filters or check back later</p>
             </div>
           )}
 
-          {/* Pagination (Flat Style) */}
-          <div className="mt-16 flex justify-center">
-            <div className="flex gap-px bg-surface-container-highest border border-surface-container-highest">
-              <button className="bg-surface-container-lowest w-12 h-12 flex items-center justify-center font-bold hover:bg-primary hover:text-on-primary transition-colors">1</button>
-              <button className="bg-primary text-on-primary w-12 h-12 flex items-center justify-center font-bold">2</button>
-              <button className="bg-surface-container-lowest w-12 h-12 flex items-center justify-center font-bold hover:bg-primary hover:text-on-primary transition-colors">3</button>
-              <button className="bg-surface-container-lowest w-12 h-12 flex items-center justify-center font-bold hover:bg-primary hover:text-on-primary transition-colors">4</button>
-              <button className="bg-surface-container-lowest px-6 h-12 flex items-center justify-center font-bold uppercase text-[10px] tracking-widest hover:bg-on-background hover:text-surface transition-colors">Next</button>
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-16 flex justify-center">
+              <div className="flex gap-px bg-surface-container-highest border border-surface-container-highest">
+                {/* Previous */}
+                <button
+                  onClick={() => goToPage(currentPage - 1)}
+                  disabled={currentPage === 0}
+                  className="bg-surface-container-lowest px-4 h-12 flex items-center justify-center font-bold uppercase text-[10px] tracking-widest hover:bg-on-background hover:text-surface transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <span className="material-symbols-outlined text-sm">chevron_left</span>
+                </button>
+
+                {/* Page numbers */}
+                {getVisiblePages().map(page => (
+                  <button
+                    key={page}
+                    onClick={() => goToPage(page)}
+                    className={`w-12 h-12 flex items-center justify-center font-bold transition-colors ${
+                      page === currentPage
+                        ? 'bg-primary text-on-primary'
+                        : 'bg-surface-container-lowest hover:bg-primary hover:text-on-primary'
+                    }`}
+                  >
+                    {page + 1}
+                  </button>
+                ))}
+
+                {/* Next */}
+                <button
+                  onClick={() => goToPage(currentPage + 1)}
+                  disabled={currentPage >= totalPages - 1}
+                  className="bg-surface-container-lowest px-4 h-12 flex items-center justify-center font-bold uppercase text-[10px] tracking-widest hover:bg-on-background hover:text-surface transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <span className="material-symbols-outlined text-sm">chevron_right</span>
+                </button>
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* Page info */}
+          {totalPages > 1 && (
+            <div className="mt-4 text-center text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">
+              Page {currentPage + 1} of {totalPages} • {totalElements} total events
+            </div>
+          )}
         </section>
       </main>
 
