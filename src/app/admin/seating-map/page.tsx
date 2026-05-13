@@ -75,7 +75,7 @@ export default function SeatingMapConfigurator() {
   return (
     <div className="bg-background text-on-background min-h-screen flex flex-col font-['Inter']">
       {/* TopNavBar */}
-      <header className="bg-slate-50 dark:bg-slate-950 w-full top-0 left-0 z-50 border-b-2 border-slate-200 dark:border-slate-800">
+      <header className="bg-slate-50 w-full top-0 left-0 z-50 border-b-2 border-slate-200 dark:border-slate-800">
         <div className="flex justify-between items-center px-8 py-6 w-full max-w-none">
           <div className="text-2xl font-black italic tracking-tighter text-blue-700 dark:text-blue-500">TICKETRUSH</div>
           <nav className="hidden md:flex gap-8 items-center uppercase text-[10px] font-black tracking-[0.2em]">
@@ -124,7 +124,7 @@ export default function SeatingMapConfigurator() {
             <section className="space-y-4">
               <p className="font-black text-[0.7rem] uppercase tracking-widest text-primary">02. Grid Properties</p>
               <div className="bg-surface-container-lowest p-4 space-y-4">
-                <div>
+                {/*<div>
                   <label className="block font-bold text-[0.65rem] uppercase mb-1 opacity-50">Section Label</label>
                   <input
                     className="w-full bg-surface-container-high border-none p-2 text-sm font-bold uppercase outline-none focus:ring-1 ring-primary"
@@ -132,7 +132,7 @@ export default function SeatingMapConfigurator() {
                     value={sectionLabel}
                     onChange={(e) => setSectionLabel(e.target.value)}
                   />
-                </div>
+                </div>*/}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block font-bold text-[0.65rem] uppercase mb-1 opacity-50">Rows</label>
@@ -258,10 +258,10 @@ export default function SeatingMapConfigurator() {
                     <p className="text-[0.6rem] font-black text-outline uppercase tracking-widest">Total Capacity</p>
                     <p className="text-4xl font-black tracking-tighter uppercase text-blue-700">{rows * seatsPerRow} Seats</p>
                   </div>
-                  <div className="text-right space-y-1">
+                  {/*<div className="text-right space-y-1">
                     <p className="text-[0.6rem] font-black text-outline uppercase tracking-widest">Active Section</p>
                     <p className="text-xl font-black uppercase">{sectionLabel}</p>
-                  </div>
+                  </div>*/}
                 </div>
               </div>
             </div>

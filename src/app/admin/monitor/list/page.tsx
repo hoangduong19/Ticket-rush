@@ -41,7 +41,7 @@ export default function MonitorSelector() {
         fetch(`${API_BASE}/events`)
             .then(res => res.json())
             .then(data => {
-                setEvents(data);
+                setEvents(data.content);
                 setLoading(false);
             })
             .catch(err => {
@@ -95,6 +95,31 @@ export default function MonitorSelector() {
         router.push(`/admin/events/edit/${eventId}`);
     };
 
+    const handlePublishNode = async (e: React.MouseEvent, eventId: string) => {
+        e.stopPropagation(); // Ngăn nhảy sang trang monitor
+
+        try {
+            const res = await fetch(`${API_BASE}/admin/events/${eventId}/publish`, {
+                method: 'PATCH', // Phải khớp với @PatchMapping ở Backend
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+                }
+            });
+
+            if (res.ok) {
+                showToast("EVENT PUBLISHED LIVE", 'success');
+                // Cập nhật lại trạng thái trong danh sách để nút biến mất ngay lập tức
+                setEvents(prev => prev.map(ev =>
+                    ev.eventId === eventId ? { ...ev, status: 'Published' } : ev
+                ));
+            } else {
+                showToast("Failed to publish event.", 'error');
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
     if (loading) {
         return (
             <div className="min-h-screen bg-black text-primary flex items-center justify-center font-black animate-pulse uppercase tracking-[0.5em]">
@@ -106,13 +131,13 @@ export default function MonitorSelector() {
     return (
         <div className="min-h-screen bg-background text-on-background font-body">
             {/* TopNavBar - Giữ nguyên */}
-            <header className="bg-slate-50 w-full px-8 py-6 border-b-2 border-surface-container-high sticky top-0 z-40">
+            <header className="bg-slate-50 w-full px-8 py-6 border-b-2 sticky top-0 z-40 border-slate-900">
                 <div className="flex justify-between items-center">
                     <div className="flex items-center gap-8">
                         <Link href="/admin" className="text-2xl font-black italic tracking-tighter text-blue-700 dark:text-blue-500 uppercase hover:text-blue-800 transition-colors">TicketRush</Link>
-                        <nav className="flex gap-6 uppercase text-[10px] font-black tracking-widest opacity-60">
-                            <Link href="/admin">Dashboard</Link>
-                            <span className="text-blue-600">Event Manager</span>
+                        <nav className="flex gap-6 uppercase text-[15px] font-black tracking-widest">
+                            <Link href="/admin" className="font-2xl text-slate-900 font-bold font-['Inter'] tracking-tight uppercase hover:bg-blue-700 hover:text-white hover:opacity-100 transition-colors px-2 py-1">Dashboard</Link>
+                            <span className="text-blue-700 font-bold font-['Inter'] tracking-tight uppercase border-b-2 border-blue-700 px-2 py-1">Event Manager</span>
                         </nav>
                     </div>
                     <AdminLogoutButton />
@@ -121,17 +146,17 @@ export default function MonitorSelector() {
 
             <main className="max-w-[1200px] mx-auto p-8 md:p-16">
                 <header className="mb-16">
-                    <span className="bg-secondary text-on-secondary px-3 py-1 font-bold text-[10px] uppercase tracking-widest mb-4 inline-block">Control Registry</span>
+                    <span className="bg-secondary text-on-secondary px-3 py-1 font-bold text-[10px] uppercase tracking-widest mb-4 inline-block">Event Manager</span>
                     <h1 className="text-[4rem] font-extrabold leading-[0.9] tracking-tighter uppercase mb-4">
                         Manage<br />Live Events.
                     </h1>
                 </header>
 
-                <div className="grid grid-cols-1 gap-2 bg-surface-container">
-                    {events.map((event) => (
+                <div className="grid grid-cols-1 gap-2 border-b-2 border-slate-900">
+                    {Array.isArray(events) && events.map((event) => (
                         <div
                             key={event.eventId}
-                            className="group bg-surface-container-lowest p-8 flex flex-col md:flex-row justify-between items-center hover:bg-slate-100  transition-all cursor-pointer border-b border-surface-container"
+                            className="group bg-surface-container-lowest p-8 flex flex-col md:flex-row justify-between items-center hover:bg-slate-100 transition-all cursor-pointer border border-black"
                             onClick={() => router.push(`/admin/monitor?eventId=${event.eventId}`)}
                         >
                             <div className="flex flex-col gap-1">
@@ -153,16 +178,31 @@ export default function MonitorSelector() {
                                     <p className="text-xs font-black text-green-500 uppercase">{event.status}</p>
                                 </div>
 
+                                {/* NÚT PUBLISH - CHỈ HIỆN KHI LÀ DRAFT */}
+                                {event.status === 'Draft' && (
+                                    <button
+                                        onClick={(e) => handlePublishNode(e, event.eventId)}
+                                        className="px-4 h-12 flex items-center justify-center bg-blue-600 text-white hover:bg-blue-700 transition-all font-black text-[10px] uppercase tracking-widest shadow-lg"
+                                        title="Publish Live"
+                                    >
+                                        <span className="material-symbols-outlined mr-2 text-sm">rocket_launch</span>
+                                        Publish
+                                    </button>
+                                )}
+
                                 <button className="w-12 h-12 flex items-center justify-center bg-slate-200 text-on-surface hover:bg-primary hover:text-white transition-all">
                                     <span className="material-symbols-outlined text-xl">analytics</span>
                                 </button>
 
-                                <button
-                                    onClick={(e) => handleEdit(e, event.eventId)}
-                                    className="w-12 h-12 flex items-center justify-center bg-slate-200 text-on-surface hover:bg-blue-600 hover:text-white transition-all"
-                                >
-                                    <span className="material-symbols-outlined text-xl">edit</span>
-                                </button>
+                                {event.status === 'Draft' && (
+                                    <button
+                                        onClick={(e) => handleEdit(e, event.eventId)}
+                                        className="w-12 h-12 flex items-center justify-center bg-slate-200 text-on-surface hover:bg-blue-600 hover:text-white transition-all"
+                                    >
+                                        <span className="material-symbols-outlined text-xl">edit</span>
+                                    </button>
+                                )}
+
 
                                 <button
                                     onClick={(e) => handleDelete(e, event.eventId, event.title)}
