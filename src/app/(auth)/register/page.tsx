@@ -120,22 +120,9 @@ export default function SignUp() {
               <Link href="/" className="text-4xl font-black tracking-tighter text-on-primary uppercase italic">TicketRush</Link>
             </div>
             <h1 className="text-6xl font-extrabold text-on-primary leading-none tracking-tighter mb-6 uppercase">
-              Your Access <br/>To Every <br/>Front Row.
+              Your Access <br/>To Every <br/>Live Experience.
             </h1>
-            <p className="text-xl text-on-primary opacity-90 max-w-md font-medium">
-              Join the premier destination for live experiences. High-speed booking, zero hidden fees, and absolute precision.
-            </p>
 
-            <div className="mt-12 space-y-4">
-              <div className="flex items-center gap-4">
-                <span className="material-symbols-outlined text-tertiary-fixed text-3xl">confirmation_number</span>
-                <span className="text-on-primary font-bold tracking-wide uppercase text-sm">Instant Digital Ticketing</span>
-              </div>
-              <div className="flex items-center gap-4">
-                <span className="material-symbols-outlined text-tertiary-fixed text-3xl">shield</span>
-                <span className="text-on-primary font-bold tracking-wide uppercase text-sm">Verified Authentic Entries</span>
-              </div>
-            </div>
           </div>
           {/* Background Accent Shape */}
           <div className="absolute -bottom-20 -right-20 w-96 h-96 bg-primary-dim"></div>
@@ -244,21 +231,6 @@ export default function SignUp() {
                 </div>
               </div>
 
-              {/* CAPTCHA Section */}
-              <div className="bg-surface-container p-4 flex items-center justify-between border-l-4 border-primary">
-                <div className="flex items-center gap-3">
-                  <input 
-                    className="w-6 h-6 border-2 border-outline bg-surface-container-lowest text-primary focus:ring-0 rounded-none cursor-pointer" 
-                    id="captcha" 
-                    type="checkbox" 
-                  />
-                  <label className="text-sm font-bold uppercase tracking-tight text-on-surface cursor-pointer" htmlFor="captcha">I am not a robot</label>
-                </div>
-                <div className="flex flex-col items-center">
-                  <img alt="CAPTCHA" className="w-8 h-8 grayscale opacity-50" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBPTiSIrPKE_-vZ-_4m5t6Z2gu1toECbynaUEGw8wqA-cmWl3SYJg62PSBERe5P02hb2zSS8YS6vuCoSWH7vVEZA9zKSOh9Hl_R9FLgtsEhr7b9fZB2lu95sWHZGh9xQJ3-WjkQixN1WDzEwCdaxQV2PUh0VjgphoWywKo7GAdgEAh943wthSYKEerG-f1WENZ-TCbgSrhYLia592d-SdJPf9BsEooPCfYnpiDFmGJjpZFDnkngdRVpv8fY1fEpqF1HmV9zeuPFtfLp" />
-                  <span className="text-[10px] text-outline font-bold uppercase">Privacy</span>
-                </div>
-              </div>
 
               {/* Submit Button */}
               <button
@@ -276,10 +248,6 @@ export default function SignUp() {
                 </div>
               )}
 
-              <p className="text-[0.7rem] text-on-surface-variant text-center uppercase font-bold tracking-wider leading-relaxed">
-                By clicking registration, you agree to our <br/>
-                <Link className="text-primary hover:underline" href="#">Terms of Service</Link> and <Link className="text-primary hover:underline" href="#">Privacy Policy</Link>.
-              </p>
             </form>
           </div>
         </section>
@@ -291,12 +259,6 @@ export default function SignUp() {
         <div className="w-full bg-blue-700 h-2 absolute left-0 top-0"></div>
         <div className="flex flex-col md:flex-row justify-between items-center gap-8 w-full max-w-screen-2xl mx-auto pt-4">
           <Link href="/" className="text-3xl font-black text-white italic">TicketRush</Link>
-          <div className="flex flex-wrap justify-center gap-6">
-            <Link href="#" className="font-['Inter'] text-sm tracking-wide uppercase font-bold text-slate-400 hover:text-white transition-colors duration-200">Terms of Service</Link>
-            <Link href="#" className="font-['Inter'] text-sm tracking-wide uppercase font-bold text-slate-400 hover:text-white transition-colors duration-200">Privacy Policy</Link>
-            <Link href="#" className="font-['Inter'] text-sm tracking-wide uppercase font-bold text-slate-400 hover:text-white transition-colors duration-200">Support</Link>
-            <Link href="#" className="font-['Inter'] text-sm tracking-wide uppercase font-bold text-slate-400 hover:text-white transition-colors duration-200">Contact</Link>
-          </div>
           <div className="md:ml-auto">
             <p className="font-['Inter'] text-sm tracking-wide uppercase font-bold text-white">© 2026 TicketRush. Built for Precision.</p>
           </div>
