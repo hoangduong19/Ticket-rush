@@ -55,7 +55,8 @@ export default function Home() {
   // Chia dữ liệu cho các khu vực giao diện
   const majorFeature = events[0]; // Sự kiện lớn nhất
   const sideFeature = events[1];  // Sự kiện bên cạnh
-  const upcomingEvents = events.slice(2, 6); // 4 sự kiện tiếp theo ở hàng dưới
+  const sideFeature2 = events[2]; // Sự kiện bên cạnh 2
+  const upcomingEvents = events.slice(3, 7); // 4 sự kiện tiếp theo ở hàng dưới
 
   // Hàm format ngày tháng hiển thị ngắn gọn (ví dụ: AUG 24)
   const formatShortDate = (dateStr: string) => {
@@ -77,12 +78,7 @@ export default function Home() {
             </nav>
           </div>
           <div className="flex items-center gap-6">
-            <div className="hidden lg:flex items-center bg-surface-container-high px-4 py-2 gap-3">
-              <span className="material-symbols-outlined text-outline">search</span>
-              <input className="bg-transparent border-none focus:ring-0 p-0 text-sm w-64 font-bold" placeholder="Search events..." type="text" />
-            </div>
             <div className="flex items-center gap-4">
-              <button className="material-symbols-outlined text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 p-2 transition-colors">notifications</button>
               <div className="relative">
                 <button onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="w-10 h-10 bg-surface-container-highest overflow-hidden focus:outline-none hover:ring-2 ring-primary">
                   <img className="w-full h-full object-cover" alt="User profile avatar" src={avatarUrl} />
@@ -114,24 +110,10 @@ export default function Home() {
         <section className="bg-primary px-6 py-24 md:py-32 flex flex-col items-start gap-8">
           <div className="max-w-5xl">
             <h1 className="text-[3.5rem] md:text-[5rem] leading-[0.9] font-black tracking-tighter text-on-primary mb-8">
-              ACCESS THE<br />UNFORGETTABLE
+              CLAIM YOUR<br />EXPERIENCE
             </h1>
             <p className="text-xl md:text-2xl text-on-primary opacity-90 max-w-2xl mb-12 font-medium uppercase tracking-tight">
-              The precision platform for live experiences. No queues, no hassle, just the front row.
-            </p>
-            <div className="w-full max-w-4xl bg-surface-container-lowest p-1 flex flex-col md:flex-row gap-1">
-              <div className="flex-1 bg-surface-container-high px-6 py-4 flex items-center gap-4">
-                <span className="material-symbols-outlined text-primary">search</span>
-                <input className="w-full bg-transparent border-none focus:ring-0 p-0 text-lg font-bold" placeholder="Artist, venue, or event" type="text" />
-              </div>
-              <div className="flex-1 bg-surface-container-high px-6 py-4 flex items-center gap-4">
-                <span className="material-symbols-outlined text-primary">location_on</span>
-                <input className="w-full bg-transparent border-none focus:ring-0 p-0 text-lg font-bold" placeholder="City or State" type="text" />
-              </div>
-              <Link href="/events" className="bg-primary text-on-primary px-12 py-4 font-black uppercase tracking-widest hover:bg-primary-dim transition-colors text-center inline-block">
-                FIND TICKETS
-              </Link>
-            </div>
+A precision-engineered gateway to the world’s biggest stages. Forget the queues—the front-row seat is waiting.            </p>
           </div>
         </section>
 
@@ -139,11 +121,10 @@ export default function Home() {
         <section className="p-6 md:p-12">
           <div className="flex justify-between items-end mb-12">
             <div>
-              <span className="text-sm font-bold tracking-[0.2em] text-secondary uppercase mb-2 block">Curation 01</span>
               <h2 className="text-4xl md:text-5xl font-extrabold tracking-tighter text-on-surface uppercase">FEATURED EVENTS</h2>
             </div>
             <Link className="hidden md:flex items-center gap-2 font-bold text-primary group" href="/events">
-              VIEW ALL CATEGORIES
+              VIEW ALL EVENTS
               <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
             </Link>
           </div>
@@ -199,7 +180,6 @@ export default function Home() {
                     </div>
                     <div className="p-6">
                       <div className="flex justify-between items-center mb-4">
-                        <span className="bg-primary text-on-primary px-3 py-0.5 text-[10px] font-black uppercase tracking-widest">Trending</span>
                         <span className="text-xs font-bold text-secondary uppercase tracking-widest">Limited Entry</span>
                       </div>
                       <h4 className="text-xl font-bold tracking-tight mb-4 uppercase">{sideFeature.title}</h4>
@@ -214,13 +194,32 @@ export default function Home() {
                     </div>
                   </div>
                 )}
-                {/* Promo Block - Giữ nguyên tĩnh */}
-                <div className="flex-1 bg-on-surface p-8 flex flex-col justify-center gap-4 relative overflow-hidden">
-                  <div className="absolute top-0 right-0 p-4 opacity-10"><span className="material-symbols-outlined text-6xl text-white">shield</span></div>
-                  <h4 className="text-2xl font-black text-surface tracking-tighter leading-none uppercase">JOIN THE<br />INNER CIRCLE</h4>
-                  <p className="text-surface-container-highest text-xs uppercase font-bold tracking-tight opacity-60">Early access, zero fees, and exclusive member pre-sales.</p>
-                  <Link href="/signup" className="self-start text-primary font-black uppercase tracking-widest text-xs hover:underline">LEARN MORE —&gt;</Link>
-                </div>
+                {/* Side Feature 2 - Sự kiện 03 */}
+                {sideFeature2 && (
+                  <div className="flex-1 bg-surface-container-lowest flex flex-col group border border-outline-variant/20">
+                    <div className="h-48 overflow-hidden">
+                      <img
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        alt={sideFeature2.title}
+                        src={sideFeature2.bannerUrl}
+                      />
+                    </div>
+                    <div className="p-6">
+                      <div className="flex justify-between items-center mb-4">
+                        <span className="text-xs font-bold text-secondary uppercase tracking-widest">Limited Entry</span>
+                      </div>
+                      <h4 className="text-xl font-bold tracking-tight mb-4 uppercase">{sideFeature2.title}</h4>
+                      <div className="flex justify-between items-end">
+                        <div className="text-[10px] font-black text-outline uppercase tracking-widest">
+                          {formatShortDate(sideFeature2.date)} | {sideFeature2.location?.substring(0, 15)}...
+                        </div>
+                        <Link href={`/event/${sideFeature2.eventId}`} className="bg-surface-container-highest p-3 hover:bg-primary hover:text-on-primary transition-all shadow-sm">
+                          <span className="material-symbols-outlined block text-sm">confirmation_number</span>
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -228,13 +227,7 @@ export default function Home() {
 
         {/* Upcoming Grid - DANH SÁCH CÁC SỰ KIỆN CÒN LẠI */}
         <section className="bg-surface-container-low px-6 py-20 border-t border-outline-variant/10">
-          <div className="flex flex-col md:flex-row justify-between items-baseline mb-16 gap-4">
-            <h2 className="text-4xl font-extrabold tracking-tighter uppercase">UPCOMING NEAR YOU</h2>
-            <div className="flex gap-1 bg-surface-container p-1">
-              <button className="bg-surface-container-lowest px-6 py-2 text-[10px] font-black uppercase tracking-widest hover:bg-primary transition-all">Today</button>
-              <button className="bg-primary text-on-primary px-6 py-2 text-[10px] font-black uppercase tracking-widest shadow-lg">Global Feed</button>
-            </div>
-          </div>
+       
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-1 bg-outline-variant/10">
             {upcomingEvents.map((event, index) => (
@@ -268,18 +261,6 @@ export default function Home() {
         </section>
 
         {/* Newsletter - Giữ nguyên */}
-        <section className="bg-secondary p-12 md:p-24 flex flex-col md:flex-row items-center justify-between gap-12">
-          <div className="max-w-xl">
-            <h2 className="text-4xl md:text-6xl font-black text-on-secondary tracking-tighter leading-[0.9] mb-6 uppercase">NEVER MISS<br />THE BEAT.</h2>
-            <p className="text-on-secondary opacity-70 font-bold uppercase text-xs tracking-widest">Get real-time alerts when your favorite artists announce tours.</p>
-          </div>
-          <div className="w-full max-w-md bg-surface-container-lowest p-1 shadow-2xl">
-            <div className="flex">
-              <input className="flex-grow border-none focus:ring-0 px-6 py-4 font-bold text-sm uppercase placeholder:text-outline/40" placeholder="EMAIL@DOMAIN.COM" type="email" />
-              <button className="bg-on-surface text-surface px-8 py-4 font-black uppercase text-xs tracking-widest hover:bg-primary transition-colors">JOIN</button>
-            </div>
-          </div>
-        </section>
       </main>
 
       {/* Footer - Giữ nguyên */}
@@ -287,17 +268,6 @@ export default function Home() {
         <div className="w-full py-16 px-8 flex flex-col md:flex-row justify-between items-center gap-12">
           <div className="flex flex-col gap-4 items-center md:items-start">
             <span className="text-2xl font-black text-blue-600 italic tracking-tighter">TicketRush</span>
-            <p className="text-slate-400">© 2026 Architectural precision in ticketing.</p>
-          </div>
-          <div className="flex gap-12 flex-wrap justify-center text-slate-500">
-            <Link className="hover:text-blue-600 transition-colors" href="#">Support</Link>
-            <Link className="hover:text-blue-600 transition-colors" href="#">Privacy</Link>
-            <Link className="hover:text-blue-600 transition-colors" href="#">Terms</Link>
-          </div>
-          <div className="flex gap-6 opacity-30">
-            <span className="material-symbols-outlined">brand_awareness</span>
-            <span className="material-symbols-outlined">verified</span>
-            <span className="material-symbols-outlined">security</span>
           </div>
         </div>
       </footer>
