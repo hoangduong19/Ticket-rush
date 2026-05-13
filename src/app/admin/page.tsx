@@ -104,7 +104,7 @@ export default async function AudienceAnalytics() {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* TopNavBar */}
-        <header className="bg-slate-50 dark:bg-slate-950 flex justify-between items-center w-full px-6 py-4 max-w-none border-b border-surface-container-high sticky top-0 z-40 shrink-0">
+        {/*<header className="bg-slate-50 dark:bg-slate-950 flex justify-between items-center w-full px-6 py-4 max-w-none border-b border-surface-container-high sticky top-0 z-40 shrink-0">
           <div className="flex items-center gap-6">
             <h1 className="text-2xl font-black tracking-tighter text-blue-600 dark:text-blue-500 uppercase">Dashboard</h1>
             <nav className="hidden lg:flex gap-6">
@@ -112,14 +112,7 @@ export default async function AudienceAnalytics() {
               <Link href="/admin/monitor/list" className="text-slate-600 dark:text-slate-400 font-medium hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-100">Live Monitor</Link>
             </nav>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="relative hidden sm:block">
-              <input className="bg-surface-container-high border-none px-4 py-2 text-sm w-64 focus:ring-0 focus:border-b-2 border-primary" placeholder="Search events..." type="text" />
-            </div>
-            <button className="material-symbols-outlined text-on-surface-variant">notifications</button>
-            <img alt="User profile avatar" className="w-8 h-8 object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBCkfDv5XrdLhl0SVFaGkaQKNQI2HrMIvOjuEFugFnByZ3OcXLpuF33BrZg9iI2kWevmD0EZMznmBkQRjpLdN2SsBvteG-zWQiYliaCyAwwejbEPJe76K3obv40A8e8bu54MVfm12PNJ1Xv32OYTRpCtTktQiKqyf3ikCAZ5bJvhYWGtwPf4ydnLlnYShtxlVA9Aw918CoVoJupO010a3wEEiWU3tqo1WzUFOFz4W6e8y_ZURoRWmytRDtuX4jQ-zLcrC6WsyIyxtBX" />
-          </div>
-        </header>
+        </header>*/}
 
         {/* Canvas */}
         <main className="p-6 md:p-8 flex-1 overflow-y-auto w-full bg-background">
@@ -129,10 +122,10 @@ export default async function AudienceAnalytics() {
               <span className="bg-secondary text-on-secondary px-3 py-1 text-[10px] font-bold tracking-[0.2em] uppercase mb-2 inline-block">Live Audience Data</span>
               <h3 className="text-[3.5rem] font-extrabold leading-none tracking-tighter text-blue-600">Audience Insights</h3>
             </div>
-            <div className="bg-surface-container-high p-1 flex items-center">
+            {/*<div className="bg-surface-container-high p-1 flex items-center">
               <button className="px-6 py-2 bg-surface-container-lowest font-bold text-sm text-on-surface">ALL TIME</button>
               <button className="px-4 py-2 material-symbols-outlined text-slate-500">calendar_today</button>
-            </div>
+            </div>*/}
           </div>
 
           {/* Top Stats */}
