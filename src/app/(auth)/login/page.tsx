@@ -57,7 +57,6 @@ export default function Login() {
             <h1 className="text-[3.5rem] font-extrabold leading-[1] tracking-tighter text-on-surface">
               SIGN<br />IN.
             </h1>
-            <p className="text-on-surface-variant font-medium tracking-tight">Access your exclusive event pass dashboard.</p>
           </div>
 
           {/* Login Form */}
@@ -80,9 +79,6 @@ export default function Login() {
               <div className="flex flex-col gap-2">
                 <div className="flex justify-between items-end">
                   <label className="text-[0.75rem] font-bold uppercase tracking-[0.15em] text-on-surface-variant">Password</label>
-                  <Link href="/reset" className="text-[0.7rem] font-bold text-primary hover:text-primary-dim uppercase tracking-widest transition-colors">
-                    Forgot?
-                  </Link>
                 </div>
                 <input
                   value={password}
@@ -101,7 +97,7 @@ export default function Login() {
               type="submit"
               disabled={loading}
             >
-              {loading ? 'Signing in...' : 'Secure Login'}
+              {loading ? 'Signing in...' : 'Login'}
               <span className="material-symbols-outlined">arrow_forward</span>
             </button>
             {error && (
@@ -124,13 +120,6 @@ export default function Login() {
           </div>
         </div>
 
-        {/* Decorative Precision Element */}
-        <div className="hidden lg:block absolute right-24 bottom-24">
-          <div className="flex flex-col items-end text-on-surface-variant opacity-20">
-            <span className="font-black text-8xl leading-none">01</span>
-            <span className="font-bold uppercase tracking-[0.4em] text-xs">Auth Layer</span>
-          </div>
-        </div>
       </main>
 
       {/* Footer - Built for Precision */}
@@ -138,12 +127,6 @@ export default function Login() {
         <div className="flex flex-col gap-2">
           <Link href="/" className="text-3xl font-black text-white italic">TicketRush</Link>
           <div className="bg-blue-700 h-1 w-20"></div>
-        </div>
-        <div className="flex gap-8">
-          <Link href="#" className="font-['Inter'] text-sm tracking-wide uppercase font-bold text-slate-400 hover:text-white transition-colors duration-200">Terms of Service</Link>
-          <Link href="#" className="font-['Inter'] text-sm tracking-wide uppercase font-bold text-slate-400 hover:text-white transition-colors duration-200">Privacy Policy</Link>
-          <Link href="#" className="font-['Inter'] text-sm tracking-wide uppercase font-bold text-slate-400 hover:text-white transition-colors duration-200">Support</Link>
-          <Link href="#" className="font-['Inter'] text-sm tracking-wide uppercase font-bold text-slate-400 hover:text-white transition-colors duration-200">Contact</Link>
         </div>
         <div className="flex flex-col items-end">
           <span className="font-['Inter'] text-sm tracking-wide uppercase font-bold text-slate-400">© 2026 TicketRush. Built for Precision.</span>
