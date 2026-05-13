@@ -6,6 +6,12 @@ import Link from 'next/link';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080';
 
+const DEFAULT_TIERS = [
+    { id: 'PLATINUM', label: 'PLATINUM', value: 499.00, hex: '#4f46e5', color: 'bg-indigo-600' },
+    { id: 'VIP', label: 'VIP', value: 249.00, hex: '#3b82f6', color: 'bg-blue-500' },
+    { id: 'GENERAL', label: 'GENERAL', value: 89.00, hex: '#6b7280', color: 'bg-slate-500' },
+];
+
 export default function EditEvent() {
     const router = useRouter();
     const params = useParams();
@@ -16,6 +22,7 @@ export default function EditEvent() {
     const [previewUrl, setPreviewUrl] = useState<string>('');
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
+    // --- 1. STATE THÔNG TIN SỰ KIỆN ---
     const [eventData, setEventData] = useState({
         title: '',
         description: '',
@@ -25,69 +32,143 @@ export default function EditEvent() {
         bannerUrl: ''
     });
 
-    // 1. LOAD DỮ LIỆU CŨ TỪ DATABASE
+    // --- 2. STATE SƠ ĐỒ GHẾ ---
+    const [rows, setRows] = useState(12);
+    const [seatsPerRow, setSeatsPerRow] = useState(24);
+    const [sectionLabel, setSectionLabel] = useState('MAIN SECTION');
+    const [selectedRow, setSelectedRow] = useState(0);
+    const [tiers, setTiers] = useState(DEFAULT_TIERS);
+    const [rowAssignments, setRowAssignments] = useState<{ [key: number]: string }>({});
+
+    // --- 3. LOAD DỮ LIỆU CŨ TỪ DATABASE ---
     useEffect(() => {
         if (!eventId) return;
 
-        fetch(`${API_BASE}/events/${eventId}`)
-            .then(res => res.json())
-            .then(data => {
-                // Format lại ngày tháng cho đúng định dạng input datetime-local
-                const formattedDate = data.date ? data.date.substring(0, 16) : '';
-                setEventData({
-                    title: data.title,
-                    description: data.description,
-                    location: data.location,
-                    date: formattedDate,
-                    category: data.category,
-                    bannerUrl: data.bannerUrl
-                });
-                setPreviewUrl(data.bannerUrl);
+        const fetchData = async () => {
+            try {
+                // Fetch thông tin Event
+                const eventRes = await fetch(`${API_BASE}/events/${eventId}`);
+                const event = await eventRes.json();
+
+                // Fetch thông tin Ghế để tái tạo sơ đồ
+                const seatRes = await fetch(`${API_BASE}/events/${eventId}/seats`);
+                const seats = await seatRes.json();
+
+                if (eventRes.ok) {
+                    const formattedDate = event.date ? event.date.substring(0, 16) : '';
+                    setEventData({
+                        title: event.title,
+                        description: event.description,
+                        location: event.location,
+                        date: formattedDate,
+                        category: event.category,
+                        bannerUrl: event.bannerUrl
+                    });
+                    setPreviewUrl(event.bannerUrl);
+                }
+
+                if (seatRes.ok && Array.isArray(seats) && seats.length > 0) {
+                    // Tự động nhận diện số hàng và số cột lớn nhất
+                    const maxR = Math.max(...seats.map((s: any) => s.rowNumber));
+                    const maxS = Math.max(...seats.map((s: any) => s.seatNumber));
+                    setRows(maxR);
+                    setSeatsPerRow(maxS);
+                    setSectionLabel(seats[0].sectionName || 'MAIN SECTION');
+
+                    // Tái tạo lại bảng gán giá tiền cho từng hàng
+                    const assignments: any = {};
+                    for (let i = 0; i < maxR; i++) {
+                        const sampleSeatInRow = seats.find((s: any) => s.rowNumber === i + 1);
+                        assignments[i] = sampleSeatInRow?.seatType?.toUpperCase() || 'GENERAL';
+                    }
+                    setRowAssignments(assignments);
+                    const updatedTiers = DEFAULT_TIERS.map(tier => {
+                        const sample = seats.find((s: any) => s.seatType?.toUpperCase() === tier.id);
+                        return sample ? { ...tier, value: Number(sample.price) } : tier;
+                    });
+                    setTiers(updatedTiers); //
+                }
+            } catch (err) {
+                console.error("Error loading data:", err);
+            } finally {
                 setLoading(false);
-            })
-            .catch(err => {
-                console.error(err);
-                setLoading(false);
-            });
+            }
+        };
+
+        fetchData();
     }, [eventId]);
 
     const handleInputChange = (field: string, value: string) => {
         setEventData({ ...eventData, [field]: value });
     };
 
+    const handleTierPriceChange = (id: string, newValue: number) => {
+        setTiers(tiers.map(t => t.id === id ? { ...t, value: newValue } : t));
+    };
+
+    const getSeatBgHex = (rIdx: number) => {
+        const tierId = rowAssignments[rIdx] || 'GENERAL';
+        return tiers.find(t => t.id === tierId)?.hex || '#6b7280';
+    };
+
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
+            // 1. Lưu file thật để gửi lên server khi nhấn Save
             setSelectedFile(file);
-            setPreviewUrl(URL.createObjectURL(file));
+
+            // 2. Tạo đường dẫn tạm thời để hiển thị ảnh ngay trên màn hình (Preview)
+            const objectUrl = URL.createObjectURL(file);
+            setPreviewUrl(objectUrl);
+
+            // Lưu ý: Giải phóng bộ nhớ khi component bị unmount (optional nhưng nên có)
+            return () => URL.revokeObjectURL(objectUrl);
         }
     };
 
-    // 2. XỬ LÝ CẬP NHẬT
+    // --- 4. XỬ LÝ CẬP NHẬT TỔNG THỂ ---
     const handleUpdate = async () => {
         setUpdating(true);
         try {
             const formData = new FormData();
+
+            // 1. Dữ liệu sự kiện
+            formData.append('event', new Blob([JSON.stringify(eventData)], { type: 'application/json' }));
+
+            // 2. Dữ liệu ma trận ghế (từ các state rows, seatsPerRow, rowAssignments ở trang edit)
+            const rowConfigs = Array.from({ length: rows }).map((_, index) => {
+                const tierId = rowAssignments[index];
+                const tierObj = tiers.find(t => t.id === tierId);
+                return {
+                    rowNumber: index + 1,
+                    price: tierObj ? tierObj.value : 89.00,
+                    seatType: tierObj ? tierObj.label : 'GENERAL'
+                };
+            });
+            const seatingPayload = {
+                sectionLabel,
+                seatsPerRow,
+                rowConfigs
+            };
+            formData.append('seating', new Blob([JSON.stringify(seatingPayload)], { type: 'application/json' }));
+
+            // 3. File ảnh (nếu có)
             if (selectedFile) {
                 formData.append('file', selectedFile);
             }
 
-            const eventBlob = new Blob([JSON.stringify(eventData)], { type: 'application/json' });
-            formData.append('event', eventBlob);
-
             const res = await fetch(`${API_BASE}/admin/events/${eventId}`, {
                 method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
-                },
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` },
                 body: formData,
             });
 
             if (res.ok) {
-                alert("Event updated successfully!");
+                alert("Cập nhật thành công cả thông tin và sơ đồ ghế!");
                 router.push('/admin/monitor/list');
             } else {
-                alert("Update failed.");
+                const errorData = await res.json().catch(() => null);
+                alert(`Cập nhật thất bại: ${errorData?.message ?? res.status}`);
             }
         } catch (err) {
             console.error(err);
@@ -100,92 +181,159 @@ export default function EditEvent() {
 
     return (
         <div className="bg-background text-on-background min-h-screen font-['Inter']">
-            <nav className="bg-slate-50 dark:bg-slate-950 w-full p-6 border-b-2 flex justify-between items-center">
+            {/* Nav Bar */}
+            <nav className="bg-slate-50 w-full p-6 border-b-2 flex justify-between items-center sticky top-0 z-50">
                 <div className="flex items-center gap-8">
                     <span className="text-2xl font-black italic text-blue-700">TicketRush</span>
                     <Link href="/admin/monitor/list" className="text-[10px] font-black uppercase tracking-widest opacity-50 hover:opacity-100">← Back to List</Link>
                 </div>
             </nav>
 
-            <main className="max-w-[1440px] mx-auto px-8 py-12">
+            <main className="max-w-[1600px] mx-auto px-8 py-12">
                 <header className="mb-16 flex justify-between items-end">
                     <div>
                         <span className="bg-blue-600 text-white px-3 py-1 font-bold text-xs uppercase tracking-widest mb-4 inline-block">Editor Mode</span>
                         <h1 className="text-[3.5rem] font-extrabold leading-none tracking-tighter uppercase">Edit Event</h1>
-                        <p className="text-outline text-xs font-bold mt-2">UUID: {eventId}</p>
                     </div>
                     <button
                         onClick={handleUpdate}
                         disabled={updating}
                         className="bg-primary text-on-primary px-16 py-5 font-black uppercase tracking-widest hover:scale-105 transition-all disabled:opacity-50 shadow-2xl"
                     >
-                        {updating ? "Updating..." : "Save Changes"}
+                        {updating ? "Processing..." : "Confirm & Save Changes"}
                     </button>
                 </header>
 
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-1 bg-surface-container border">
-                    {/* Cột trái: Form nhập liệu */}
-                    <section className="md:col-span-8 bg-surface-container-lowest p-12 space-y-12">
-                        <div className="space-y-2">
-                            <label className="text-xs font-bold text-outline uppercase tracking-widest">Event Identity</label>
-                            <input
-                                className="w-full text-2xl font-bold bg-surface-container-high p-4 outline-none border-b-2 border-transparent focus:border-primary uppercase"
-                                value={eventData.title}
-                                onChange={(e) => handleInputChange('title', e.target.value)}
-                            />
-                        </div>
+                {/* --- GRID CHÍNH --- */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-1 bg-surface-container border">
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* PHẦN 1: THÔNG TIN CƠ BẢN (TRÁI) */}
+                    <section className="lg:col-span-4 bg-surface-container-lowest p-10 space-y-10 border-r">
+                        <h2 className="text-xs font-black text-primary uppercase tracking-widest">01. Identity & Details</h2>
+                        <div className="space-y-6">
                             <div className="space-y-2">
-                                <label className="text-xs font-bold text-outline uppercase tracking-widest">Date & Time</label>
-                                <input type="datetime-local" className="w-full font-bold bg-surface-container-high p-4 outline-none"
-                                    value={eventData.date}
-                                    onChange={(e) => handleInputChange('date', e.target.value)}
-                                />
+                                <p className="text-[0.75rem] font-bold uppercase tracking-widest pt-0">Event Identity</p>
+                                <input className="w-full bg-slate-100 p-4 text-xl font-bold uppercase outline-none focus:ring-1 ring-primary"
+                                    value={eventData.title} onChange={e => handleInputChange('title', e.target.value)} placeholder="Title" />
                             </div>
+
                             <div className="space-y-2">
-                                <label className="text-xs font-bold text-outline uppercase tracking-widest">Category</label>
-                                <select className="w-full font-bold bg-surface-container-high p-4 outline-none"
-                                    value={eventData.category}
-                                    onChange={(e) => handleInputChange('category', e.target.value)}
-                                >
-                                    <option value="MUSIC">MUSIC</option>
-                                    <option value="SPORT">SPORT</option>
-                                    <option value="THEATER">THEATER</option>
-                                </select>
+                                <p className="text-[0.75rem] font-bold uppercase tracking-widest pt-0">Event Date & Time</p>
+                                <input type="datetime-local" className="w-full bg-slate-100 p-4 font-bold outline-none"
+                                    value={eventData.date} onChange={e => handleInputChange('date', e.target.value)} />
                             </div>
-                        </div>
 
-                        <div className="space-y-2">
-                            <label className="text-xs font-bold text-outline uppercase tracking-widest">Location</label>
-                            <input className="w-full font-bold bg-surface-container-high p-4 outline-none"
-                                value={eventData.location}
-                                onChange={(e) => handleInputChange('location', e.target.value)}
-                            />
-                        </div>
+                            <div className="space-y-2">
+                                <p className="text-[0.75rem] font-bold uppercase tracking-widest pt-0">Event Location</p>
+                                <input className="w-full bg-slate-100 p-4 font-bold outline-none"
+                                    value={eventData.location} onChange={e => handleInputChange('location', e.target.value)} placeholder="Location" />
+                            </div>
 
-                        <div className="space-y-2">
-                            <label className="text-xs font-bold text-outline uppercase tracking-widest">Description</label>
-                            <textarea className="w-full bg-surface-container-high p-4 h-48 resize-none outline-none border-b-2 border-transparent focus:border-primary"
-                                value={eventData.description}
-                                onChange={(e) => handleInputChange('description', e.target.value)}
-                            />
+                            <div className="space-y-2">
+                                <p className="text-[0.75rem] font-bold uppercase tracking-widest pt-0">Event Description</p>
+                                <textarea className="w-full bg-slate-100 p-4 h-40 resize-none outline-none"
+                                    value={eventData.description} onChange={e => handleInputChange('description', e.target.value)} placeholder="Description" />
+                            </div>
                         </div>
                     </section>
 
-                    {/* Cột phải: Ảnh Banner */}
-                    <aside className="md:col-span-4 bg-surface-container-lowest p-12 border-l">
-                        <label className="text-xs font-bold text-outline uppercase tracking-widest block mb-4 cursor-pointer">
-                            Event Banner
-                            <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
-                            <div className="aspect-[4/5] bg-surface-container-high flex flex-col items-center justify-center border-2 border-dashed border-outline-variant/40 p-8 group hover:bg-surface-variant transition-all relative overflow-hidden mt-4">
-                                {previewUrl && <img src={previewUrl} className="absolute inset-0 w-full h-full object-cover" />}
-                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                                    <span className="text-white font-bold uppercase text-[10px] tracking-widest">Change Image</span>
+                    {/* PHẦN 2: CẤU HÌNH GHẾ & GIÁ (GIỮA) */}
+                    <section className="lg:col-span-3 bg-surface-container-low p-8 border-r">
+                        <h2 className="text-xs font-black text-secondary uppercase tracking-widest mb-8">02. Tier & Matrix</h2>
+
+                        {/* Sửa giá */}
+                        <div className="space-y-3 mb-8">
+                            <p className="text-[0.75rem] font-bold uppercase tracking-widest pt-0">Price Settings</p>
+                            {tiers.map(tier => (
+                                <div key={tier.id} className="bg-white p-3 border border-outline-variant/20" style={{ borderColor: "#000000", border: "1px solid black" }}>
+                                    <span className="text-[9px] font-bold uppercase opacity-50">{tier.label} Price</span>
+                                    <input type="number" className="w-full bg-transparent font-black text-lg outline-none"
+                                        value={tier.value} onChange={e => handleTierPriceChange(tier.id, parseFloat(e.target.value))} />
                                 </div>
+                            ))}
+                        </div>
+
+                        {/* Sửa kích thước */}
+                        <p className="text-[0.75rem] font-bold uppercase tracking-widest pt-0 pb-3">Seat Matrix Settings</p>
+                        <div className="grid grid-cols-2 gap-2 mb-8">
+                            <div className="flex flex-col gap-1">
+                                <p className="text-[9px] font-bold uppercase opacity-50">Rows</p>
+                                <input
+                                    type="number"
+                                    className="w-full bg-white p-3 font-bold text-sm"
+                                    value={rows}
+                                    onChange={e => {
+                                        const newRows = Number(e.target.value);
+                                        setRows(newRows);
+                                        // Gán GENERAL mặc định cho các hàng mới chưa có assignment
+                                        const newAssignments = { ...rowAssignments };
+                                        for (let i = 0; i < newRows; i++) {
+                                            if (!newAssignments[i]) newAssignments[i] = 'GENERAL';
+                                        }
+                                        setRowAssignments(newAssignments);
+                                    }}
+                                />
                             </div>
-                        </label>
-                    </aside>
+
+                            <div className="flex flex-col gap-1">
+                                <p className="text-[9px] font-bold uppercase opacity-50">Seats per row</p>
+                                <input type="number" className="w-full bg-white p-3 font-bold text-sm" value={seatsPerRow} onChange={e => setSeatsPerRow(Number(e.target.value))} />
+                            </div>
+                        </div>
+
+                        {/* Gán hàng */}
+                        <p className="text-[0.75rem] font-bold uppercase tracking-widest pt-0 pb-3">Seat Tiers Settings</p>
+                        <div className="max-h-40 overflow-y-auto space-y-1 mb-4" style={{ backgroundColor: "white", borderColor: "#000000", border: "1px solid black" }}>
+                            {Array.from({ length: rows }).map((_, i) => (
+                                <div key={i} onClick={() => setSelectedRow(i)} className={`p-2 cursor-pointer flex justify-between items-center text-[9px] font-bold border-l-4 ${selectedRow === i ? 'bg-primary/10 border-primary' : 'border-transparent'}`}>
+                                    <span>ROW {i + 1}</span>
+                                    <span style={{ color: tiers.find(t => t.id === rowAssignments[i])?.hex }}>{rowAssignments[i]}</span>
+                                </div>
+                            ))}
+                        </div>
+                        <select className="w-full bg-slate-900 text-white p-3 font-bold text-xs uppercase"
+                            value={rowAssignments[selectedRow]} onChange={e => setRowAssignments({ ...rowAssignments, [selectedRow]: e.target.value })}>
+                            {tiers.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
+                        </select>
+                    </section>
+
+                    {/* PHẦN 3: VISUAL PREVIEW (PHẢI) */}
+                    <section className="lg:col-span-5 bg-white p-10 flex flex-col items-center overflow-auto min-h-[500px]">
+                        <h2 className="text-xs font-black text-outline uppercase tracking-widest mb-12 self-start">03. Seating Preview</h2>
+
+                        <div className="w-full h-8 bg-on-surface flex items-center justify-center mb-12 shadow-md">
+                            <span className="text-surface font-black tracking-[1em] text-[10px]">STAGE</span>
+                        </div>
+
+                        <div className="flex flex-col gap-1.5 scale-90 origin-top">
+                            {Array.from({ length: rows }).map((_, r) => (
+                                <div key={r} className="flex gap-1 items-center">
+                                    <span className="w-4 text-[7px] font-bold opacity-20">{r + 1}</span>
+                                    <div className="flex gap-1">
+                                        {Array.from({ length: seatsPerRow }).map((_, s) => (
+                                            <div key={s} className="w-3 h-3 rounded-sm transition-colors"
+                                                style={{ backgroundColor: getSeatBgHex(r) }} />
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Banner Upload Mini */}
+                        <div className="mt-auto w-full pt-10 border-t border-slate-100">
+                            <label className="cursor-pointer group flex items-center gap-4">
+                                <div className="w-16 h-16 bg-slate-100 flex items-center justify-center rounded-lg border-2 border-dashed overflow-hidden relative">
+                                    {previewUrl ? <img src={previewUrl} className="object-cover w-full h-full" /> : <span className="material-symbols-outlined text-xs">add_a_photo</span>}
+                                    <input type="file" className="hidden" onChange={handleFileChange} />
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-black uppercase">Update Banner Asset</p>
+                                    <p className="text-[8px] opacity-40 uppercase">Click to browse file</p>
+                                </div>
+                            </label>
+                        </div>
+                    </section>
+
                 </div>
             </main>
         </div>
