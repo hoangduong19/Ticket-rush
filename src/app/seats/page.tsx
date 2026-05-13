@@ -16,7 +16,7 @@ function SeatSelectionContent() {
 
   const [seatsData, setSeatsData] = useState<any[]>([]);
   const [selectedSeats, setSelectedSeats] = useState<any[]>([]);
-  const [isNotBot, setIsNotBot] = useState(false);
+
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -32,7 +32,6 @@ function SeatSelectionContent() {
     setTimeout(() => setToast(null), 3500);
   };
 
-  const SERVICE_FEE_RATE = 0.15;
   const MAX_SELECTION = 5;
 
   useEffect(() => {
@@ -52,13 +51,11 @@ function SeatSelectionContent() {
             setSelectedSeats(trimmed);
             if (holdId) {
               setMyHeldSeatIds(new Set(trimmed.map((s: any) => s.seatId)));
-              setIsNotBot(true);
             }
           } else {
             setSelectedSeats(seats);
             if (holdId) {
               setMyHeldSeatIds(new Set(seats.map((s: any) => s.seatId)));
-              setIsNotBot(true);
             }
           }
         }
@@ -194,9 +191,7 @@ function SeatSelectionContent() {
     setSelectedSeats(prev => prev.filter(seat => seat.seatId !== seatId));
   };
 
-  const subtotal = selectedSeats.reduce((sum, seat) => sum + (seat.price || 0), 0);
-  const serviceFee = subtotal * SERVICE_FEE_RATE;
-  const totalPrice = subtotal + serviceFee;
+  const totalPrice = selectedSeats.reduce((sum, seat) => sum + (seat.price || 0), 0);
 
   // --- THUẬT TOÁN TÍNH TOÁN MA TRẬN ĐỘNG ---
   const rowNumbers = Array.from(new Set(seatsData.map(s => s.rowNumber))).sort((a, b) => a - b);
@@ -210,10 +205,7 @@ function SeatSelectionContent() {
       showToast("Vui lòng chọn ít nhất một ghế!", 'warning');
       return;
     }
-    if (!isNotBot) {
-      showToast("Vui lòng xác nhận bạn không phải bot trước khi tiếp tục!", 'warning');
-      return;
-    }
+
     if (selectedSeats.length > MAX_SELECTION) {
       showToast(`Không thể tiếp tục: bạn chỉ được chọn tối đa ${MAX_SELECTION} ghế.`, 'warning');
       return;
@@ -404,19 +396,6 @@ function SeatSelectionContent() {
                 ))}
               </div>
             </div>
-
-            {/* Venue Info Section */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-surface-container-high border border-surface-container-high">
-              <div className="bg-surface-container-lowest p-8 shadow-sm">
-                <span className="block text-[10px] font-black text-secondary uppercase tracking-[0.3em] mb-2">01. Venue Standards</span>
-                <h3 className="text-xl font-black tracking-tighter mb-4 uppercase italic">Architectural Integrity</h3>
-                <p className="text-[11px] text-on-surface-variant leading-relaxed font-bold uppercase opacity-60">High-fidelity acoustics combined with optimized line-of-sight metrics across all tiers.</p>
-              </div>
-              <div className="bg-surface-container-lowest p-8 shadow-sm">
-                <span className="block text-[10px] font-black text-tertiary uppercase tracking-[0.3em] mb-2">02. Live Feed</span>
-                <p className="text-[11px] text-on-surface-variant leading-relaxed font-bold uppercase opacity-60">System synchronizing every 3,000ms with global booking nodes to ensure seat validity.</p>
-              </div>
-            </div>
           </div>
           <div className="h-24 md:hidden"></div>
         </section>
@@ -459,24 +438,13 @@ function SeatSelectionContent() {
           </div>
 
           <div className="space-y-4 pt-4 border-t border-surface-container-high">
-            <div className="flex justify-between items-center text-[10px] font-black uppercase opacity-40">
-              <span>Service Aggregate (15%)</span>
-              <span>${serviceFee.toFixed(2)}</span>
-            </div>
             <div className="flex justify-between items-end pt-2">
-              <span className="text-xl font-black uppercase tracking-tighter">Total Gross</span>
+              <span className="text-xl font-black uppercase tracking-tighter">Total</span>
               <span className="text-4xl font-black text-primary tracking-tighter">${totalPrice.toFixed(2)}</span>
             </div>
           </div>
 
           <div className="space-y-6 pt-4">
-            <label className="flex items-center gap-4 cursor-pointer group bg-slate-50 p-5 border border-surface-container-high hover:border-primary transition-all">
-              <div className="relative w-6 h-6 border-2 border-surface-container-highest group-hover:border-primary transition-all flex items-center justify-center bg-white rounded-sm">
-                <input className="peer hidden" type="checkbox" checked={isNotBot} onChange={(e) => setIsNotBot(e.target.checked)} />
-                <div className="w-3 h-3 bg-primary opacity-0 peer-checked:opacity-100 transition-all scale-50 peer-checked:scale-100"></div>
-              </div>
-              <span className="text-[10px] bg-white font-black uppercase tracking-widest text-on-surface-variant group-hover:text-primary transition-colors">I am not a bot</span>
-            </label>
             <button
               onClick={handleConfirmSelection}
               disabled={loading || selectedSeats.length === 0 || isEventEnded}

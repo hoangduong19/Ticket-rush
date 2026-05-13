@@ -165,7 +165,7 @@ export default function EventDetailPage() {
 
             {/* Footer nhỏ */}
             <footer className="mt-20 p-12 bg-slate-900 text-center">
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.5em]">TicketRush Precision Ticketing Engine © 2024</p>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.5em]">TicketRush Precision Ticketing Engine © 2026</p>
             </footer>
         </div>
     );

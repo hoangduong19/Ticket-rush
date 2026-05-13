@@ -69,7 +69,6 @@ export default function BrowseEvents() {
             <Link href="/tickets" className="text-slate-900 dark:text-slate-100 font-bold opacity-60 hover:bg-blue-700 hover:text-white transition-colors duration-100 font-['Inter'] tracking-tight uppercase">My Tickets</Link>
           </nav>
           <div className="flex items-center gap-4">
-            <button className="material-symbols-outlined text-slate-900 dark:text-slate-100 p-2 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors">notifications</button>
             <div className="relative">
               <button onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="w-10 h-10 bg-surface-container-highest overflow-hidden focus:outline-none hover:ring-2 ring-primary">
                 <img className="w-full h-full object-cover" alt="User profile avatar" src={avatarUrl} />
@@ -103,23 +102,6 @@ export default function BrowseEvents() {
           <div className="max-w-2xl w-full">
             <span className="font-['Inter'] font-bold text-xs uppercase tracking-widest text-primary mb-2 block">Search Directory</span>
             <h1 className="text-[2rem] font-bold tracking-tighter leading-none mb-6">EXPLORE LIVE EVENTS</h1>
-            <div className="relative flex items-center bg-surface-container-high w-full">
-              <span className="material-symbols-outlined absolute left-4 text-outline">search</span>
-              <input
-                className="w-full bg-transparent border-none focus:ring-0 py-4 pl-12 pr-4 font-bold text-sm uppercase placeholder:text-outline-variant border-b-2 border-transparent focus:border-primary"
-                placeholder="SEARCH BY ARTIST, VENUE, OR CITY..."
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)} // Cập nhật từ khóa khi gõ
-              />
-            </div>
-          </div>
-          <div className="text-right">
-            {/* Hiển thị số lượng tìm thấy thật từ filteredEvents */}
-            <div className="text-[3.5rem] font-extrabold tracking-tighter leading-none text-primary">
-              {filteredEvents.length}
-            </div>
-            <div className="font-bold text-xs uppercase tracking-widest text-on-surface-variant">Events Found</div>
           </div>
         </div>
       </section>
@@ -279,14 +261,7 @@ export default function BrowseEvents() {
         <div className="flex flex-col md:flex-row justify-between items-center px-12 py-16 w-full gap-8">
           <div className="flex flex-col items-center md:items-start gap-4">
             <Link href="/" className="text-lg font-black text-white">TICKETRUSH</Link>
-            <div className="font-['Inter'] font-bold text-xs uppercase tracking-widest text-slate-400">© 2026 TicketRush. ARCHITECTURAL PRECISION IN TICKETING.</div>
           </div>
-          <nav className="flex gap-8">
-            <Link href="#" className="font-['Inter'] font-bold text-xs uppercase tracking-widest text-slate-400 hover:text-blue-500 transition-colors">Support</Link>
-            <Link href="#" className="font-['Inter'] font-bold text-xs uppercase tracking-widest text-slate-400 hover:text-blue-500 transition-colors">Terms</Link>
-            <Link href="#" className="font-['Inter'] font-bold text-xs uppercase tracking-widest text-slate-400 hover:text-blue-500 transition-colors">Privacy</Link>
-            <Link href="#" className="font-['Inter'] font-bold text-xs uppercase tracking-widest text-slate-400 hover:text-blue-500 transition-colors">Careers</Link>
-          </nav>
         </div>
       </footer>
     </div>

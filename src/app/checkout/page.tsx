@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 
-const SERVICE_FEE_RATE = 0.15;
+
 
 export default function Checkout() {
   const router = useRouter();
@@ -26,9 +26,7 @@ export default function Checkout() {
   const [eventId, setEventId] = useState<string | null>(null);
 
   // Tính toán giá động từ seats
-  const subtotal = seats.reduce((sum, seat) => sum + (seat.price || 0), 0);
-  const serviceFee = subtotal * SERVICE_FEE_RATE;
-  const total = subtotal + serviceFee;
+  const total = seats.reduce((sum, seat) => sum + (seat.price || 0), 0);
 
   useEffect(() => {
     const cartDataStr = localStorage.getItem('checkoutCart');
@@ -137,10 +135,8 @@ export default function Checkout() {
           <nav className="hidden md:flex items-center gap-8">
             <Link href="/events" className="text-slate-900 dark:text-slate-100 font-bold opacity-60 font-['Inter'] tracking-tight uppercase hover:bg-blue-700 hover:text-white transition-colors duration-100 px-2 py-1">Events</Link>
             <Link href="/tickets" className="text-slate-900 dark:text-slate-100 font-bold opacity-60 font-['Inter'] tracking-tight uppercase hover:bg-blue-700 hover:text-white transition-colors duration-100 px-2 py-1">My Tickets</Link>
-            <Link href="/dashboard" className="text-slate-900 dark:text-slate-100 font-bold opacity-60 font-['Inter'] tracking-tight uppercase hover:bg-blue-700 hover:text-white transition-colors duration-100 px-2 py-1">Dashboard</Link>
           </nav>
           <div className="flex items-center gap-4">
-            <span className="material-symbols-outlined text-blue-700 dark:text-blue-400">account_circle</span>
           </div>
         </div>
         <div className="bg-slate-200 dark:bg-slate-800 h-[2px] w-full"></div>
@@ -159,10 +155,7 @@ export default function Checkout() {
               </h2>
             </div>
           </div>
-          <div className="hidden lg:block text-right">
-            <p className="text-xs font-bold tracking-widest uppercase opacity-80">Hold ID</p>
-            <p className="font-mono text-xs opacity-70 truncate max-w-[180px]">{holdId ?? '—'}</p>
-          </div>
+
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-1 bg-surface-container">
@@ -261,9 +254,6 @@ export default function Checkout() {
               >
                 {isExpired ? "Session Expired" : "Confirm Purchase"}
               </button>
-              <p className="text-[0.75rem] text-center text-outline-variant font-bold uppercase tracking-tighter">
-                By clicking confirm, you agree to the TicketRush Terms of Service
-              </p>
             </section>
           </div>
 
@@ -294,14 +284,6 @@ export default function Checkout() {
                 )}
 
                 <div className="pt-6 mt-2 border-t border-surface-container-highest space-y-3">
-                  <div className="flex justify-between text-on-surface-variant text-sm font-bold uppercase">
-                    <span>Subtotal</span>
-                    <span>${subtotal.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-on-surface-variant text-sm font-bold uppercase">
-                    <span>Service Fee (15%)</span>
-                    <span>${serviceFee.toFixed(2)}</span>
-                  </div>
                   <div className="pt-4 border-t-4 border-inverse-surface flex justify-between items-end">
                     <span className="text-sm font-black uppercase tracking-widest">Total</span>
                     <span className="text-4xl font-black text-primary leading-none">${total.toFixed(2)}</span>
@@ -313,23 +295,7 @@ export default function Checkout() {
         </div>
 
         {/* Help Section */}
-        <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="p-8 bg-surface-container-low">
-            <span className="material-symbols-outlined text-primary text-3xl mb-4">shield</span>
-            <h4 className="font-bold uppercase tracking-tight mb-2">Secure Transaction</h4>
-            <p className="text-sm text-on-surface-variant">All payments are encrypted with military-grade 256-bit protocols. Your data is never stored on our servers.</p>
-          </div>
-          <div className="p-8 bg-surface-container-low">
-            <span className="material-symbols-outlined text-primary text-3xl mb-4">local_shipping</span>
-            <h4 className="font-bold uppercase tracking-tight mb-2">Instant Delivery</h4>
-            <p className="text-sm text-on-surface-variant">Tickets are delivered digitally to your email and TicketRush account immediately after verification.</p>
-          </div>
-          <div className="p-8 bg-surface-container-low">
-            <span className="material-symbols-outlined text-primary text-3xl mb-4">support_agent</span>
-            <h4 className="font-bold uppercase tracking-tight mb-2">24/7 Priority Support</h4>
-            <p className="text-sm text-on-surface-variant">Our concierge team is standing by to assist with any purchase issues or venue inquiries.</p>
-          </div>
-        </div>
+        
       </main>
 
       {/* Footer */}
@@ -337,15 +303,6 @@ export default function Checkout() {
         <div className="bg-blue-600 h-2 w-full"></div>
         <div className="flex flex-col md:flex-row justify-between items-center px-12 py-16 w-full gap-8">
           <Link href="/" className="text-lg font-black text-white">TICKETRUSH</Link>
-          <nav className="flex gap-8">
-            <Link href="#" className="font-['Inter'] font-bold text-xs uppercase tracking-widest text-slate-400 hover:text-blue-500 transition-colors">Support</Link>
-            <Link href="#" className="font-['Inter'] font-bold text-xs uppercase tracking-widest text-slate-400 hover:text-blue-500 transition-colors">Terms</Link>
-            <Link href="#" className="font-['Inter'] font-bold text-xs uppercase tracking-widest text-slate-400 hover:text-blue-500 transition-colors">Privacy</Link>
-            <Link href="#" className="font-['Inter'] font-bold text-xs uppercase tracking-widest text-slate-400 hover:text-blue-500 transition-colors">Careers</Link>
-          </nav>
-          <div className="font-['Inter'] font-bold text-xs uppercase tracking-widest text-white text-center md:text-right">
-            © 2026 TicketRush. ARCHITECTURAL PRECISION IN TICKETING.
-          </div>
         </div>
       </footer>
 
