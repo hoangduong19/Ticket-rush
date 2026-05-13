@@ -242,10 +242,6 @@ export default function Dashboard() {
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <div className="bg-surface-container-high px-4 py-2 flex items-center gap-2">
-            <span className="material-symbols-outlined text-outline">search</span>
-            <input className="bg-transparent border-none focus:ring-0 text-xs font-bold uppercase tracking-widest w-48" placeholder="SEARCH EVENTS" type="text" />
-          </div>
           <div className="relative">
             <button onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="w-10 h-10 bg-surface-container-highest overflow-hidden focus:outline-none hover:ring-2 ring-primary">
               <img className="w-full h-full object-cover" alt="User profile avatar" src={user.avatarUrl} />
@@ -294,7 +290,6 @@ export default function Dashboard() {
               </button>
               <input type="file" ref={fileInputRef} onChange={handleAvatarChange} className="hidden" accept="image/*" />
 
-              <div className="absolute -bottom-4 -right-4 bg-secondary px-4 py-2 text-on-secondary font-bold text-xs uppercase tracking-widest z-20">Verified</div>
             </div>
 
             <div className="flex-1">
@@ -458,7 +453,6 @@ export default function Dashboard() {
       <footer className="bg-slate-900 text-white p-12 mt-12">
         <div className="max-w-[1440px] mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
           <span className="text-2xl font-black italic uppercase">TicketRush</span>
-          <p className="text-xs opacity-50 uppercase font-bold tracking-widest">© 2026 Architectural Precision in Ticketing.</p>
         </div>
       </footer>
 
