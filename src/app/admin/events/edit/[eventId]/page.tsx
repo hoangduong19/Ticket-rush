@@ -164,7 +164,7 @@ export default function EditEvent() {
                 return {
                     rowNumber: index + 1,
                     price: tierObj ? tierObj.value : 89.00,
-                    seatType: tierObj ? tierObj.label : 'GENERAL'
+                    seatType: tierObj ? tierObj.id : 'GENERAL'
                 };
             });
             const seatingPayload = {
