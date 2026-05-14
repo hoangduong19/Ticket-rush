@@ -53,6 +53,7 @@ export default function BrowseEvents() {
       const params = new URLSearchParams();
       params.set('page', String(page));
       params.set('size', String(PAGE_SIZE));
+      params.set('status', 'Published');
 
       appliedCategories.forEach(cat => params.append('category', cat));
       if (appliedDateFrom) params.set('dateFrom', appliedDateFrom);
@@ -224,8 +225,8 @@ export default function BrowseEvents() {
                       key={cat.value}
                       onClick={() => toggleCategory(cat.value)}
                       className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-all duration-200 border ${isSelected
-                          ? 'bg-primary text-on-primary border-primary shadow-md'
-                          : 'bg-surface-container-lowest border-surface-container-high hover:border-primary hover:bg-surface-container-high'
+                        ? 'bg-primary text-on-primary border-primary shadow-md'
+                        : 'bg-surface-container-lowest border-surface-container-high hover:border-primary hover:bg-surface-container-high'
                         }`}
                     >
                       <span className="material-symbols-outlined text-[18px]">{cat.icon}</span>
@@ -297,8 +298,8 @@ export default function BrowseEvents() {
                 onClick={applyFilters}
                 disabled={!hasUnappliedChanges}
                 className={`w-full py-4 font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${hasUnappliedChanges
-                    ? 'bg-primary text-on-primary hover:bg-primary-dim shadow-lg'
-                    : 'bg-surface-container-highest text-on-surface-variant cursor-not-allowed opacity-50'
+                  ? 'bg-primary text-on-primary hover:bg-primary-dim shadow-lg'
+                  : 'bg-surface-container-highest text-on-surface-variant cursor-not-allowed opacity-50'
                   }`}
               >
                 <span className="material-symbols-outlined text-[16px]">filter_alt</span>
@@ -449,8 +450,8 @@ export default function BrowseEvents() {
                     key={page}
                     onClick={() => goToPage(page)}
                     className={`w-12 h-12 flex items-center justify-center font-bold transition-colors ${page === currentPage
-                        ? 'bg-primary text-on-primary'
-                        : 'bg-surface-container-lowest hover:bg-primary hover:text-on-primary'
+                      ? 'bg-primary text-on-primary'
+                      : 'bg-surface-container-lowest hover:bg-primary hover:text-on-primary'
                       }`}
                   >
                     {page + 1}
