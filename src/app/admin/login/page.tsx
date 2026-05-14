@@ -16,6 +16,10 @@ export default function AdminLogin() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Rate limit state
+  const [rateLimited, setRateLimited] = useState(false);
+  const [countdown, setCountdown] = useState(0);
+
   // Nếu đã đăng nhập (token còn hạn) → redirect về trang chủ
   useEffect(() => {
     if (getToken('admin')) {
@@ -23,15 +27,32 @@ export default function AdminLogin() {
     }
   }, [router]);
 
+  // Countdown timer for rate limit
+  useEffect(() => {
+    if (countdown <= 0) {
+      setRateLimited(false);
+      return;
+    }
+    const timer = setTimeout(() => setCountdown((c) => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [countdown]);
+
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (rateLimited) return;
     setError(null);
     setLoading(true);
     try {
       await apiLogin(email, password);
       router.push('/admin');
-    } catch {
-      setError('Thông tin đăng nhập không hợp lệ. Vui lòng kiểm tra lại.');
+    } catch (err: any) {
+      if (err?.status === 429) {
+        setRateLimited(true);
+        setCountdown(60);
+        setError(null);
+      } else {
+        setError('Thông tin đăng nhập không hợp lệ. Vui lòng kiểm tra lại.');
+      }
     } finally {
       setLoading(false);
     }
@@ -92,14 +113,30 @@ export default function AdminLogin() {
               </div>
             </div>
             
+            {/* Rate Limit Warning */}
+            {rateLimited && (
+              <div className="flex items-center gap-4 bg-amber-50 border-l-4 border-amber-500 px-5 py-4 animate-[fadeIn_0.3s_ease-out]">
+                <span className="material-symbols-outlined text-amber-600 text-2xl shrink-0 animate-pulse">schedule</span>
+                <div className="flex-1">
+                  <p className="text-amber-800 text-sm font-bold uppercase tracking-wide">Quá nhiều lần thử</p>
+                  <p className="text-amber-700 text-xs mt-1">Vui lòng đợi <span className="font-black text-amber-900 text-sm">{countdown}s</span> trước khi thử lại.</p>
+                </div>
+                <div className="w-10 h-10 border-3 border-amber-300 border-t-amber-600 rounded-full animate-spin shrink-0"></div>
+              </div>
+            )}
+
             {/* Action Button */}
             <button
-              className="bg-error text-white font-black py-6 text-xl uppercase tracking-widest hover:bg-red-700 transition-all active:scale-[0.98] flex items-center justify-center gap-3"
+              className={`font-black py-6 text-xl uppercase tracking-widest transition-all flex items-center justify-center gap-3 ${
+                rateLimited
+                  ? 'bg-slate-400 text-slate-200 cursor-not-allowed'
+                  : 'bg-error text-white hover:bg-red-700 active:scale-[0.98]'
+              }`}
               type="submit"
-              disabled={loading}
+              disabled={loading || rateLimited}
             >
-              {loading ? 'Authenticating...' : 'Admin Login'}
-              <span className="material-symbols-outlined">arrow_forward</span>
+              {rateLimited ? `Đợi ${countdown}s` : loading ? 'Authenticating...' : 'Admin Login'}
+              <span className="material-symbols-outlined">{rateLimited ? 'hourglass_top' : 'arrow_forward'}</span>
             </button>
             {error && (
               <div className="flex items-center gap-3 bg-red-50 border-l-4 border-red-500 px-4 py-3 mt-1">

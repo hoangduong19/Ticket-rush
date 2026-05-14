@@ -1,7 +1,7 @@
 "use client";
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { signup as apiSignup } from '../../../lib/auth';
 
@@ -59,6 +59,20 @@ export default function SignUp() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Rate limit state
+  const [rateLimited, setRateLimited] = useState(false);
+  const [countdown, setCountdown] = useState(0);
+
+  // Countdown timer for rate limit
+  useEffect(() => {
+    if (countdown <= 0) {
+      setRateLimited(false);
+      return;
+    }
+    const timer = setTimeout(() => setCountdown((c) => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [countdown]);
+
   // Field-level errors — only shown after user touches the field
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const touch = (field: string) => setTouched(t => ({ ...t, [field]: true }));
@@ -74,6 +88,7 @@ export default function SignUp() {
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (rateLimited) return;
     // Mark all fields as touched so errors are visible on submit
     setTouched({ email: true, password: true, confirm: true, age: true, displayName: true });
     if (hasErrors) return;
@@ -102,8 +117,14 @@ export default function SignUp() {
       await apiSignup(payload);
       router.push('/dashboard');
     } catch (err: any) {
-      const raw = err?.message || 'Đã xảy ra lỗi, vui lòng thử lại.';
-      setError(parseServerError(raw));
+      if (err?.status === 429) {
+        setRateLimited(true);
+        setCountdown(60);
+        setError(null);
+      } else {
+        const raw = err?.message || 'Đã xảy ra lỗi, vui lòng thử lại.';
+        setError(parseServerError(raw));
+      }
     } finally {
       setLoading(false);
     }
@@ -232,14 +253,34 @@ export default function SignUp() {
               </div>
 
 
+              {/* Rate Limit Warning */}
+              {rateLimited && (
+                <div className="flex items-center gap-4 bg-amber-50 border-l-4 border-amber-500 px-5 py-4 animate-[fadeIn_0.3s_ease-out]">
+                  <span className="material-symbols-outlined text-amber-600 text-2xl shrink-0 animate-pulse">schedule</span>
+                  <div className="flex-1">
+                    <p className="text-amber-800 text-sm font-bold uppercase tracking-wide">Quá nhiều lần thử</p>
+                    <p className="text-amber-700 text-xs mt-1">Vui lòng đợi <span className="font-black text-amber-900 text-sm">{countdown}s</span> trước khi thử lại.</p>
+                  </div>
+                  <div className="w-10 h-10 border-3 border-amber-300 border-t-amber-600 rounded-full animate-spin shrink-0"></div>
+                </div>
+              )}
+
               {/* Submit Button */}
               <button
-                className={`w-full h-16 flex items-center justify-center gap-2 group transition-colors ${loading || hasErrors ? 'bg-primary opacity-60 cursor-not-allowed' : 'bg-primary hover:bg-primary-dim'}`}
+                className={`w-full h-16 flex items-center justify-center gap-2 group transition-colors ${
+                  rateLimited
+                    ? 'bg-slate-400 cursor-not-allowed'
+                    : loading || hasErrors ? 'bg-primary opacity-60 cursor-not-allowed' : 'bg-primary hover:bg-primary-dim'
+                }`}
                 type="submit"
-                disabled={loading}
+                disabled={loading || rateLimited}
               >
-                <span className="text-on-primary font-black uppercase tracking-widest text-lg">{loading ? 'Creating...' : 'Complete Registration'}</span>
-                <span className="material-symbols-outlined text-on-primary group-active:translate-x-1 transition-transform">arrow_forward</span>
+                <span className="text-on-primary font-black uppercase tracking-widest text-lg">
+                  {rateLimited ? `Đợi ${countdown}s` : loading ? 'Creating...' : 'Complete Registration'}
+                </span>
+                <span className="material-symbols-outlined text-on-primary group-active:translate-x-1 transition-transform">
+                  {rateLimited ? 'hourglass_top' : 'arrow_forward'}
+                </span>
               </button>
               {error && (
                 <div className="flex items-start gap-3 bg-error-container/20 border border-error text-error px-4 py-3">

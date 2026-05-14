@@ -31,11 +31,25 @@ export default function Dashboard() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   // Toast notification
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
-  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'warning' } | null>(null);
+  const showToast = (message: string, type: 'success' | 'error' | 'warning' = 'success') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3500);
   };
+
+  // Rate limit state for profile update
+  const [profileRateLimited, setProfileRateLimited] = useState(false);
+  const [profileCountdown, setProfileCountdown] = useState(0);
+
+  // Countdown timer for profile rate limit
+  useEffect(() => {
+    if (profileCountdown <= 0) {
+      setProfileRateLimited(false);
+      return;
+    }
+    const timer = setTimeout(() => setProfileCountdown((c) => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [profileCountdown]);
 
   // Password change state
   const [pwForm, setPwForm] = useState({ oldPassword: '', newPassword: '', confirmPassword: '' });
@@ -93,6 +107,7 @@ export default function Dashboard() {
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (profileRateLimited) return;
     try {
       const token = localStorage.getItem('token');
 
@@ -108,6 +123,10 @@ export default function Dashboard() {
       if (res.ok) {
         setUser((prev) => ({ ...prev, ...formData }));
         showToast('Thông tin cá nhân đã được lưu!');
+      } else if (res.status === 429) {
+        setProfileRateLimited(true);
+        setProfileCountdown(5);
+        showToast('Bạn đang cập nhật quá nhanh. Vui lòng đợi 5 giây.', 'warning');
       } else {
         const error = await res.json();
         showToast('Lỗi: ' + (error.message || 'Không thể cập nhật'), 'error');
@@ -354,8 +373,16 @@ export default function Dashboard() {
                     </select>
                   </div>
                 </div>
-                <button className="bg-primary text-on-primary py-6 px-12 font-black uppercase tracking-[0.2em] self-start hover:bg-black transition-all active:translate-y-1" type="submit">
-                  Save Changes
+                <button 
+                  className={`py-6 px-12 font-black uppercase tracking-[0.2em] self-start transition-all active:translate-y-1 ${
+                    profileRateLimited
+                      ? 'bg-slate-400 text-slate-200 cursor-not-allowed'
+                      : 'bg-primary text-on-primary hover:bg-black'
+                  }`}
+                  type="submit"
+                  disabled={profileRateLimited}
+                >
+                  {profileRateLimited ? `Đợi ${profileCountdown}s` : 'Save Changes'}
                 </button>
               </form>
             </div>
@@ -462,16 +489,18 @@ export default function Dashboard() {
           className={`fixed bottom-8 right-8 z-[9999] flex items-center gap-4 px-6 py-4 shadow-2xl border-l-4 transition-all duration-300 ${
             toast.type === 'success'
               ? 'bg-white border-green-500'
-              : 'bg-white border-red-500'
+              : toast.type === 'warning'
+                ? 'bg-white border-amber-500'
+                : 'bg-white border-red-500'
           }`}
           style={{ minWidth: 280, maxWidth: 400 }}
         >
           <span
             className={`material-symbols-outlined text-xl ${
-              toast.type === 'success' ? 'text-green-500' : 'text-red-500'
+              toast.type === 'success' ? 'text-green-500' : toast.type === 'warning' ? 'text-amber-500' : 'text-red-500'
             }`}
           >
-            {toast.type === 'success' ? 'check_circle' : 'error'}
+            {toast.type === 'success' ? 'check_circle' : toast.type === 'warning' ? 'schedule' : 'error'}
           </span>
           <span className="text-slate-800 text-sm font-bold tracking-wide flex-1">{toast.message}</span>
           <button

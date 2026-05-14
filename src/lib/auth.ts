@@ -56,6 +56,17 @@ async function parseAuthResponse(
   type: AuthType
 ): Promise<LoginResponse> {
   if (!res.ok) {
+    // Handle rate limit (429) specifically
+    if (res.status === 429) {
+      let message = 'Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.';
+      try {
+        const data = await res.json();
+        if (data.message) message = data.message;
+      } catch {}
+      const err = new Error(message);
+      (err as any).status = 429;
+      throw err;
+    }
     const text = await res.text();
     throw new Error(text || res.statusText);
   }
