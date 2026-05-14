@@ -37,17 +37,32 @@ export default function MonitorSelector() {
         fetchEvents();
     }, []);
 
-    const fetchEvents = () => {
-        fetch(`${API_BASE}/events`)
-            .then(res => res.json())
-            .then(data => {
-                setEvents(data.content);
-                setLoading(false);
-            })
-            .catch(err => {
-                console.error("Failed to fetch events", err);
-                setLoading(false);
-            });
+    const fetchEvents = async () => {
+        try {
+            // Fetch trang đầu để biết totalPages
+            const firstRes = await fetch(`${API_BASE}/events?page=0&size=50`);
+            const firstData = await firstRes.json();
+            const totalPages = firstData.totalPages ?? 1;
+
+            // Fetch các trang còn lại song song
+            const otherPages = await Promise.all(
+                Array.from({ length: totalPages - 1 }, (_, i) =>
+                    fetch(`${API_BASE}/events?page=${i + 1}&size=50`)
+                        .then(r => r.json())
+                        .then(d => d.content ?? [])
+                )
+            );
+
+            const allEvents = [
+                ...(firstData.content ?? []),
+                ...otherPages.flat()
+            ];
+            setEvents(allEvents);
+        } catch (err) {
+            console.error("Failed to fetch events", err);
+        } finally {
+            setLoading(false);
+        }
     };
 
     // --- HÀM THỰC THI XÓA THẬT SỰ ---
