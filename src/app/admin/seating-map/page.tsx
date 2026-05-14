@@ -52,6 +52,10 @@ export default function SeatingMapConfigurator() {
     setTiers(tiers.map(t => t.id === id ? { ...t, value: newValue } : t));
   };
 
+  const handleTierLabelChange = (id: string, newLabel: string) => {
+    setTiers(tiers.map(t => t.id === id ? { ...t, label: newLabel } : t));
+  };
+
   // Lấy màu sắc dựa trên hạng ghế đã gán cho hàng đó
   const getSeatBgHex = (rowIndex: number) => {
     const tierId = rowAssignments[rowIndex] || 'GENERAL';
@@ -104,7 +108,13 @@ export default function SeatingMapConfigurator() {
                   <div key={tier.id} className="bg-surface-container-lowest p-3 border border-outline-variant/30 rounded-sm">
                     <div className="flex items-center gap-2 mb-2">
                       <div className={`w-2 h-2 rounded-full ${tier.color}`}></div>
-                      <span className="text-[10px] font-bold uppercase">{tier.label}</span>
+                      <input
+                        type="text"
+                        className="bg-transparent outline-none text-[10px] font-bold uppercase w-full"
+                        value={tier.label}
+                        onChange={(e) => handleTierLabelChange(tier.id, e.target.value)}
+                        placeholder="Tier Name"
+                      />
                     </div>
                     <div className="flex items-center bg-surface-container-high px-3 py-2">
                       <span className="font-bold text-xs opacity-40">$</span>

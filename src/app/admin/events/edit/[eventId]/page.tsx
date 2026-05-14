@@ -79,14 +79,32 @@ export default function EditEvent() {
                     const assignments: any = {};
                     for (let i = 0; i < maxR; i++) {
                         const sampleSeatInRow = seats.find((s: any) => s.rowNumber === i + 1);
-                        assignments[i] = sampleSeatInRow?.seatType?.toUpperCase() || 'GENERAL';
+                        assignments[i] = sampleSeatInRow?.seatType || 'GENERAL';
                     }
                     setRowAssignments(assignments);
-                    const updatedTiers = DEFAULT_TIERS.map(tier => {
-                        const sample = seats.find((s: any) => s.seatType?.toUpperCase() === tier.id);
-                        return sample ? { ...tier, value: Number(sample.price) } : tier;
+
+                    // Tạo lại danh sách tiers từ các loại ghế thực tế
+                    const uniqueTypes = Array.from(new Set(Object.values(assignments)));
+                    const updatedTiers = uniqueTypes.map((type: any, index) => {
+                        const sample = seats.find((s: any) => s.seatType === type);
+                        const baseConfig = DEFAULT_TIERS[index % DEFAULT_TIERS.length];
+                        return {
+                            id: type,
+                            label: type,
+                            value: sample ? Number(sample.price) : baseConfig.value,
+                            hex: baseConfig.hex,
+                            color: baseConfig.color
+                        };
                     });
-                    setTiers(updatedTiers); //
+
+                    // Nếu thiếu tier so với mặc định, thêm vào cho đủ 3 (tùy chọn)
+                    if (updatedTiers.length < DEFAULT_TIERS.length) {
+                        for (let i = updatedTiers.length; i < DEFAULT_TIERS.length; i++) {
+                            updatedTiers.push({ ...DEFAULT_TIERS[i], id: DEFAULT_TIERS[i].id + '_' + i });
+                        }
+                    }
+
+                    setTiers(updatedTiers);
                 }
             } catch (err) {
                 console.error("Error loading data:", err);
@@ -104,6 +122,10 @@ export default function EditEvent() {
 
     const handleTierPriceChange = (id: string, newValue: number) => {
         setTiers(tiers.map(t => t.id === id ? { ...t, value: newValue } : t));
+    };
+
+    const handleTierLabelChange = (id: string, newLabel: string) => {
+        setTiers(tiers.map(t => t.id === id ? { ...t, label: newLabel } : t));
     };
 
     const getSeatBgHex = (rIdx: number) => {
@@ -246,9 +268,10 @@ export default function EditEvent() {
                             <p className="text-[0.75rem] font-bold uppercase tracking-widest pt-0">Price Settings</p>
                             {tiers.map(tier => (
                                 <div key={tier.id} className="bg-white p-3 border border-outline-variant/20" style={{ borderColor: "#000000", border: "1px solid black" }}>
-                                    <span className="text-[9px] font-bold uppercase opacity-50">{tier.label} Price</span>
+                                    <input type="text" className="w-full bg-transparent text-[9px] font-bold uppercase opacity-50 outline-none mb-1"
+                                        value={tier.label} onChange={e => handleTierLabelChange(tier.id, e.target.value)} placeholder="Tier Name" />
                                     <input type="number" className="w-full bg-transparent font-black text-lg outline-none"
-                                        value={tier.value} onChange={e => handleTierPriceChange(tier.id, parseFloat(e.target.value))} />
+                                        value={tier.value} onChange={e => handleTierPriceChange(tier.id, e.target.value === '' ? 0 : parseFloat(e.target.value))} />
                                 </div>
                             ))}
                         </div>
