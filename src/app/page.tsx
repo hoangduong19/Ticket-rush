@@ -39,7 +39,8 @@ export default function Home() {
         const res = await fetch(`${API_BASE}/events`, { cache: 'no-store' });
         if (res.ok) {
           const data = await res.json();
-          setEvents(data);
+          console.log("Type:", typeof data, "IsArray:", Array.isArray(data), data);
+          setEvents(data.content);
         }
       } catch (err) {
         console.error("Lỗi fetch events:", err);
