@@ -4,12 +4,14 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuthGuard } from '@/lib/useAuthGuard';
 import { getToken, clearToken } from '@/lib/auth';
+import { getTicketDownloadUrl } from '@/lib/generateTicketPdf';
 
 
 interface Ticket {
   ticketId: string;      
   eventName: string;
   sectionName: string;
+  seatType: string;
   rowNumber: number;     
   seatNumber: number;
   price: number;         
@@ -131,7 +133,7 @@ export default function MyTicketsPage() {
                       </h2>
                       {/* Thêm cả Row Number vào đây cho chi tiết */}
                       <p className="text-on-surface-variant text-sm font-medium mb-6 uppercase tracking-tight">
-                        {ticket.sectionName} • Hàng {ticket.rowNumber} • Ghế {ticket.seatNumber}
+                        {ticket.seatType} • Hàng {ticket.rowNumber} • Ghế {ticket.seatNumber}
                       </p>
 
                       <div className="grid grid-cols-3 gap-4 bg-surface-container-low p-4">
@@ -142,22 +144,13 @@ export default function MyTicketsPage() {
                       </div>
                     </div>
 
-                    <div className="mt-8 flex items-center justify-between">
-                     
-                      <div className="w-20 h-20 bg-white border border-surface-container-high p-1">
-                        {/* QR encode toàn bộ ticket JSON — khi quét sẽ ra đầy đủ thông tin */}
+                    <div className="mt-8 flex items-center justify-center">
+                      <div className="w-32 h-32 bg-white border border-surface-container-high p-1.5 shrink-0">
+                        {/* QR encodes download page URL — quét sẽ mở trang tải vé PDF */}
                         <img
                           alt="QR Code"
-                          className="w-full h-full grayscale"
-                          src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(JSON.stringify({
-                            ticketId: ticket.ticketId,
-                            eventName: ticket.eventName,
-                            sectionName: ticket.sectionName,
-                            rowNumber: ticket.rowNumber,
-                            seatNumber: ticket.seatNumber,
-                            price: ticket.price,
-                            purchaseDate: ticket.purchaseDate
-                          }, null, 2))}`}
+                          className="w-full h-full"
+                          src={`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(getTicketDownloadUrl(ticket))}`}
                         />
                       </div>
                     </div>
