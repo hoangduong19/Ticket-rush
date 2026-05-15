@@ -86,7 +86,7 @@ export default function SeatingMapConfigurator() {
             <span className="text-blue-600">Map Configurator</span>
           </nav>
           <div className="flex items-center gap-4">
-            <button className="material-symbols-outlined text-slate-900 dark:text-slate-100">account_circle</button>
+            <button className="material-symbols-outlined text-slate-900 dark:text-slate-100"></button>
           </div>
         </div>
       </header>
@@ -94,10 +94,7 @@ export default function SeatingMapConfigurator() {
       <main className="flex-grow flex flex-col md:flex-row overflow-hidden">
         {/* Sidebar Controls */}
         <aside className="w-full md:w-80 bg-surface-container-low flex flex-col shrink-0 overflow-y-auto border-r border-slate-200 dark:border-slate-800">
-          <div className="p-6 bg-surface-container-highest">
-            <p className="font-bold text-[0.65rem] uppercase tracking-[0.2em] text-on-surface-variant mb-1">Toolbox</p>
-            <h1 className="text-xl font-black tracking-tighter">MAP_ENGINE_V4</h1>
-          </div>
+         
 
           <div className="p-6 space-y-8">
             {/* PHẦN MỚI: CHỈNH SỬA GIÁ TIỀN HẠNG VÉ */}
@@ -212,17 +209,8 @@ export default function SeatingMapConfigurator() {
         <section className="flex-grow bg-surface relative overflow-hidden flex flex-col">
           {/* Canvas Toolbar */}
           <div className="bg-surface-container px-8 py-4 flex justify-between items-center border-b border-slate-200 dark:border-slate-800">
-            <div className="flex gap-6 items-center">
-              <span className="material-symbols-outlined opacity-30 cursor-pointer hover:opacity-100">zoom_in</span>
-              <span className="material-symbols-outlined opacity-30 cursor-pointer hover:opacity-100">zoom_out</span>
-              <div className="h-4 w-px bg-outline-variant/20"></div>
-              <span className="material-symbols-outlined opacity-30 cursor-not-allowed">undo</span>
-              <span className="material-symbols-outlined opacity-30 cursor-not-allowed">redo</span>
-            </div>
+
             <div className="flex gap-4">
-              <span className="bg-secondary/10 text-secondary px-3 py-1 font-black text-[0.6rem] tracking-widest uppercase self-center border border-secondary/20">
-                Live Preview
-              </span>
               <button
                 onClick={handleSaveDraft}
                 className="bg-blue-700 text-white px-10 py-2 font-black text-[0.7rem] uppercase tracking-widest shadow-xl hover:bg-blue-600 transition-all"
@@ -238,7 +226,7 @@ export default function SeatingMapConfigurator() {
               {/* Stage Graphic */}
               <div className="w-[600px] h-12 bg-on-surface flex items-center justify-center mx-auto shadow-2xl relative">
                 <div className="absolute -inset-1 bg-white opacity-5 blur-sm"></div>
-                <span className="text-surface font-black tracking-[1.5em] text-xs relative">STAGE FRONTAL</span>
+                <span className="text-surface font-black tracking-[1.5em] text-xs relative">STAGE</span>
               </div>
 
               {/* Seating Grid - Dynamic Rendering */}

@@ -100,10 +100,7 @@ function MonitorContent() {
       <div className="flex-grow flex flex-col min-w-0 overflow-hidden">
         <header className="bg-slate-50 dark:bg-slate-950 flex justify-between items-center w-full px-6 py-4 border-b border-surface-container-high sticky top-0 z-40 shrink-0">
           <h1 className="text-2xl font-black tracking-tighter text-blue-600 dark:text-blue-500 uppercase">Live Monitor</h1>
-          <div className="flex items-center gap-2 bg-green-500/10 px-3 py-1 rounded-full">
-            <span className="w-2 h-2 bg-green-500 rounded-full animate-ping"></span>
-            <span className="text-[10px] font-black text-green-600 uppercase tracking-tighter">System Online</span>
-          </div>
+          
         </header>
 
         <main className="flex-grow overflow-y-auto p-8 bg-background">
@@ -132,10 +129,7 @@ function MonitorContent() {
           <div className="flex flex-col lg:flex-row gap-8 items-start">
             {/* Main Visual Map Section - PHẦN SỬA ĐỂ KHÔNG BỊ TRÀN */}
             <section className="flex-grow w-full bg-surface-container-lowest relative min-h-[600px] border border-outline-variant/20 shadow-sm overflow-hidden flex flex-col">
-              <div className="bg-surface-container-high px-6 py-4 flex items-center justify-between border-b border-outline-variant/20">
-                <span className="text-[9px] font-black text-outline uppercase tracking-widest">Arena_Matrix_Engine / Live_Sync</span>
-                <span className="text-[9px] font-bold text-outline uppercase">Max Seats Per Row: {maxSeatsInARow}</span>
-              </div>
+              
 
               {/* Seating Map Grid - RE-ENGINEERED */}
               <div className="p-12 flex-grow overflow-auto bg-white flex flex-col items-center">
@@ -206,7 +200,7 @@ function MonitorContent() {
               <div className="p-6 border-b border-outline-variant/20 flex justify-between items-center bg-surface-container-high/50">
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 bg-secondary rounded-full animate-pulse"></span>
-                  <h3 className="text-sm font-black uppercase tracking-tight">Live_Activity</h3>
+                  <h3 className="text-sm font-black uppercase tracking-tight">Live Activity</h3>
                 </div>
               </div>
               <div className="flex-grow overflow-y-auto p-4 space-y-4">
@@ -216,10 +210,8 @@ function MonitorContent() {
                       <span className={`text-[8px] font-black px-2 py-0.5 rounded-[1px] ${s.status === 'Sold' ? 'bg-primary text-white' : 'bg-secondary text-white'}`}>
                         {s.status.toUpperCase()}
                       </span>
-                      <span className="text-[8px] font-bold text-outline">LIVE</span>
                     </div>
-                    <p className="text-[10px] font-black text-on-surface uppercase">SECTOR_{s.sectionName}</p>
-                    <p className="text-[9px] font-bold text-outline pl-2 border-l-2 border-primary mt-1 uppercase tracking-tighter">ROW: {s.rowNumber} | SEAT: {s.seatNumber}</p>
+                    <p className="text-[10px] font-black text-on-surface uppercase">ROW: {s.rowNumber} | SEAT: {s.seatNumber}</p>
                   </div>
                 ))}
               </div>

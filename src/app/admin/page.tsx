@@ -50,9 +50,12 @@ export default async function AudienceAnalytics() {
   const femalePct = getPctStr(females);
   const otherPct = getPctStr(other);
 
-  const maleW = getPctNum(males) + '%';
-  const femaleW = getPctNum(females) + '%';
-  const otherW = getPctNum(other) + '%';
+  const maleWNum = Math.round(getPctNum(males) * 10) / 10;
+  const femaleWNum = Math.round(getPctNum(females) * 10) / 10;
+  const otherWNum = Math.max(0, Math.round((100 - maleWNum - femaleWNum) * 10) / 10);
+  const maleW = maleWNum + '%';
+  const femaleW = femaleWNum + '%';
+  const otherW = otherWNum + '%';
 
   const ageDist = { '<25': 0, '25-34': 0, '35-44': 0, '45+': 0 };
   users.forEach((u) => {
@@ -91,8 +94,7 @@ export default async function AudienceAnalytics() {
           <div className="flex items-center gap-3">
             <img alt="Admin Avatar" className="w-10 h-10 object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD8XpUv4yqBXDrN1KvICMpWaJHrMpiDTWZwMrNjzP_2ur60ZDgE4MHY2yIyw9IN5k7zr2zIL7fBUtyiBCmVcdnXG0oyYWfTaPF7NFxvWdAt9ajMfjdTw58llPabfSMKOjyPHIrBgNPQezsReKnl1wkkdmvVEPQhdPkJHmyXElIqk1YtkbVyfWnPRd-2xP_9EI2eDvJJ8zRt2fGSY1tTHmsHwCOEGCnav0-zIk1bz6TXw0KYAGS0L1vlKoHDKUWa2507n-DGciQmvUXv" />
             <div className="flex-1">
-              <p className="text-sm font-bold">Admin User</p>
-              <p className="text-xs text-on-surface-variant">System Architect</p>
+              <p className="text-sm font-bold">Admin</p>
             </div>
           </div>
           <div className="mt-4 flex justify-end">
@@ -119,7 +121,6 @@ export default async function AudienceAnalytics() {
           {/* Page Header */}
           <div className="flex justify-between items-end mb-12">
             <div>
-              <span className="bg-secondary text-on-secondary px-3 py-1 text-[10px] font-bold tracking-[0.2em] uppercase mb-2 inline-block">Live Audience Data</span>
               <h3 className="text-[3.5rem] font-extrabold leading-none tracking-tighter text-blue-600">Audience Insights</h3>
             </div>
             {/*<div className="bg-surface-container-high p-1 flex items-center">
@@ -129,7 +130,7 @@ export default async function AudienceAnalytics() {
           </div>
 
           {/* Top Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-0 mb-12 border-l-4 border-primary">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-0 mb-12 border-l-4 border-primary">
             <div className="bg-surface-container-lowest p-8 border-r border-background">
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-4">Total Registered Users</p>
               <p className="text-4xl font-black text-primary">{totalUsers.toLocaleString()}</p>
@@ -154,13 +155,6 @@ export default async function AudienceAnalytics() {
                 <span>O: {otherPct}%</span>
               </div>
             </div>
-            <div className="bg-surface-container-lowest p-8">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-4">Top Region</p>
-              <p className="text-4xl font-black text-slate-900">Global</p>
-              <div className="mt-4 flex items-center gap-1 text-slate-400 font-bold text-xs uppercase">
-                All Regions
-              </div>
-            </div>
           </div>
 
           {/* Main Analytics Section */}
@@ -169,10 +163,6 @@ export default async function AudienceAnalytics() {
             <div className="lg:col-span-2 bg-surface-container-lowest p-8 shadow-sm">
               <div className="flex justify-between items-center mb-10">
                 <h4 className="text-xl font-bold tracking-tight text-slate-900 uppercase">Age Distribution</h4>
-                <div className="flex gap-2 items-center">
-                  <span className="w-3 h-3 bg-primary"></span>
-                  <span className="text-[10px] font-bold text-slate-500 uppercase">Registered Users</span>
-                </div>
               </div>
               <div className="flex items-end gap-12 h-64 border-b-2 border-slate-900 relative mt-8">
                 <div className="flex-1 flex flex-col items-center gap-4 group h-full justify-end">
@@ -244,7 +234,6 @@ export default async function AudienceAnalytics() {
                     <th className="px-8 py-4">User</th>
                     <th className="px-8 py-4">Age</th>
                     <th className="px-8 py-4">Gender</th>
-                    <th className="px-8 py-4 text-right">Join Date</th>
                   </tr>
                 </thead>
                 <tbody className="text-sm font-semibold text-on-surface">
@@ -267,7 +256,6 @@ export default async function AudienceAnalytics() {
                             {u.gender || 'Other'}
                           </span>
                         </td>
-                        <td className="px-8 py-6 text-right font-medium text-slate-400 uppercase text-xs">Recently</td>
                       </tr>
                     );
                   })}
@@ -277,24 +265,9 @@ export default async function AudienceAnalytics() {
           </div>
         </main>
 
-        {/* Footer / Credits */}
-        <footer className="p-8 mt-auto border-t-2 border-slate-200 bg-white">
-          <div className="flex justify-between items-center">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">© 2026 TicketRush Intelligence Platform</p>
-            <div className="flex gap-4">
-              <Link href="#" className="text-[10px] font-bold uppercase tracking-widest text-primary cursor-pointer hover:underline">Privacy Policy</Link>
-              <Link href="#" className="text-[10px] font-bold uppercase tracking-widest text-primary cursor-pointer hover:underline">API Docs</Link>
-            </div>
-          </div>
-        </footer>
       </div>
 
-      {/* Contextual FAB - Restricted to Insights */}
-      <div className="fixed bottom-8 right-8 z-50">
-        <button className="w-16 h-16 bg-slate-900 text-white flex items-center justify-center hover:bg-slate-800 active:scale-95 transition-all shadow-none">
-          <span className="material-symbols-outlined scale-125">add_chart</span>
-        </button>
-      </div>
+
     </div>
   );
 }
