@@ -91,7 +91,9 @@ export default function EditEvent() {
                         return {
                             id: type,
                             label: type,
-                            value: sample ? Number(sample.price) : baseConfig.value,
+                            value: (sample?.price != null && !isNaN(Number(sample.price)))
+                                ? Number(sample.price)
+                                : baseConfig.value,
                             hex: baseConfig.hex,
                             color: baseConfig.color
                         };
@@ -163,7 +165,7 @@ export default function EditEvent() {
                 const tierObj = tiers.find(t => t.id === tierId);
                 return {
                     rowNumber: index + 1,
-                    price: tierObj ? tierObj.value : 89.00,
+                    price: tierObj ? (isNaN(tierObj.value) ? 0 : tierObj.value) : 89.00,
                     seatType: tierObj ? tierObj.id : 'GENERAL'
                 };
             });
@@ -271,7 +273,12 @@ export default function EditEvent() {
                                     <input type="text" className="w-full bg-transparent text-[9px] font-bold uppercase opacity-50 outline-none mb-1"
                                         value={tier.label} onChange={e => handleTierLabelChange(tier.id, e.target.value)} placeholder="Tier Name" />
                                     <input type="number" className="w-full bg-transparent font-black text-lg outline-none"
-                                        value={tier.value} onChange={e => handleTierPriceChange(tier.id, e.target.value === '' ? 0 : parseFloat(e.target.value))} />
+                                        value={tier.value}
+                                        onChange={e => {
+                                            const val = parseFloat(e.target.value);
+                                            if (!isNaN(val) && val >= 0) handleTierPriceChange(tier.id, val);
+                                        }}
+                                    />
                                 </div>
                             ))}
                         </div>
