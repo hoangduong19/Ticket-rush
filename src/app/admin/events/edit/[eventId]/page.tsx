@@ -166,7 +166,7 @@ export default function EditEvent() {
                 return {
                     rowNumber: index + 1,
                     price: tierObj ? (isNaN(tierObj.value) ? 0 : tierObj.value) : 89.00,
-                    seatType: tierObj ? tierObj.id : 'GENERAL'
+                    seatType: tierObj ? tierObj.label : 'GENERAL'
                 };
             });
             const seatingPayload = {
