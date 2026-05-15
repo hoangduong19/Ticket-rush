@@ -1,7 +1,7 @@
 "use client";
 
 import Link from 'next/link';
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthGuard } from '@/lib/useAuthGuard';
 import { getToken, clearToken } from '@/lib/auth';
@@ -33,6 +33,38 @@ function SeatSelectionContent() {
   };
 
   const MAX_SELECTION = 5;
+  // ✅ THAY THẾ TOÀN BỘ 2 HÀM CŨ BẰNG ĐOẠN NÀY
+  const seatTypeColorMap = useMemo(() => {
+    const palette = [
+      { bg: '#4f46e5', text: '#4f46e5' },
+      { bg: '#3b82f6', text: '#3b82f6' },
+      { bg: '#6b7280', text: '#6b7280' },
+    ];
+
+    const typeToPrice = new Map<string, number>();
+    seatsData.forEach(seat => {
+      if (seat.seatType && !typeToPrice.has(seat.seatType)) {
+        typeToPrice.set(seat.seatType, seat.price ?? 0);
+      }
+    });
+
+    // Sắp xếp giảm dần theo giá → tier đắt nhất = màu đậm nhất
+    const sorted = Array.from(typeToPrice.entries())
+      .sort((a, b) => b[1] - a[1]);
+
+    const colorMap: Record<string, { bg: string; text: string }> = {};
+    sorted.forEach(([type], index) => {
+      colorMap[type] = palette[index % palette.length];
+    });
+
+    return colorMap;
+  }, [seatsData]);
+
+  const getSeatColor = (seatType: string) =>
+    seatTypeColorMap[seatType]?.bg ?? 'bg-slate-400';
+
+  const getSeatTextColor = (seatType: string) =>
+    seatTypeColorMap[seatType]?.text ?? 'text-slate-400';
 
   useEffect(() => {
     const storedId = localStorage.getItem('userId');
@@ -321,24 +353,32 @@ function SeatSelectionContent() {
             <div className="relative w-full h-20 bg-slate-900 flex items-center justify-center overflow-hidden shadow-2xl">
               <span className="text-white text-2xl font-black tracking-[1em] uppercase z-10">THE STAGE</span>
             </div>
-
             {/* Legend */}
-            <div className="flex flex-wrap gap-6 justify-center py-4 bg-surface-container-lowest border border-surface-container-high shadow-sm">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-primary"></div>
-                <span className="text-[9px] font-black uppercase tracking-widest opacity-60">Available</span>
+            <div className="flex flex-col gap-3 py-4 px-6 bg-surface-container-lowest border border-surface-container-high shadow-sm">
+              <div className="flex flex-wrap gap-6 justify-center items-center">
+                <span className="text-[10px] font-black uppercase tracking-widest text-primary mr-2">Tiers</span>
+                {Array.from(new Set(seatsData.map(s => s.seatType).filter(Boolean))).map(type => (
+                  <div key={type} className="flex items-center gap-2">
+                    <div className="w-3 h-3" style={{ backgroundColor: getSeatColor(type) }} />
+                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-800">{type}</span>
+                  </div>
+                ))}
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-tertiary"></div>
-                <span className="text-[9px] font-black uppercase tracking-widest opacity-60">Selected</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-amber-500"></div>
-                <span className="text-[9px] font-black uppercase tracking-widest opacity-60">Holding</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-surface-container-highest"></div>
-                <span className="text-[9px] font-black uppercase tracking-widest opacity-60">Sold Out</span>
+              <div className="w-full h-px bg-surface-container-high/50"></div>
+              <div className="flex flex-wrap gap-6 justify-center items-center">
+                <span className="text-[10px] font-black uppercase tracking-widest text-primary mr-2">Status</span>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-tertiary"></div>
+                  <span className="text-[9px] font-black uppercase tracking-widest text-slate-800">Selected</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-amber-500"></div>
+                  <span className="text-[9px] font-black uppercase tracking-widest text-slate-800">Holding</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-surface-container-highest"></div>
+                  <span className="text-[9px] font-black uppercase tracking-widest text-slate-800">Sold Out</span>
+                </div>
               </div>
             </div>
 
@@ -365,7 +405,9 @@ function SeatSelectionContent() {
                           const isSold = seat.status === 'Sold' || seat.status === 'Booked';
                           const isMyHeld = myHeldSeatIds.has(seat.seatId);
 
-                          let statusClass = 'bg-primary cursor-pointer hover:scale-125 hover:z-10';
+                          let seatBgColor = getSeatColor(seat.seatType);
+                          let statusClass = 'cursor-pointer hover:scale-125 hover:z-10';
+
                           if (isSelected) {
                             statusClass = 'bg-tertiary shadow-[0_0_10px_rgba(0,105,71,0.5)] z-10 scale-110';
                           } else if (isLocked && isMyHeld) {
@@ -384,6 +426,7 @@ function SeatSelectionContent() {
                               onClick={() => toggleSeat(seat)}
                               disabled={isDisabled}
                               className={`${statusClass} aspect-square w-full rounded-[1px] transition-all duration-300`}
+                              style={!isSelected && !isLocked && !isSold ? { backgroundColor: seatBgColor } : undefined}
                               title={`R${seat.rowNumber}:S${seat.seatNumber} | $${seat.price}`}
                             />
                           );
@@ -424,7 +467,7 @@ function SeatSelectionContent() {
                 <div key={seat.seatId} className="bg-white py-5 px-4 flex justify-between items-center group border-b border-surface-container">
                   <div>
                     <div className="text-[11px] font-black uppercase tracking-tight text-on-surface">Row {seat.rowNumber} : Seat {seat.seatNumber}</div>
-                    <div className="text-[9px] text-primary font-black uppercase tracking-widest mt-1">{seat.seatType} tier</div>
+                    <div className="text-[9px] font-black uppercase tracking-widest mt-1" style={{ color: getSeatTextColor(seat.seatType) }}>{seat.seatType} tier</div>
                   </div>
                   <div className="flex items-center gap-6">
                     <div className="text-xl font-black tracking-tighter text-on-surface">${seat.price?.toFixed(2)}</div>
