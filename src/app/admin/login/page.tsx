@@ -65,22 +65,22 @@ export default function AdminLogin() {
         {/* Background Architectural Block */}
         <div className="absolute top-0 right-0 w-1/3 h-full bg-surface-container-low -z-10"></div>
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-primary opacity-5 -z-10"></div>
-        
+
         <div className="w-full max-w-[480px] bg-surface-container-lowest p-10 md:p-16 flex flex-col gap-10">
           {/* Brand Anchor */}
           <div className="flex flex-col gap-2">
             <Link href="/" className="text-error font-black text-4xl tracking-tighter uppercase italic">TicketRush</Link>
             <div className="h-1.5 w-12 bg-primary"></div>
           </div>
-          
+
           {/* Header Section */}
           <div className="flex flex-col gap-4">
             <h1 className="text-[3.5rem] font-extrabold leading-[1] tracking-tighter text-on-surface">
-              ADMIN<br/>SIGN IN.
+              ADMIN<br />SIGN IN.
             </h1>
             <p className="text-on-surface-variant font-medium tracking-tight">Restricted access. Administrators only.</p>
           </div>
-          
+
           {/* Login Form */}
           <form className="flex flex-col gap-8" onSubmit={onSubmit}>
             <div className="flex flex-col gap-6">
@@ -90,13 +90,13 @@ export default function AdminLogin() {
                 <input
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-surface-container-high border-0 border-b-2 border-transparent py-4 px-0 text-on-surface font-bold placeholder:text-outline-variant focus:ring-0 focus:outline-none focus:border-error transition-colors"
+                  className="w-full bg-surface-container-high border-0 border-b-2 border-transparent py-4 px-2 text-on-surface font-bold placeholder:text-outline-variant focus:ring-0 focus:outline-none focus:border-error transition-colors"
                   placeholder="ADMIN@DOMAIN.COM"
                   type="email"
                   required
                 />
               </div>
-              
+
               {/* Password Input */}
               <div className="flex flex-col gap-2">
                 <div className="flex justify-between items-end">
@@ -105,14 +105,14 @@ export default function AdminLogin() {
                 <input
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-surface-container-high border-0 border-b-2 border-transparent py-4 px-0 text-on-surface font-bold placeholder:text-outline-variant focus:ring-0 focus:outline-none focus:border-error transition-colors"
+                  className="w-full bg-surface-container-high border-0 border-b-2 border-transparent py-4 px-2 text-on-surface font-bold placeholder:text-outline-variant focus:ring-0 focus:outline-none focus:border-error transition-colors"
                   placeholder="••••••••"
                   type="password"
                   required
                 />
               </div>
             </div>
-            
+
             {/* Rate Limit Warning */}
             {rateLimited && (
               <div className="flex items-center gap-4 bg-amber-50 border-l-4 border-amber-500 px-5 py-4 animate-[fadeIn_0.3s_ease-out]">
@@ -127,11 +127,10 @@ export default function AdminLogin() {
 
             {/* Action Button */}
             <button
-              className={`font-black py-6 text-xl uppercase tracking-widest transition-all flex items-center justify-center gap-3 ${
-                rateLimited
+              className={`font-black py-6 text-xl uppercase tracking-widest transition-all flex items-center justify-center gap-3 ${rateLimited
                   ? 'bg-slate-400 text-slate-200 cursor-not-allowed'
                   : 'bg-error text-white hover:bg-red-700 active:scale-[0.98]'
-              }`}
+                }`}
               type="submit"
               disabled={loading || rateLimited}
             >
@@ -145,7 +144,7 @@ export default function AdminLogin() {
               </div>
             )}
           </form>
-          
+
           <div className="flex flex-col gap-6 items-start">
             <div className="h-[2px] w-full bg-surface-container"></div>
             <div className="flex flex-col gap-1">
@@ -156,7 +155,7 @@ export default function AdminLogin() {
             </div>
           </div>
         </div>
-        
+
         {/* Decorative Precision Element */}
         <div className="hidden lg:block absolute right-24 bottom-24">
           <div className="flex flex-col items-end text-on-surface-variant opacity-20">
