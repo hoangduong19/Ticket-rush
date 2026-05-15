@@ -424,7 +424,7 @@ function SeatSelectionContent() {
                 <div key={seat.seatId} className="bg-white py-5 px-4 flex justify-between items-center group border-b border-surface-container">
                   <div>
                     <div className="text-[11px] font-black uppercase tracking-tight text-on-surface">Row {seat.rowNumber} : Seat {seat.seatNumber}</div>
-                    <div className="text-[9px] text-primary font-black uppercase tracking-widest mt-1">{seat.sectionName} tier</div>
+                    <div className="text-[9px] text-primary font-black uppercase tracking-widest mt-1">{seat.seatType} tier</div>
                   </div>
                   <div className="flex items-center gap-6">
                     <div className="text-xl font-black tracking-tighter text-on-surface">${seat.price?.toFixed(2)}</div>

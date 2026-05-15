@@ -275,7 +275,7 @@ export default function Checkout() {
                           {seat.seatType || 'Standard'} Admission
                         </p>
                         <p className="text-base font-black leading-snug uppercase">
-                          {seat.sectionName} — Row {seat.rowNumber}, Seat {seat.seatNumber}
+                          {seat.seatType} — Row {seat.rowNumber}, Seat {seat.seatNumber}
                         </p>
                       </div>
                       <p className="font-bold text-primary whitespace-nowrap ml-4">${seat.price?.toFixed(2)}</p>
